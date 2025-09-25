@@ -51,10 +51,10 @@ interface ServiceRequest {
   created_at: string;
   service_categories: {
     name: string;
-  };
+  } | null;
   profiles: {
     name: string;
-  };
+  } | null;
 }
 
 interface Fee {
@@ -71,10 +71,10 @@ interface Fee {
     vehicle_make: string;
     model: string;
     year: number;
-  };
+  } | null;
   profiles: {
     name: string;
-  };
+  } | null;
 }
 
 const AdminDashboard = () => {
@@ -317,29 +317,29 @@ const AdminDashboard = () => {
           case 'customers':
           case 'pros':
             return (
-              item.name?.toLowerCase().includes(query) ||
-              item.phone?.toLowerCase().includes(query) ||
-              item.id?.toLowerCase().includes(query) ||
-              (item.pro_profiles?.[0]?.business_name?.toLowerCase().includes(query))
+              item?.name?.toLowerCase().includes(query) ||
+              item?.phone?.toLowerCase().includes(query) ||
+              item?.id?.toLowerCase().includes(query) ||
+              (item?.pro_profiles?.[0]?.business_name?.toLowerCase().includes(query))
             );
           case 'requests':
             return (
-              item.vehicle_make?.toLowerCase().includes(query) ||
-              item.model?.toLowerCase().includes(query) ||
-              item.year?.toString().includes(query) ||
-              item.profiles?.name?.toLowerCase().includes(query) ||
-              item.service_categories?.name?.toLowerCase().includes(query) ||
-              item.address?.toLowerCase().includes(query) ||
-              item.zip?.includes(query) ||
-              item.contact_email?.toLowerCase().includes(query)
+              item?.vehicle_make?.toLowerCase().includes(query) ||
+              item?.model?.toLowerCase().includes(query) ||
+              item?.year?.toString().includes(query) ||
+              item?.profiles?.name?.toLowerCase().includes(query) ||
+              item?.service_categories?.name?.toLowerCase().includes(query) ||
+              item?.address?.toLowerCase().includes(query) ||
+              item?.zip?.includes(query) ||
+              item?.contact_email?.toLowerCase().includes(query)
             );
           case 'fees':
             return (
-              item.profiles?.name?.toLowerCase().includes(query) ||
-              item.service_requests?.vehicle_make?.toLowerCase().includes(query) ||
-              item.service_requests?.model?.toLowerCase().includes(query) ||
-              item.amount?.toString().includes(query) ||
-              item.fee_type?.toLowerCase().includes(query)
+              item?.profiles?.name?.toLowerCase().includes(query) ||
+              item?.service_requests?.vehicle_make?.toLowerCase().includes(query) ||
+              item?.service_requests?.model?.toLowerCase().includes(query) ||
+              item?.amount?.toString().includes(query) ||
+              item?.fee_type?.toLowerCase().includes(query)
             );
           default:
             return true;
@@ -542,7 +542,7 @@ const AdminDashboard = () => {
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-semibold">{customer.name}</h3>
+                        <h3 className="font-semibold">{customer?.name || 'Unknown Customer'}</h3>
                         <p className="text-sm text-muted-foreground">ID: {customer.id}</p>
                         <p className="text-sm text-muted-foreground">
                           Joined: {format(new Date(customer.created_at), 'PPP')}
@@ -595,7 +595,7 @@ const AdminDashboard = () => {
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-semibold">{pro.name}</h3>
+                        <h3 className="font-semibold">{pro?.name || 'Unknown Professional'}</h3>
                         {pro.pro_profiles && pro.pro_profiles.length > 0 && (
                           <p className="text-sm font-medium">{pro.pro_profiles[0].business_name}</p>
                         )}
@@ -662,14 +662,14 @@ const AdminDashboard = () => {
                 <Card key={request.id}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold">{request.service_categories.name}</h3>
-                        <p className="text-sm font-medium">
-                          {request.year} {request.vehicle_make} {request.model}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Customer: {request.profiles.name}
-                        </p>
+                       <div>
+                         <h3 className="font-semibold">{request.service_categories?.name || 'Unknown Service'}</h3>
+                         <p className="text-sm font-medium">
+                           {request.year} {request.vehicle_make} {request.model}
+                         </p>
+                         <p className="text-sm text-muted-foreground">
+                           Customer: {request.profiles?.name || 'Unknown Customer'}
+                         </p>
                         <p className="text-sm text-muted-foreground">
                           <MapPin className="h-3 w-3 inline mr-1" />
                           {request.address}, {request.zip}
@@ -728,10 +728,10 @@ const AdminDashboard = () => {
                       <div>
                         <h3 className="font-semibold">${fee.amount.toFixed(2)} - {fee.fee_type.replace('_', ' ')}</h3>
                         <p className="text-sm text-muted-foreground">
-                          Pro: {fee.profiles.name}
+                          Pro: {fee.profiles?.name || 'Unknown Professional'}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Vehicle: {fee.service_requests.year} {fee.service_requests.vehicle_make} {fee.service_requests.model}
+                          Vehicle: {fee.service_requests?.year || 'N/A'} {fee.service_requests?.vehicle_make || 'Unknown'} {fee.service_requests?.model || 'Vehicle'}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Due: {format(new Date(fee.due_date), 'PPP')}
