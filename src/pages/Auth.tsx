@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/components/ui/use-toast';
 
 const Auth = () => {
@@ -33,8 +34,9 @@ const Auth = () => {
     const email = formData.get('signup-email') as string;
     const password = formData.get('signup-password') as string;
     const name = formData.get('name') as string;
+    const role = formData.get('role') as string;
 
-    const { error } = await signUp(email, password, name);
+    const { error } = await signUp(email, password, name, role);
     
     if (error) {
       toast({
@@ -143,6 +145,19 @@ const Auth = () => {
                     placeholder="Create a password"
                     required
                   />
+                </div>
+                <div className="space-y-3">
+                  <Label>Account Type</Label>
+                  <RadioGroup defaultValue="customer" name="role" className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="customer" id="customer" />
+                      <Label htmlFor="customer" className="text-sm font-normal">Customer</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="pro" id="pro" />
+                      <Label htmlFor="pro" className="text-sm font-normal">Professional</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Creating account...' : 'Sign Up'}
