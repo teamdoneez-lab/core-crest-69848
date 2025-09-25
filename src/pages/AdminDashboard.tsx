@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Car, DollarSign, FileText, Download, CheckCircle, Calendar, Phone, Mail, MapPin } from 'lucide-react';
+import { Users, Car, DollarSign, FileText, Download, CheckCircle, Calendar, Phone, Mail, MapPin, Search, Filter, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Customer {
@@ -88,6 +88,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -282,10 +283,12 @@ const AdminDashboard = () => {
   const filterData = (data: any[], type: string) => {
     let filtered = [...data];
 
+    // Status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(item => item.status === statusFilter);
     }
 
+    // Date filter
     if (dateFilter !== 'all') {
       const now = new Date();
       const filterDate = new Date();
@@ -304,6 +307,44 @@ const AdminDashboard = () => {
           filtered = filtered.filter(item => new Date(item.created_at) >= filterDate);
           break;
       }
+    }
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(item => {
+        switch (type) {
+          case 'customers':
+          case 'pros':
+            return (
+              item.name?.toLowerCase().includes(query) ||
+              item.phone?.toLowerCase().includes(query) ||
+              item.id?.toLowerCase().includes(query) ||
+              (item.pro_profiles?.[0]?.business_name?.toLowerCase().includes(query))
+            );
+          case 'requests':
+            return (
+              item.vehicle_make?.toLowerCase().includes(query) ||
+              item.model?.toLowerCase().includes(query) ||
+              item.year?.toString().includes(query) ||
+              item.profiles?.name?.toLowerCase().includes(query) ||
+              item.service_categories?.name?.toLowerCase().includes(query) ||
+              item.address?.toLowerCase().includes(query) ||
+              item.zip?.includes(query) ||
+              item.contact_email?.toLowerCase().includes(query)
+            );
+          case 'fees':
+            return (
+              item.profiles?.name?.toLowerCase().includes(query) ||
+              item.service_requests?.vehicle_make?.toLowerCase().includes(query) ||
+              item.service_requests?.model?.toLowerCase().includes(query) ||
+              item.amount?.toString().includes(query) ||
+              item.fee_type?.toLowerCase().includes(query)
+            );
+          default:
+            return true;
+        }
+      });
     }
 
     return filtered;
@@ -382,42 +423,83 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="status-filter">Status:</Label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="accepted">Accepted</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Label htmlFor="date-filter">Date:</Label>
-            <Select value={dateFilter} onValueChange={setDateFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All time" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="week">Last Week</SelectItem>
-                <SelectItem value="month">Last Month</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        {/* Filters and Search */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Label htmlFor="search" className="flex items-center gap-2 mb-2">
+                  <Search className="h-4 w-4" />
+                  Search
+                </Label>
+                <Input
+                  id="search"
+                  placeholder="Search by name, email, vehicle, business..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="flex gap-4">
+                <div>
+                  <Label htmlFor="status-filter" className="flex items-center gap-2 mb-2">
+                    <Filter className="h-4 w-4" />
+                    Status
+                  </Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="accepted">Accepted</SelectItem>
+                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="date-filter" className="flex items-center gap-2 mb-2">
+                    <Calendar className="h-4 w-4" />
+                    Date
+                  </Label>
+                  <Select value={dateFilter} onValueChange={setDateFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="All time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="week">Last Week</SelectItem>
+                      <SelectItem value="month">Last Month</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label className="flex items-center gap-2 mb-2">
+                    <RefreshCw className="h-4 w-4" />
+                    Actions
+                  </Label>
+                  <Button 
+                    onClick={fetchAllData} 
+                    variant="outline"
+                    className="w-[120px]"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -430,16 +512,32 @@ const AdminDashboard = () => {
 
           {/* Customers Tab */}
           <TabsContent value="customers" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">Customers</h2>
-              <Button onClick={() => exportToCSV(customers, 'customers')}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold">Customers</h2>
+                <p className="text-sm text-muted-foreground">
+                  {filterData(customers, 'customers').length} customers found
+                </p>
+              </div>
+              <Button onClick={() => exportToCSV(filterData(customers, 'customers'), 'customers')}>
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
               </Button>
             </div>
             
             <div className="grid gap-4">
-              {filterData(customers, 'customers').map((customer) => (
+              {filterData(customers, 'customers').length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-lg font-medium mb-2">No customers found</p>
+                    <p className="text-sm text-muted-foreground">
+                      Try adjusting your search or filter criteria
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                filterData(customers, 'customers').map((customer) => (
                 <Card key={customer.id}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
@@ -460,22 +558,39 @@ const AdminDashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              )}
             </div>
           </TabsContent>
 
           {/* Professionals Tab */}
           <TabsContent value="pros" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">Professionals</h2>
-              <Button onClick={() => exportToCSV(pros, 'professionals')}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold">Professionals</h2>
+                <p className="text-sm text-muted-foreground">
+                  {filterData(pros, 'pros').length} professionals found
+                </p>
+              </div>
+              <Button onClick={() => exportToCSV(filterData(pros, 'pros'), 'professionals')}>
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
               </Button>
             </div>
             
             <div className="grid gap-4">
-              {filterData(pros, 'pros').map((pro) => (
+              {filterData(pros, 'pros').length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <Car className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-lg font-medium mb-2">No professionals found</p>
+                    <p className="text-sm text-muted-foreground">
+                      Try adjusting your search or filter criteria
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                filterData(pros, 'pros').map((pro) => (
                 <Card key={pro.id}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
@@ -511,22 +626,39 @@ const AdminDashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              )}
             </div>
           </TabsContent>
 
           {/* Service Requests Tab */}
           <TabsContent value="requests" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">Service Requests</h2>
-              <Button onClick={() => exportToCSV(requests, 'service_requests')}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold">Service Requests</h2>
+                <p className="text-sm text-muted-foreground">
+                  {filterData(requests, 'requests').length} requests found
+                </p>
+              </div>
+              <Button onClick={() => exportToCSV(filterData(requests, 'requests'), 'service_requests')}>
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
               </Button>
             </div>
             
             <div className="grid gap-4">
-              {filterData(requests, 'requests').map((request) => (
+              {filterData(requests, 'requests').length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-lg font-medium mb-2">No service requests found</p>
+                    <p className="text-sm text-muted-foreground">
+                      Try adjusting your search or filter criteria
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                filterData(requests, 'requests').map((request) => (
                 <Card key={request.id}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
@@ -557,22 +689,39 @@ const AdminDashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              )}
             </div>
           </TabsContent>
 
           {/* Fees Tab */}
           <TabsContent value="fees" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">Fees & Payments</h2>
-              <Button onClick={() => exportToCSV(fees, 'fees')}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold">Fees & Payments</h2>
+                <p className="text-sm text-muted-foreground">
+                  {filterData(fees, 'fees').length} fees found
+                </p>
+              </div>
+              <Button onClick={() => exportToCSV(filterData(fees, 'fees'), 'fees')}>
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
               </Button>
             </div>
             
             <div className="grid gap-4">
-              {filterData(fees, 'fees').map((fee) => (
+              {filterData(fees, 'fees').length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-lg font-medium mb-2">No fees found</p>
+                    <p className="text-sm text-muted-foreground">
+                      Try adjusting your search or filter criteria
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                filterData(fees, 'fees').map((fee) => (
                 <Card key={fee.id}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
@@ -639,7 +788,8 @@ const AdminDashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              )}
             </div>
           </TabsContent>
         </Tabs>
