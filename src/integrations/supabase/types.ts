@@ -180,6 +180,8 @@ export type Database = {
       }
       service_requests: {
         Row: {
+          accept_expires_at: string | null
+          accepted_pro_id: string | null
           address: string
           appointment_pref: string
           category_id: string
@@ -199,6 +201,8 @@ export type Database = {
           zip: string
         }
         Insert: {
+          accept_expires_at?: string | null
+          accepted_pro_id?: string | null
           address: string
           appointment_pref: string
           category_id: string
@@ -218,6 +222,8 @@ export type Database = {
           zip: string
         }
         Update: {
+          accept_expires_at?: string | null
+          accepted_pro_id?: string | null
           address?: string
           appointment_pref?: string
           category_id?: string
@@ -238,6 +244,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "service_requests_accepted_pro_id_fkey"
+            columns: ["accepted_pro_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "service_requests_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
@@ -251,9 +264,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_lead_and_lock_job: {
+        Args: { lead_id: string }
+        Returns: Json
+      }
       generate_leads_for_request: {
         Args: { request_id: string }
         Returns: undefined
+      }
+      release_expired_job_locks: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
     }
     Enums: {
