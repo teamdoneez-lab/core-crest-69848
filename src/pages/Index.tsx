@@ -18,16 +18,16 @@ const Index = () => {
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
-  // Redirect to auth if not authenticated
-  if (!user && !loading) {
-    return <Navigate to="/auth" replace />;
-  }
-
   useEffect(() => {
     if (user) {
       fetchServiceCategories();
     }
   }, [user]);
+
+  // Redirect to auth if not authenticated (moved after all hooks)
+  if (!user && !loading) {
+    return <Navigate to="/auth" replace />;
+  }
 
   const fetchServiceCategories = async () => {
     try {
