@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          pro_id: string
+          request_id: string
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pro_id: string
+          request_id: string
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pro_id?: string
+          request_id?: string
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_pro_id_fkey"
+            columns: ["pro_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string
@@ -275,6 +320,18 @@ export type Database = {
       release_expired_job_locks: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      schedule_appointment: {
+        Args: {
+          appointment_notes?: string
+          appointment_time: string
+          request_id: string
+        }
+        Returns: Json
+      }
+      update_request_status: {
+        Args: { new_status: string; request_id: string }
+        Returns: Json
       }
     }
     Enums: {

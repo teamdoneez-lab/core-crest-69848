@@ -39,15 +39,35 @@ export function Navigation() {
               </Link>
 
               {isCustomer && (
-                <Link 
-                  to="/request-service" 
-                  className={cn(
-                    "text-sm font-medium transition-colors hover:text-primary",
-                    isActive('/request-service') ? 'text-primary' : 'text-muted-foreground'
-                  )}
-                >
-                  Request Service
-                </Link>
+                <>
+                  <Link 
+                    to="/request-service" 
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-primary",
+                      isActive('/request-service') ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    Request Service
+                  </Link>
+                  <Link 
+                    to="/service-requests" 
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-primary",
+                      isActive('/service-requests') ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    My Requests
+                  </Link>
+                  <Link 
+                    to="/appointments" 
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-primary",
+                      isActive('/appointments') ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    Appointments
+                  </Link>
+                </>
               )}
 
               {isPro && (
@@ -70,15 +90,15 @@ export function Navigation() {
                   >
                     Inbox
                   </Link>
-                  <Link 
-                    to="/service-requests" 
-                    className={cn(
-                      "text-sm font-medium transition-colors hover:text-primary",
-                      isActive('/service-requests') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    Service Requests
-                  </Link>
+                   <Link 
+                     to="/service-requests" 
+                     className={cn(
+                       "text-sm font-medium transition-colors hover:text-primary",
+                       isActive('/service-requests') ? 'text-primary' : 'text-muted-foreground'
+                     )}
+                   >
+                     Service Requests
+                   </Link>
                 </>
               )}
 
