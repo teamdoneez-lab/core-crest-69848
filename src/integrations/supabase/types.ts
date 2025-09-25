@@ -59,6 +59,66 @@ export type Database = {
           },
         ]
       }
+      fees: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          fee_type: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          payment_method: string | null
+          pro_id: string
+          request_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date?: string
+          fee_type?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          pro_id: string
+          request_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          fee_type?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          pro_id?: string
+          request_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fees_pro_id_fkey"
+            columns: ["pro_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fees_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string
@@ -316,6 +376,14 @@ export type Database = {
       generate_leads_for_request: {
         Args: { request_id: string }
         Returns: undefined
+      }
+      mark_fee_paid: {
+        Args: {
+          fee_id: string
+          notes_input?: string
+          payment_method_input?: string
+        }
+        Returns: Json
       }
       release_expired_job_locks: {
         Args: Record<PropertyKey, never>

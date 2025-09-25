@@ -12,6 +12,7 @@ import ProProfile from "./pages/ProProfile";
 import ProInbox from "./pages/ProInbox";
 import ServiceRequests from "./pages/ServiceRequests";
 import Appointments from "./pages/Appointments";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/pro-inbox" element={<ProInbox />} />
             <Route path="/service-requests" element={<ServiceRequests />} />
             <Route path="/appointments" element={<Appointments />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
