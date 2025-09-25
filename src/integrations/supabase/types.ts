@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      leads: {
+        Row: {
+          created_at: string
+          id: string
+          pro_id: string
+          request_id: string
+          status: Database["public"]["Enums"]["lead_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pro_id: string
+          request_id: string
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pro_id?: string
+          request_id?: string
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pro_profiles: {
         Row: {
           business_name: string
@@ -209,9 +236,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_leads_for_request: {
+        Args: { request_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
+      lead_status: "new" | "accepted" | "declined"
       user_role: "customer" | "pro" | "admin"
     }
     CompositeTypes: {
@@ -340,6 +371,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      lead_status: ["new", "accepted", "declined"],
       user_role: ["customer", "pro", "admin"],
     },
   },

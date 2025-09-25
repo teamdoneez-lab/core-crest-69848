@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import RequestService from "./pages/RequestService";
 import RequestConfirmation from "./pages/RequestConfirmation";
 import ProProfile from "./pages/ProProfile";
+import ProInbox from "./pages/ProInbox";
 import ServiceRequests from "./pages/ServiceRequests";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/request-service" element={<RequestService />} />
             <Route path="/request-confirmation" element={<RequestConfirmation />} />
             <Route path="/pro-profile" element={<ProProfile />} />
+            <Route path="/pro-inbox" element={<ProInbox />} />
             <Route path="/service-requests" element={<ServiceRequests />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

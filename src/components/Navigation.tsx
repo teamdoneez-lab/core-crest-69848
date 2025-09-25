@@ -62,6 +62,15 @@ export function Navigation() {
                     My Profile
                   </Link>
                   <Link 
+                    to="/pro-inbox" 
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-primary",
+                      isActive('/pro-inbox') ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    Inbox
+                  </Link>
+                  <Link 
                     to="/service-requests" 
                     className={cn(
                       "text-sm font-medium transition-colors hover:text-primary",
