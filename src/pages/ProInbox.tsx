@@ -14,6 +14,7 @@ interface Lead {
   id: string;
   status: 'new' | 'accepted' | 'declined';
   created_at: string;
+  request_id: string;
   service_requests: {
     id: string;
     vehicle_make: string;
@@ -51,21 +52,7 @@ const ProInbox = () => {
           id,
           status,
           created_at,
-          service_requests (
-            id,
-            vehicle_make,
-            model,
-            year,
-            address,
-            zip,
-            contact_email,
-            contact_phone,
-            appointment_pref,
-            notes,
-            service_categories (
-              name
-            )
-          )
+          request_id
         `)
         .eq('pro_id', user?.id)
         .order('created_at', { ascending: false });
@@ -80,7 +67,46 @@ const ProInbox = () => {
         return;
       }
 
-      setLeads(leadsData || []);
+      // Fetch service request details separately for each lead
+      const enrichedLeads = await Promise.all(
+        (leadsData || []).map(async (lead) => {
+          const { data: requestData } = await supabase
+            .from('service_requests')
+            .select(`
+              id,
+              vehicle_make,
+              model,
+              year,
+              address,
+              zip,
+              contact_email,
+              contact_phone,
+              appointment_pref,
+              notes,
+              category_id
+            `)
+            .eq('id', lead.request_id)
+            .single();
+
+          const { data: categoryData } = await supabase
+            .from('service_categories')
+            .select('name')
+            .eq('id', requestData?.category_id)
+            .single();
+
+          return {
+            ...lead,
+            service_requests: {
+              ...requestData,
+              service_categories: {
+                name: categoryData?.name || 'Unknown Service'
+              }
+            }
+          };
+        })
+      );
+
+      setLeads(enrichedLeads);
     } catch (error) {
       console.error('Error fetching leads:', error);
     } finally {
