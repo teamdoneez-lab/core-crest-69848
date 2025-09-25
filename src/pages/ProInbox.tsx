@@ -1,48 +1,54 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
-import { RoleGuard } from '@/components/RoleGuard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+
+interface ServiceRequest {
+  id: string;
+  vehicle_make: string;
+  model: string;
+  year: number;
+  address: string;
+  zip: string;
+  contact_email: string;
+  contact_phone: string;
+  appointment_pref: string;
+  notes?: string;
+  service_categories: {
+    name: string;
+  };
+}
 
 interface Lead {
   id: string;
   status: 'new' | 'accepted' | 'declined';
   created_at: string;
-  request_id: string;
-  service_requests: {
-    id: string;
-    vehicle_make: string;
-    model: string;
-    year: number;
-    address: string;
-    zip: string;
-    contact_email: string;
-    contact_phone: string;
-    appointment_pref: string;
-    notes?: string;
-    service_categories: {
-      name: string;
-    };
-  };
+  service_requests: ServiceRequest;
 }
 
 const ProInbox = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { isPro, loading: roleLoading } = useRole();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
+    if (user && isPro) {
       fetchLeads();
     }
-  }, [user]);
+  }, [user, isPro]);
+
+  // Redirect if not authenticated or not a pro
+  if (!authLoading && !roleLoading && (!user || !isPro)) {
+    return <Navigate to="/" replace />;
+  }
 
   const fetchLeads = async () => {
     try {
@@ -52,63 +58,37 @@ const ProInbox = () => {
           id,
           status,
           created_at,
-          request_id
+          service_requests (
+            id,
+            vehicle_make,
+            model,
+            year,
+            address,
+            zip,
+            contact_email,
+            contact_phone,
+            appointment_pref,
+            notes,
+            service_categories (
+              name
+            )
+          )
         `)
-        .eq('pro_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching leads:', error);
         toast({
           title: "Error",
-          description: "Failed to fetch leads. Please try again.",
+          description: "Failed to fetch leads",
           variant: "destructive",
         });
         return;
       }
 
-      // Fetch service request details separately for each lead
-      const enrichedLeads = await Promise.all(
-        (leadsData || []).map(async (lead) => {
-          const { data: requestData } = await supabase
-            .from('service_requests')
-            .select(`
-              id,
-              vehicle_make,
-              model,
-              year,
-              address,
-              zip,
-              contact_email,
-              contact_phone,
-              appointment_pref,
-              notes,
-              category_id
-            `)
-            .eq('id', lead.request_id)
-            .single();
-
-          const { data: categoryData } = await supabase
-            .from('service_categories')
-            .select('name')
-            .eq('id', requestData?.category_id)
-            .single();
-
-          return {
-            ...lead,
-            service_requests: {
-              ...requestData,
-              service_categories: {
-                name: categoryData?.name || 'Unknown Service'
-              }
-            }
-          };
-        })
-      );
-
-      setLeads(enrichedLeads);
+      setLeads(leadsData || []);
     } catch (error) {
-      console.error('Error fetching leads:', error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
@@ -122,128 +102,119 @@ const ProInbox = () => {
         .eq('id', leadId);
 
       if (error) {
-        console.error('Error updating lead:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update lead status. Please try again.",
-          variant: "destructive",
-        });
-        return;
+        throw error;
       }
 
       // Update local state
-      setLeads(prev => 
-        prev.map(lead => 
-          lead.id === leadId ? { ...lead, status } : lead
-        )
-      );
+      setLeads(leads.map(lead => 
+        lead.id === leadId ? { ...lead, status } : lead
+      ));
 
       toast({
         title: "Success",
-        description: `Lead ${status} successfully.`,
+        description: `Lead ${status === 'accepted' ? 'accepted' : 'declined'} successfully`,
       });
     } catch (error) {
-      console.error('Error updating lead:', error);
+      console.error('Error updating lead status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update lead status",
+        variant: "destructive",
+      });
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'accepted': return 'bg-green-100 text-green-800 border-green-200';
-      case 'declined': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'new':
+        return 'bg-blue-100 text-blue-800';
+      case 'accepted':
+        return 'bg-green-100 text-green-800';
+      case 'declined':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  if (loading) {
+  if (authLoading || roleLoading || loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div>Loading leads...</div>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div>Loading...</div>
       </div>
     );
   }
 
   return (
-    <RoleGuard allowedRoles={['pro']}>
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="mx-auto max-w-6xl p-6">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Lead Inbox</h1>
-            <p className="text-muted-foreground">
-              Manage incoming service requests and opportunities
-            </p>
-          </div>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <div className="mx-auto max-w-6xl p-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Lead Inbox</h1>
+          <p className="text-muted-foreground">
+            Manage your service request leads
+          </p>
+        </div>
 
-          <div className="grid gap-6">
-            {leads.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">
-                    No leads available. Complete your profile and set up your service areas to start receiving leads.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              leads.map((lead) => (
-                <Card key={lead.id} className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+        {leads.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground">
+                No leads available at the moment. Make sure your profile is complete and verified.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {leads.map((lead) => (
+              <Card key={lead.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-semibold mb-1">
+                      <CardTitle className="text-lg">
                         {lead.service_requests.service_categories.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Received {format(new Date(lead.created_at), 'MMM d, yyyy at h:mm a')}
-                      </p>
+                      </CardTitle>
+                      <CardDescription>
+                        {lead.service_requests.year} {lead.service_requests.vehicle_make} {lead.service_requests.model}
+                      </CardDescription>
                     </div>
                     <Badge className={getStatusColor(lead.status)}>
-                      {lead.status}
+                      {lead.status.toUpperCase()}
                     </Badge>
                   </div>
-
-                  <div className="grid md:grid-cols-2 gap-4 mb-6">
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <h4 className="font-medium mb-2">Vehicle Information</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {lead.service_requests.year} {lead.service_requests.vehicle_make} {lead.service_requests.model}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium mb-2">Location</h4>
+                      <h4 className="font-semibold mb-1">Location</h4>
                       <p className="text-sm text-muted-foreground">
                         {lead.service_requests.address}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {lead.service_requests.zip}
+                        ZIP: {lead.service_requests.zip}
                       </p>
                     </div>
-
                     <div>
-                      <h4 className="font-medium mb-2">Contact Information</h4>
+                      <h4 className="font-semibold mb-1">Contact</h4>
                       <p className="text-sm text-muted-foreground">
-                        Email: {lead.service_requests.contact_email}
+                        {lead.service_requests.contact_email}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Phone: {lead.service_requests.contact_phone}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="font-medium mb-2">Appointment Preference</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {lead.service_requests.appointment_pref}
+                        {lead.service_requests.contact_phone}
                       </p>
                     </div>
                   </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-1">Appointment Preference</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {lead.service_requests.appointment_pref}
+                    </p>
+                  </div>
 
                   {lead.service_requests.notes && (
-                    <div className="mb-6">
-                      <h4 className="font-medium mb-2">Additional Notes</h4>
+                    <div className="mb-4">
+                      <h4 className="font-semibold mb-1">Notes</h4>
                       <p className="text-sm text-muted-foreground">
                         {lead.service_requests.notes}
                       </p>
@@ -251,45 +222,32 @@ const ProInbox = () => {
                   )}
 
                   {lead.status === 'new' && (
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 pt-4 border-t">
                       <Button 
                         onClick={() => updateLeadStatus(lead.id, 'accepted')}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-green-600 hover:bg-green-700"
                       >
                         Accept Lead
                       </Button>
                       <Button 
-                        variant="outline" 
+                        variant="outline"
                         onClick={() => updateLeadStatus(lead.id, 'declined')}
-                        className="border-red-200 text-red-600 hover:bg-red-50"
                       >
                         Decline
                       </Button>
                     </div>
                   )}
 
-                  {lead.status === 'accepted' && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <p className="text-sm text-green-800 font-medium">
-                        ✓ You accepted this lead. Contact the customer to discuss the service details.
-                      </p>
-                    </div>
-                  )}
-
-                  {lead.status === 'declined' && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                      <p className="text-sm text-red-800 font-medium">
-                        ✗ You declined this lead.
-                      </p>
-                    </div>
-                  )}
-                </Card>
-              ))
-            )}
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Received: {new Date(lead.created_at).toLocaleDateString()}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </div>
+        )}
       </div>
-    </RoleGuard>
+    </div>
   );
 };
 
