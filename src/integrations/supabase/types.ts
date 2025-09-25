@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      pro_profiles: {
+        Row: {
+          business_name: string
+          created_at: string | null
+          is_verified: boolean | null
+          notes: string | null
+          pro_id: string
+          radius_km: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_name: string
+          created_at?: string | null
+          is_verified?: boolean | null
+          notes?: string | null
+          pro_id: string
+          radius_km?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_name?: string
+          created_at?: string | null
+          is_verified?: boolean | null
+          notes?: string | null
+          pro_id?: string
+          radius_km?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pro_service_areas: {
+        Row: {
+          created_at: string | null
+          id: string
+          pro_id: string
+          zip: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          pro_id: string
+          zip: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          pro_id?: string
+          zip?: string
+        }
+        Relationships: []
+      }
+      pro_service_categories: {
+        Row: {
+          category_id: string
+          pro_id: string
+        }
+        Insert: {
+          category_id: string
+          pro_id: string
+        }
+        Update: {
+          category_id?: string
+          pro_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pro_service_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -61,6 +135,74 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      service_requests: {
+        Row: {
+          address: string
+          appointment_pref: string
+          category_id: string
+          contact_email: string
+          contact_phone: string
+          created_at: string | null
+          customer_id: string
+          id: string
+          mileage: number | null
+          model: string
+          notes: string | null
+          status: string
+          trim: string | null
+          updated_at: string | null
+          vehicle_make: string
+          year: number
+          zip: string
+        }
+        Insert: {
+          address: string
+          appointment_pref: string
+          category_id: string
+          contact_email: string
+          contact_phone: string
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          mileage?: number | null
+          model: string
+          notes?: string | null
+          status?: string
+          trim?: string | null
+          updated_at?: string | null
+          vehicle_make: string
+          year: number
+          zip: string
+        }
+        Update: {
+          address?: string
+          appointment_pref?: string
+          category_id?: string
+          contact_email?: string
+          contact_phone?: string
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          mileage?: number | null
+          model?: string
+          notes?: string | null
+          status?: string
+          trim?: string | null
+          updated_at?: string | null
+          vehicle_make?: string
+          year?: number
+          zip?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
