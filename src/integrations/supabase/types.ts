@@ -373,6 +373,10 @@ export type Database = {
         Args: { lead_id: string }
         Returns: Json
       }
+      create_admin_user: {
+        Args: { admin_email: string; admin_password?: string }
+        Returns: Json
+      }
       generate_leads_for_request: {
         Args: { request_id: string }
         Returns: undefined
@@ -383,6 +387,10 @@ export type Database = {
           notes_input?: string
           payment_method_input?: string
         }
+        Returns: Json
+      }
+      promote_user_to_admin: {
+        Args: { user_email: string }
         Returns: Json
       }
       release_expired_job_locks: {
