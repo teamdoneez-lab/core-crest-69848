@@ -274,16 +274,16 @@ const Index = () => {
                 Connect with <span className="font-semibold text-primary">verified automotive professionals</span> for quality repairs, maintenance, and services. 
                 Book instantly, track progress, and pay securely.
               </p>
-              <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
-                <Link to="/request-service-flow">
-                  <Button size="lg" className="w-full sm:w-auto text-lg px-10 py-7 bg-gradient-primary hover:opacity-90 shadow-elegant hover:shadow-glow transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
-                    <Wrench className="mr-3 h-6 w-6" />
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center lg:justify-start">
+                <Link to="/request-service-flow" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full text-base sm:text-lg px-6 py-4 sm:px-10 sm:py-7 bg-gradient-primary hover:opacity-90 shadow-elegant hover:shadow-glow transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
+                    <Wrench className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
                     Request Service Now
                   </Button>
                 </Link>
-                <Link to="/pro-onboarding">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-10 py-7 border-2 border-primary/30 hover:border-primary bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-500 transform hover:scale-105">
-                    <UserPlus className="mr-3 h-6 w-6" />
+                <Link to="/pro-onboarding" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full text-base sm:text-lg px-6 py-4 sm:px-10 sm:py-7 border-2 border-primary/30 hover:border-primary bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-500 transform hover:scale-105">
+                    <UserPlus className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
                     Join as Professional
                   </Button>
                 </Link>
