@@ -27,6 +27,7 @@ import {
   Target
 } from 'lucide-react';
 import logo from '@/assets/logo-new.png';
+import proWorkingCar from '@/assets/pro-working-car.jpg';
 
 interface ServiceCategory {
   id: string;
@@ -343,7 +344,7 @@ const Index = () => {
             <div className="relative">
               <div className="rounded-2xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500 transform hover:scale-105">
                 <img 
-                  src="/src/assets/pro-working-car.jpg" 
+                  src={proWorkingCar} 
                   alt="Professional automotive technician working on car engine" 
                   className="w-full h-auto object-cover"
                 />
