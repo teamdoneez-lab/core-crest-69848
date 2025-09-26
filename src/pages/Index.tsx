@@ -26,7 +26,7 @@ import {
   Zap,
   Target
 } from 'lucide-react';
-import logo from '@/assets/logo.png';
+import logo from '@/assets/logo-new.png';
 
 interface ServiceCategory {
   id: string;
