@@ -402,7 +402,7 @@ const Index = () => {
                     </div>
                     <h3 className="text-2xl font-bold mb-4 group-hover:text-primary transition-colors duration-300">Brake Service</h3>
                     <p className="text-muted-foreground mb-6 leading-relaxed">
-                      Complete brake inspection, repair, and replacement services with certified parts
+                      Complete brake inspection, repair, and replacement services with certified parts and warranty
                     </p>
                     <Link to="/auth">
                       <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300">
@@ -525,7 +525,7 @@ const Index = () => {
               </Button>
             </Link>
             <Link to="/pro-onboarding">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-10 py-7 border-2 border-white text-white hover:bg-white hover:text-primary transition-all duration-500 transform hover:scale-105">
+              <Button size="lg" className="w-full sm:w-auto text-lg px-10 py-7 bg-white text-primary hover:bg-white/90 shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
                 <UserPlus className="mr-3 h-6 w-6" />
                 Become a Professional Partner
               </Button>
@@ -579,7 +579,7 @@ const Index = () => {
           </div>
           
           <div className="border-t mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 DoneEZ. All rights reserved.</p>
+            <p>&copy; 2025 DoneEZ. All rights reserved.</p>
           </div>
         </div>
       </footer>
