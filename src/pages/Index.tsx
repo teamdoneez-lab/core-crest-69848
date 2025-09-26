@@ -18,7 +18,13 @@ import {
   Wrench,
   MapPin,
   DollarSign,
-  Phone
+  Phone,
+  UserPlus,
+  Calendar,
+  Sparkles,
+  Award,
+  Zap,
+  Target
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 
@@ -60,38 +66,52 @@ const Index = () => {
         <Navigation />
         <div className="mx-auto max-w-6xl p-6">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-3xl font-bold mb-2 bg-gradient-primary bg-clip-text text-transparent">
               {isAdmin && 'Admin Dashboard'}
               {isPro && 'Professional Dashboard'}
               {isCustomer && 'Customer Dashboard'}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-lg">
               Welcome back, {profile?.name || user?.email}
             </p>
           </div>
 
           {isCustomer && (
             <div className="grid gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                  <CardDescription>
-                    Get started with our auto services
+              <Card className="bg-gradient-card shadow-xl border-0">
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-2xl bg-gradient-primary bg-clip-text text-transparent">Quick Actions</CardTitle>
+                  <CardDescription className="text-lg">
+                    Professional auto services at your fingertips
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Link to="/request-service">
-                      <Button className="w-full h-20 text-lg">
-                        <Car className="mr-2 h-6 w-6" />
-                        Request Service
-                      </Button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Link to="/request-service-flow">
+                      <Card className="group cursor-pointer transition-all duration-500 hover:shadow-xl hover:scale-105 hover:bg-gradient-subtle border-2 hover:border-primary/20">
+                        <CardContent className="p-8 text-center">
+                          <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-elegant">
+                            <Wrench className="h-8 w-8 text-white drop-shadow-lg" />
+                          </div>
+                          <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">Request Service</h3>
+                          <p className="text-muted-foreground group-hover:text-primary/80 transition-colors">
+                            Get your vehicle serviced by verified professionals
+                          </p>
+                        </CardContent>
+                      </Card>
                     </Link>
                     <Link to="/appointments">
-                      <Button variant="outline" className="w-full h-20 text-lg">
-                        <Clock className="mr-2 h-6 w-6" />
-                        View Appointments
-                      </Button>
+                      <Card className="group cursor-pointer transition-all duration-500 hover:shadow-xl hover:scale-105 hover:bg-gradient-subtle border-2 hover:border-primary/20">
+                        <CardContent className="p-8 text-center">
+                          <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-elegant">
+                            <Calendar className="h-8 w-8 text-white drop-shadow-lg" />
+                          </div>
+                          <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">My Appointments</h3>
+                          <p className="text-muted-foreground group-hover:text-primary/80 transition-colors">
+                            View and manage your scheduled services
+                          </p>
+                        </CardContent>
+                      </Card>
                     </Link>
                   </div>
                 </CardContent>
@@ -200,19 +220,31 @@ const Index = () => {
   // Landing page for unauthenticated users
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      {/* Enhanced Navigation */}
+      <nav className="border-b bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
-              <img src={logo} alt="DoneEZ" className="h-10 w-auto mr-2" />
+              <img src={logo} alt="DoneEZ" className="h-10 w-auto mr-2 drop-shadow-md" />
             </div>
             <div className="flex items-center space-x-4">
-              <Link to="/auth">
-                <Button variant="ghost" className="hover:bg-primary/10 transition-all duration-300">Sign In</Button>
+              <Button variant="outline" className="border-primary/20 bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-300">
+                Request Service
+              </Button>
+              <Link to="/pro-onboarding">
+                <Button className="bg-gradient-primary hover:opacity-90 text-white shadow-elegant transition-all duration-300">
+                  Become a Pro
+                </Button>
               </Link>
               <Link to="/auth">
-                <Button className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">Get Started</Button>
+                <Button variant="outline" className="border-primary/20 bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-300">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button className="bg-gradient-primary hover:opacity-90 text-white shadow-elegant transition-all duration-300">
+                  Sign Up
+                </Button>
               </Link>
             </div>
           </div>
@@ -243,15 +275,15 @@ const Index = () => {
                 Book instantly, track progress, and pay securely.
               </p>
               <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
-                <Link to="/auth">
-                  <Button size="lg" className="w-full sm:w-auto text-lg px-10 py-7 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-2xl hover:shadow-primary/25 transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
-                    <Car className="mr-3 h-6 w-6" />
-                    Book a Service
+                <Link to="/request-service-flow">
+                  <Button size="lg" className="w-full sm:w-auto text-lg px-10 py-7 bg-gradient-primary hover:opacity-90 shadow-elegant hover:shadow-glow transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
+                    <Wrench className="mr-3 h-6 w-6" />
+                    Request Service Now
                   </Button>
                 </Link>
-                <Link to="/auth">
+                <Link to="/pro-onboarding">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-10 py-7 border-2 border-primary/30 hover:border-primary bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-500 transform hover:scale-105">
-                    <Wrench className="mr-3 h-6 w-6" />
+                    <UserPlus className="mr-3 h-6 w-6" />
                     Join as Professional
                   </Button>
                 </Link>
@@ -486,16 +518,16 @@ const Index = () => {
             Join thousands of satisfied customers and professional service providers in revolutionizing auto care
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Link to="/auth">
+            <Link to="/request-service-flow">
               <Button size="lg" className="w-full sm:w-auto text-lg px-10 py-7 bg-white text-primary hover:bg-white/90 shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
-                <Car className="mr-3 h-6 w-6" />
-                Book Your Service
+                <Calendar className="mr-3 h-6 w-6" />
+                Book Your Service Today
               </Button>
             </Link>
-            <Link to="/auth">
+            <Link to="/pro-onboarding">
               <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-10 py-7 border-2 border-white text-white hover:bg-white hover:text-primary transition-all duration-500 transform hover:scale-105">
-                <Wrench className="mr-3 h-6 w-6" />
-                Become a Professional
+                <UserPlus className="mr-3 h-6 w-6" />
+                Become a Professional Partner
               </Button>
             </Link>
           </div>
