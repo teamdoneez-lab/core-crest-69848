@@ -198,21 +198,21 @@ const Index = () => {
 
   // Landing page for unauthenticated users
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="border-b bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
-              <Car className="h-8 w-8 text-primary mr-2" />
-              <span className="text-xl font-bold">AutoServices</span>
+              <Car className="h-8 w-8 text-primary mr-3 drop-shadow-lg" />
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">AutoServices</span>
             </div>
             <div className="flex items-center space-x-4">
               <Link to="/auth">
-                <Button variant="ghost">Sign In</Button>
+                <Button variant="ghost" className="hover:bg-primary/10 transition-all duration-300">Sign In</Button>
               </Link>
               <Link to="/auth">
-                <Button>Get Started</Button>
+                <Button className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">Get Started</Button>
               </Link>
             </div>
           </div>
@@ -220,63 +220,81 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center py-20">
-            <div className="text-center lg:text-left">
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent font-playfair">
-                Professional Auto Services
-                <span className="block text-primary">At Your Doorstep</span>
+      <section className="relative overflow-hidden py-24 bg-gradient-to-br from-primary/3 via-background to-accent/5">
+        {/* Background decorations */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-gradient-to-r from-accent/15 to-primary/15 rounded-full blur-2xl animate-pulse delay-1000"></div>
+          <div className="absolute top-3/4 left-1/2 w-32 h-32 bg-primary/10 rounded-full blur-xl animate-bounce"></div>
+        </div>
+        
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="text-center lg:text-left space-y-8 animate-fade-in">
+              <h1 className="text-5xl md:text-7xl font-bold tracking-tight font-playfair leading-tight">
+                <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent drop-shadow-sm">
+                  Professional Auto Services
+                </span>
+                <br />
+                <span className="text-foreground/90 text-4xl md:text-5xl">At Your Doorstep</span>
               </h1>
-              <p className="text-xl text-muted-foreground mb-8 max-w-2xl">
-                Connect with verified automotive professionals for quality repairs, maintenance, and services. 
+              <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                Connect with <span className="font-semibold text-primary">verified automotive professionals</span> for quality repairs, maintenance, and services. 
                 Book instantly, track progress, and pay securely.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
                 <Link to="/auth">
-                  <Button size="lg" className="w-full sm:w-auto text-lg px-8 py-6">
-                    <Car className="mr-2 h-5 w-5" />
+                  <Button size="lg" className="w-full sm:w-auto text-lg px-10 py-7 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-2xl hover:shadow-primary/25 transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
+                    <Car className="mr-3 h-6 w-6" />
                     Book a Service
                   </Button>
                 </Link>
                 <Link to="/auth">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 py-6">
-                    <Wrench className="mr-2 h-5 w-5" />
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-10 py-7 border-2 border-primary/30 hover:border-primary bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-500 transform hover:scale-105">
+                    <Wrench className="mr-3 h-6 w-6" />
                     Join as Professional
                   </Button>
                 </Link>
               </div>
             </div>
             
-            {/* Hero Image/Stats */}
+            {/* Hero Stats Grid */}
             <div className="relative">
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6 text-center">
-                    <Users className="h-12 w-12 text-primary mx-auto mb-4" />
-                    <div className="text-2xl font-bold">500+</div>
-                    <div className="text-sm text-muted-foreground">Verified Pros</div>
+              <div className="grid grid-cols-2 gap-6">
+                <Card className="hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-gradient-to-br from-background to-background/80 backdrop-blur-sm border-primary/20">
+                  <CardContent className="p-8 text-center">
+                    <div className="w-16 h-16 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <Users className="h-8 w-8 text-white" />
+                    </div>
+                    <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">500+</div>
+                    <div className="text-sm text-muted-foreground font-medium">Verified Pros</div>
                   </CardContent>
                 </Card>
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6 text-center">
-                    <Star className="h-12 w-12 text-primary mx-auto mb-4" />
-                    <div className="text-2xl font-bold">4.9★</div>
-                    <div className="text-sm text-muted-foreground">Average Rating</div>
+                <Card className="hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-gradient-to-br from-background to-background/80 backdrop-blur-sm border-primary/20">
+                  <CardContent className="p-8 text-center">
+                    <div className="w-16 h-16 bg-gradient-to-r from-accent to-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <Star className="h-8 w-8 text-white" />
+                    </div>
+                    <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">4.9★</div>
+                    <div className="text-sm text-muted-foreground font-medium">Average Rating</div>
                   </CardContent>
                 </Card>
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6 text-center">
-                    <CheckCircle className="h-12 w-12 text-primary mx-auto mb-4" />
-                    <div className="text-2xl font-bold">5000+</div>
-                    <div className="text-sm text-muted-foreground">Jobs Completed</div>
+                <Card className="hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-gradient-to-br from-background to-background/80 backdrop-blur-sm border-primary/20">
+                  <CardContent className="p-8 text-center">
+                    <div className="w-16 h-16 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <CheckCircle className="h-8 w-8 text-white" />
+                    </div>
+                    <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">5000+</div>
+                    <div className="text-sm text-muted-foreground font-medium">Jobs Completed</div>
                   </CardContent>
                 </Card>
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6 text-center">
-                    <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
-                    <div className="text-2xl font-bold">24/7</div>
-                    <div className="text-sm text-muted-foreground">Support</div>
+                <Card className="hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-gradient-to-br from-background to-background/80 backdrop-blur-sm border-primary/20">
+                  <CardContent className="p-8 text-center">
+                    <div className="w-16 h-16 bg-gradient-to-r from-accent to-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <Clock className="h-8 w-8 text-white" />
+                    </div>
+                    <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">24/7</div>
+                    <div className="text-sm text-muted-foreground font-medium">Support</div>
                   </CardContent>
                 </Card>
               </div>
@@ -286,27 +304,37 @@ const Index = () => {
       </section>
 
       {/* Services Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Services</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              From routine maintenance to complex repairs, we've got you covered
+      <section className="py-24 bg-gradient-to-br from-muted/20 via-background to-primary/5 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-l from-accent/10 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-r from-primary/10 to-transparent rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-20">
+            <Badge className="mb-6 px-6 py-2 text-sm font-medium bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">Our Services</Badge>
+            <h2 className="text-4xl md:text-6xl font-bold mb-6 font-playfair bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">Comprehensive Auto Care</h2>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              From routine maintenance to complex repairs, our network of certified professionals delivers excellence at your convenience
             </p>
           </div>
           
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {categories.length > 0 && categories.map((category) => (
-              <Card key={category.id} className="hover:shadow-lg transition-all hover:-translate-y-1">
-                <CardContent className="p-6">
-                  <Wrench className="h-12 w-12 text-primary mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Professional {category.name.toLowerCase()} services by certified technicians
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {categories.length > 0 && categories.map((category, index) => (
+              <Card key={category.id} className="group hover:shadow-2xl transition-all duration-700 transform hover:scale-105 hover:-translate-y-3 bg-gradient-to-br from-background via-background/95 to-background/90 backdrop-blur-sm border-primary/20 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                <CardContent className="p-8 relative z-10">
+                  <div className={`w-16 h-16 bg-gradient-to-r ${index % 3 === 0 ? 'from-primary to-accent' : index % 3 === 1 ? 'from-accent to-primary' : 'from-primary to-primary'} rounded-2xl flex items-center justify-center mb-6 shadow-xl group-hover:scale-110 transition-transform duration-500`}>
+                    <Wrench className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4 group-hover:text-primary transition-colors duration-300">{category.name}</h3>
+                  <p className="text-muted-foreground mb-6 leading-relaxed">
+                    Professional {category.name.toLowerCase()} services by certified technicians with guaranteed quality
                   </p>
                   <Link to="/auth">
-                    <Button variant="outline" className="w-full">
-                      Book Now <ArrowRight className="ml-2 h-4 w-4" />
+                    <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300">
+                      Book Now <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                     </Button>
                   </Link>
                 </CardContent>
@@ -316,46 +344,55 @@ const Index = () => {
             {/* Default services if none loaded */}
             {categories.length === 0 && (
               <>
-                <Card className="hover:shadow-lg transition-all hover:-translate-y-1">
-                  <CardContent className="p-6">
-                    <Car className="h-12 w-12 text-primary mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">Oil Changes</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Quick and professional oil change services at your location
+                <Card className="group hover:shadow-2xl transition-all duration-700 transform hover:scale-105 hover:-translate-y-3 bg-gradient-to-br from-background via-background/95 to-background/90 backdrop-blur-sm border-primary/20 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                  <CardContent className="p-8 relative z-10">
+                    <div className="w-16 h-16 bg-gradient-to-r from-primary to-accent rounded-2xl flex items-center justify-center mb-6 shadow-xl group-hover:scale-110 transition-transform duration-500">
+                      <Car className="h-8 w-8 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4 group-hover:text-primary transition-colors duration-300">Oil Changes</h3>
+                    <p className="text-muted-foreground mb-6 leading-relaxed">
+                      Quick and professional oil change services at your location with premium quality oil
                     </p>
                     <Link to="/auth">
-                      <Button variant="outline" className="w-full">
-                        Book Now <ArrowRight className="ml-2 h-4 w-4" />
+                      <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300">
+                        Book Now <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                       </Button>
                     </Link>
                   </CardContent>
                 </Card>
                 
-                <Card className="hover:shadow-lg transition-all hover:-translate-y-1">
-                  <CardContent className="p-6">
-                    <Wrench className="h-12 w-12 text-primary mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">Brake Service</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Complete brake inspection, repair, and replacement services
+                <Card className="group hover:shadow-2xl transition-all duration-700 transform hover:scale-105 hover:-translate-y-3 bg-gradient-to-br from-background via-background/95 to-background/90 backdrop-blur-sm border-primary/20 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                  <CardContent className="p-8 relative z-10">
+                    <div className="w-16 h-16 bg-gradient-to-r from-accent to-primary rounded-2xl flex items-center justify-center mb-6 shadow-xl group-hover:scale-110 transition-transform duration-500">
+                      <Wrench className="h-8 w-8 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4 group-hover:text-primary transition-colors duration-300">Brake Service</h3>
+                    <p className="text-muted-foreground mb-6 leading-relaxed">
+                      Complete brake inspection, repair, and replacement services with certified parts
                     </p>
                     <Link to="/auth">
-                      <Button variant="outline" className="w-full">
-                        Book Now <ArrowRight className="ml-2 h-4 w-4" />
+                      <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300">
+                        Book Now <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                       </Button>
                     </Link>
                   </CardContent>
                 </Card>
                 
-                <Card className="hover:shadow-lg transition-all hover:-translate-y-1">
-                  <CardContent className="p-6">
-                    <Shield className="h-12 w-12 text-primary mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">Diagnostics</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Advanced computer diagnostics to identify vehicle issues
+                <Card className="group hover:shadow-2xl transition-all duration-700 transform hover:scale-105 hover:-translate-y-3 bg-gradient-to-br from-background via-background/95 to-background/90 backdrop-blur-sm border-primary/20 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                  <CardContent className="p-8 relative z-10">
+                    <div className="w-16 h-16 bg-gradient-to-r from-primary to-accent rounded-2xl flex items-center justify-center mb-6 shadow-xl group-hover:scale-110 transition-transform duration-500">
+                      <Shield className="h-8 w-8 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4 group-hover:text-primary transition-colors duration-300">Diagnostics</h3>
+                    <p className="text-muted-foreground mb-6 leading-relaxed">
+                      Advanced computer diagnostics to accurately identify and resolve vehicle issues
                     </p>
                     <Link to="/auth">
-                      <Button variant="outline" className="w-full">
-                        Book Now <ArrowRight className="ml-2 h-4 w-4" />
+                      <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300">
+                        Book Now <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                       </Button>
                     </Link>
                   </CardContent>
@@ -367,43 +404,65 @@ const Index = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Getting your vehicle serviced has never been easier
+      <section className="py-24 bg-gradient-to-br from-background via-primary/3 to-accent/5 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-gradient-to-r from-primary/15 to-accent/15 rounded-full blur-3xl animate-pulse delay-500"></div>
+          <div className="absolute bottom-1/4 right-1/3 w-48 h-48 bg-gradient-to-l from-accent/10 to-primary/10 rounded-full blur-2xl animate-pulse"></div>
+        </div>
+        
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-20">
+            <Badge className="mb-6 px-6 py-2 text-sm font-medium bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">How It Works</Badge>
+            <h2 className="text-4xl md:text-6xl font-bold mb-6 font-playfair bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">Simple. Fast. Reliable.</h2>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Getting your vehicle serviced has never been easier with our streamlined three-step process
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Phone className="h-8 w-8 text-primary" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="text-center group">
+              <div className="relative mb-8">
+                <div className="w-24 h-24 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto shadow-2xl group-hover:scale-110 transition-transform duration-500">
+                  <Phone className="h-12 w-12 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-accent to-primary rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                  1
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-4">1. Book Online</h3>
-              <p className="text-muted-foreground">
-                Choose your service, select a time, and provide your vehicle details through our easy booking system.
+              <h3 className="text-2xl font-bold mb-6 group-hover:text-primary transition-colors duration-300">Book Online</h3>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Choose your service, select a convenient time, and provide your vehicle details through our intuitive booking system.
               </p>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <MapPin className="h-8 w-8 text-primary" />
+            <div className="text-center group">
+              <div className="relative mb-8">
+                <div className="w-24 h-24 bg-gradient-to-r from-accent to-primary rounded-full flex items-center justify-center mx-auto shadow-2xl group-hover:scale-110 transition-transform duration-500">
+                  <MapPin className="h-12 w-12 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                  2
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-4">2. We Come to You</h3>
-              <p className="text-muted-foreground">
-                Our certified professionals arrive at your location with all necessary tools and equipment.
+              <h3 className="text-2xl font-bold mb-6 group-hover:text-primary transition-colors duration-300">We Come to You</h3>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Our certified professionals arrive at your location fully equipped with all necessary tools and premium parts.
               </p>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <DollarSign className="h-8 w-8 text-primary" />
+            <div className="text-center group">
+              <div className="relative mb-8">
+                <div className="w-24 h-24 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto shadow-2xl group-hover:scale-110 transition-transform duration-500">
+                  <DollarSign className="h-12 w-12 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-accent to-primary rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                  3
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-4">3. Pay Securely</h3>
-              <p className="text-muted-foreground">
-                Complete your service and pay securely through our platform with transparent pricing.
+              <h3 className="text-2xl font-bold mb-6 group-hover:text-primary transition-colors duration-300">Pay Securely</h3>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Complete your service and pay securely through our platform with transparent, upfront pricing.
               </p>
             </div>
           </div>
@@ -411,25 +470,32 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary/5">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+      <section className="py-24 bg-gradient-to-r from-primary via-primary to-accent relative overflow-hidden">
+        {/* Background effects */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/90 via-primary to-accent/90"></div>
+          <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-white/5 rounded-full blur-2xl animate-pulse delay-1000"></div>
+        </div>
+        
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <h2 className="text-4xl md:text-6xl font-bold mb-8 text-white font-playfair leading-tight">
             Ready to Get Started?
           </h2>
-          <p className="text-xl text-muted-foreground mb-8">
-            Join thousands of satisfied customers and professional service providers
+          <p className="text-xl md:text-2xl text-white/90 mb-12 leading-relaxed">
+            Join thousands of satisfied customers and professional service providers in revolutionizing auto care
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Link to="/auth">
-              <Button size="lg" className="w-full sm:w-auto text-lg px-8 py-6">
-                <Car className="mr-2 h-5 w-5" />
+              <Button size="lg" className="w-full sm:w-auto text-lg px-10 py-7 bg-white text-primary hover:bg-white/90 shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
+                <Car className="mr-3 h-6 w-6" />
                 Book Your Service
               </Button>
             </Link>
             <Link to="/auth">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 py-6">
-                <Users className="mr-2 h-5 w-5" />
-                Become a Pro
+              <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-10 py-7 border-2 border-white text-white hover:bg-white hover:text-primary transition-all duration-500 transform hover:scale-105">
+                <Wrench className="mr-3 h-6 w-6" />
+                Become a Professional
               </Button>
             </Link>
           </div>

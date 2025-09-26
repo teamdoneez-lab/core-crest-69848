@@ -17,26 +17,42 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 234 89% 74%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 234 89% 85%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 240 5% 96%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 210 40% 96.1%;
+    --muted: 240 5% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 234 89% 74%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 234 89% 74%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Modern gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(234 89% 74%), hsl(234 89% 85%));
+    --gradient-hero: linear-gradient(135deg, hsl(234 89% 74%) 0%, hsl(280 100% 70%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(240 5% 98%) 100%);
+    
+    /* Modern shadows */
+    --shadow-sm: 0 2px 4px hsl(234 89% 74% / 0.1);
+    --shadow-md: 0 4px 12px hsl(234 89% 74% / 0.15);
+    --shadow-lg: 0 8px 25px hsl(234 89% 74% / 0.2);
+    --shadow-glow: 0 0 30px hsl(234 89% 74% / 0.3);
+    
+    /* Animation variables */
+    --animate-duration: 0.3s;
+    --animate-ease: cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
 
@@ -94,12 +110,50 @@ All colors MUST be HSL.
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+/* Custom animations and utilities */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  body {
-    @apply bg-background text-foreground;
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
   }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-bounce {
+  animation: bounce 3s infinite;
 }
