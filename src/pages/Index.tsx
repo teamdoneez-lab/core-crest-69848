@@ -339,45 +339,14 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Hero Stats Grid */}
+            {/* Professional Service Image */}
             <div className="relative">
-              <div className="grid grid-cols-2 gap-6">
-                <Card className="hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-gradient-to-br from-background to-background/80 backdrop-blur-sm border-primary/20">
-                  <CardContent className="p-8 text-center">
-                    <div className="w-16 h-16 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Users className="h-8 w-8 text-white" />
-                    </div>
-                    <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">500+</div>
-                    <div className="text-sm text-muted-foreground font-medium">Verified Pros</div>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-gradient-to-br from-background to-background/80 backdrop-blur-sm border-primary/20">
-                  <CardContent className="p-8 text-center">
-                    <div className="w-16 h-16 bg-gradient-to-r from-accent to-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Star className="h-8 w-8 text-white" />
-                    </div>
-                    <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">4.9★</div>
-                    <div className="text-sm text-muted-foreground font-medium">Average Rating</div>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-gradient-to-br from-background to-background/80 backdrop-blur-sm border-primary/20">
-                  <CardContent className="p-8 text-center">
-                    <div className="w-16 h-16 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <CheckCircle className="h-8 w-8 text-white" />
-                    </div>
-                    <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">5000+</div>
-                    <div className="text-sm text-muted-foreground font-medium">Jobs Completed</div>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-gradient-to-br from-background to-background/80 backdrop-blur-sm border-primary/20">
-                  <CardContent className="p-8 text-center">
-                    <div className="w-16 h-16 bg-gradient-to-r from-accent to-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Clock className="h-8 w-8 text-white" />
-                    </div>
-                    <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">24/7</div>
-                    <div className="text-sm text-muted-foreground font-medium">Support</div>
-                  </CardContent>
-                </Card>
+              <div className="rounded-2xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500 transform hover:scale-105">
+                <img 
+                  src="/src/assets/pro-working-car.jpg" 
+                  alt="Professional automotive technician working on car engine" 
+                  className="w-full h-auto object-cover"
+                />
               </div>
             </div>
           </div>
@@ -395,9 +364,9 @@ const Index = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-20">
             <Badge className="mb-6 px-6 py-2 text-sm font-medium bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">Our Services</Badge>
-            <h2 className="text-4xl md:text-6xl font-bold mb-6 font-playfair bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">Comprehensive Auto Care</h2>
+            <h2 className="text-4xl md:text-6xl font-bold mb-6 font-playfair bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">All-in-One Auto Care</h2>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              From routine maintenance to complex repairs, our network of certified professionals delivers excellence at your convenience
+              Repair, maintenance, detailing, tires, bodywork, customization. Whatever your vehicle needs, DoneEZ has you covered.
             </p>
           </div>
           
