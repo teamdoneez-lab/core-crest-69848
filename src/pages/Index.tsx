@@ -20,6 +20,7 @@ import {
   DollarSign,
   Phone
 } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 interface ServiceCategory {
   id: string;
@@ -204,8 +205,7 @@ const Index = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
-              <Car className="h-8 w-8 text-primary mr-3 drop-shadow-lg" />
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">AutoServices</span>
+              <img src={logo} alt="DoneEZ" className="h-10 w-auto mr-2" />
             </div>
             <div className="flex items-center space-x-4">
               <Link to="/auth">
@@ -508,8 +508,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center mb-4">
-                <Car className="h-8 w-8 text-primary mr-2" />
-                <span className="text-xl font-bold">AutoServices</span>
+                <img src={logo} alt="DoneEZ" className="h-10 w-auto mr-2" />
               </div>
               <p className="text-muted-foreground">
                 Professional automotive services delivered to your doorstep.
@@ -548,7 +547,7 @@ const Index = () => {
           </div>
           
           <div className="border-t mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 AutoServices. All rights reserved.</p>
+            <p>&copy; 2024 DoneEZ. All rights reserved.</p>
           </div>
         </div>
       </footer>

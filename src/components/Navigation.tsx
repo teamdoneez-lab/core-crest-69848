@@ -4,6 +4,7 @@ import { useRole } from '@/hooks/useRole';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/logo.png';
 
 export function Navigation() {
   const { user, signOut } = useAuth();
@@ -23,8 +24,8 @@ export function Navigation() {
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <Link to="/" className="text-xl font-bold">
-              Auto Services
+            <Link to="/" className="flex items-center">
+              <img src={logo} alt="DoneEZ" className="h-8 w-auto" />
             </Link>
             
             <div className="flex space-x-4">
