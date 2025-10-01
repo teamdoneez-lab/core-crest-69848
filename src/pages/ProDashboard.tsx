@@ -24,6 +24,7 @@ import {
   Award
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { EarningsTab } from '@/components/pro/EarningsTab';
 
 interface ServiceRequest {
   id: string;
@@ -330,7 +331,7 @@ export default function ProDashboard() {
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="new-requests">New Requests</TabsTrigger>
             <TabsTrigger value="my-jobs">My Jobs</TabsTrigger>
-            <TabsTrigger value="earnings">Earnings</TabsTrigger>
+            <TabsTrigger value="earnings">Earnings & Fees</TabsTrigger>
           </TabsList>
 
           {/* New Requests Tab */}
@@ -515,75 +516,7 @@ export default function ProDashboard() {
 
           {/* Earnings Tab */}
           <TabsContent value="earnings" className="mt-6">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-2">Earnings Overview</h2>
-            </div>
-
-            {/* Earnings Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Earnings</p>
-                      <p className="text-2xl font-bold text-green-600">${earnings.totalEarnings}</p>
-                    </div>
-                    <DollarSign className="h-8 w-8 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Completed Jobs</p>
-                      <p className="text-2xl font-bold text-blue-600">{earnings.completedJobs}</p>
-                    </div>
-                    <CheckCircle className="h-8 w-8 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Average Rating</p>
-                      <p className="text-2xl font-bold text-yellow-600">{earnings.averageRating}</p>
-                    </div>
-                    <Star className="h-8 w-8 text-yellow-600" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Detailed Earnings */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Referral Fee Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Total Referral Fees Paid</span>
-                  <span className="text-red-600">${earnings.totalFeesPaid}</span>
-                </div>
-                <div className="flex justify-between items-center font-semibold text-lg">
-                  <span>Net Earnings (After Fees)</span>
-                  <span className="text-green-600">${earnings.netEarnings}</span>
-                </div>
-
-                <div className="mt-6 p-4 bg-muted rounded-lg">
-                  <h4 className="font-medium mb-3">Referral Fee Structure</h4>
-                  <ul className="space-y-1 text-sm text-muted-foreground">
-                    <li>• Under $1,000: 5% fee</li>
-                    <li>• $1,000-$4,999: 3% fee</li>
-                    <li>• $5,000-$9,999: 2% fee</li>
-                    <li>• $10,000+: 1% fee</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+            <EarningsTab />
           </TabsContent>
         </Tabs>
       </div>

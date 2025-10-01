@@ -314,39 +314,56 @@ const ProInbox = () => {
     }
   };
 
-  const handleAcceptLead = async (leadId: string) => {
+  const handleAcceptLead = async (leadId: string, requestId: string) => {
     try {
-      const { data, error } = await supabase.rpc('accept_lead_and_lock_job', {
-        lead_id: leadId
+      // First, create Stripe checkout session for referral fee
+      toast({
+        title: 'Processing...',
+        description: 'Creating payment session for referral fee'
       });
 
-      if (error) {
-        console.error('Error accepting lead:', error);
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-referral-checkout', {
+        body: { 
+          lead_id: leadId,
+          request_id: requestId
+        }
+      });
+
+      if (checkoutError) {
+        console.error('Error creating checkout:', checkoutError);
         toast({
           title: 'Error',
-          description: 'Failed to accept lead. Please try again.',
+          description: 'Failed to create payment session',
           variant: 'destructive'
         });
         return;
       }
 
-      const result = typeof data === 'string' ? JSON.parse(data) : data;
-      
-      if (!result.success) {
+      if (checkoutData.error) {
         toast({
-          title: 'Cannot Accept',
-          description: result.error,
+          title: 'Error',
+          description: checkoutData.error,
           variant: 'destructive'
         });
         return;
       }
 
-      toast({
-        title: 'Lead Accepted!',
-        description: `Job locked for 24 hours until ${new Date(result.expires_at).toLocaleString()}`
-      });
+      // Redirect to Stripe Checkout
+      if (checkoutData.url) {
+        toast({
+          title: 'Redirecting to Payment',
+          description: 'Opening Stripe Checkout in new tab'
+        });
+        
+        // Store session info for verification
+        sessionStorage.setItem('pending_checkout', JSON.stringify({
+          session_id: checkoutData.session_id,
+          request_id: requestId,
+          lead_id: leadId
+        }));
 
-      fetchLeads();
+        window.open(checkoutData.url, '_blank');
+      }
     } catch (error) {
       console.error('Error:', error);
       toast({
@@ -629,7 +646,7 @@ const ProInbox = () => {
                     <div className="flex gap-2 pt-4 border-t">
                       {canAcceptLead(lead) && (
                         <Button 
-                          onClick={() => handleAcceptLead(lead.id)}
+                          onClick={() => handleAcceptLead(lead.id, lead.service_requests.id)}
                           className="bg-green-600 hover:bg-green-700"
                         >
                           Accept Lead
