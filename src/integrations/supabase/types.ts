@@ -440,6 +440,10 @@ export type Database = {
         Args: { admin_email: string; admin_password?: string }
         Returns: Json
       }
+      ensure_admin_user: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_leads_for_request: {
         Args: { request_id: string }
         Returns: undefined

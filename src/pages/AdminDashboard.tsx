@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Car, DollarSign, FileText, Download, CheckCircle, Calendar, Phone, Mail, MapPin, Search, Filter, RefreshCw } from 'lucide-react';
+import { Users, Car, DollarSign, FileText, Download, CheckCircle, Calendar, Phone, Mail, MapPin, Search, Filter, RefreshCw, UserCheck, UserX, ShieldCheck, ShieldOff, UserCog } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Customer {
@@ -233,6 +233,67 @@ const AdminDashboard = () => {
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleToggleProVerification = async (proId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('pro_profiles')
+        .update({ is_verified: !currentStatus })
+        .eq('pro_id', proId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `Professional ${!currentStatus ? 'verified' : 'unverified'} successfully`
+      });
+
+      fetchPros();
+    } catch (error) {
+      console.error('Error toggling verification:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update verification status',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleAssignProToRequest = async (requestId: string, proId: string) => {
+    try {
+      const { error } = await supabase
+        .from('service_requests')
+        .update({ 
+          accepted_pro_id: proId,
+          status: 'accepted',
+          accept_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      // Update leads status
+      await supabase
+        .from('leads')
+        .update({ status: 'accepted' })
+        .eq('request_id', requestId)
+        .eq('pro_id', proId);
+
+      toast({
+        title: 'Success',
+        description: 'Professional assigned to request successfully'
+      });
+
+      fetchRequests();
+    } catch (error) {
+      console.error('Error assigning pro:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to assign professional',
         variant: 'destructive'
       });
     }
@@ -615,12 +676,31 @@ const AdminDashboard = () => {
                           </p>
                         )}
                       </div>
-                      <div className="flex flex-col gap-2 items-end">
+                       <div className="flex flex-col gap-2 items-end">
                         <Badge>{pro.role}</Badge>
                         {pro.pro_profiles && pro.pro_profiles.length > 0 && (
-                          <Badge className={pro.pro_profiles[0].is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                            {pro.pro_profiles[0].is_verified ? 'Verified' : 'Unverified'}
-                          </Badge>
+                          <>
+                            <Badge className={pro.pro_profiles[0].is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                              {pro.pro_profiles[0].is_verified ? 'Verified' : 'Unverified'}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant={pro.pro_profiles[0].is_verified ? 'outline' : 'default'}
+                              onClick={() => handleToggleProVerification(pro.id, pro.pro_profiles[0].is_verified)}
+                            >
+                              {pro.pro_profiles[0].is_verified ? (
+                                <>
+                                  <ShieldOff className="h-4 w-4 mr-2" />
+                                  Unverify
+                                </>
+                              ) : (
+                                <>
+                                  <ShieldCheck className="h-4 w-4 mr-2" />
+                                  Verify
+                                </>
+                              )}
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -660,9 +740,9 @@ const AdminDashboard = () => {
               ) : (
                 filterData(requests, 'requests').map((request) => (
                 <Card key={request.id}>
-                  <CardContent className="p-6">
+                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
-                       <div>
+                       <div className="flex-1">
                          <h3 className="font-semibold">{request.service_categories?.name || 'Unknown Service'}</h3>
                          <p className="text-sm font-medium">
                            {request.year} {request.vehicle_make} {request.model}
@@ -683,9 +763,47 @@ const AdminDashboard = () => {
                           {format(new Date(request.created_at), 'PPP')}
                         </p>
                       </div>
-                      <Badge className={getStatusColor(request.status)}>
-                        {request.status.replace('_', ' ').toUpperCase()}
-                      </Badge>
+                      <div className="flex flex-col gap-2 items-end">
+                        <Badge className={getStatusColor(request.status)}>
+                          {request.status.replace('_', ' ').toUpperCase()}
+                        </Badge>
+                        {request.status === 'pending' && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm">
+                                <UserCog className="h-4 w-4 mr-2" />
+                                Assign Pro
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Assign Professional</DialogTitle>
+                                <DialogDescription>
+                                  Select a professional to manually assign to this request
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div>
+                                <Label htmlFor="pro-select">Select Professional</Label>
+                                <Select onValueChange={(value) => handleAssignProToRequest(request.id, value)}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Choose a professional" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {pros
+                                      .filter(p => p.pro_profiles && p.pro_profiles.length > 0 && p.pro_profiles[0].is_verified)
+                                      .map(pro => (
+                                        <SelectItem key={pro.id} value={pro.id}>
+                                          {pro.name} - {pro.pro_profiles[0].business_name}
+                                        </SelectItem>
+                                      ))
+                                    }
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
