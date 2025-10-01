@@ -13,7 +13,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProgressIndicator } from '@/components/ui/progress-indicator';
 import { toast } from '@/hooks/use-toast';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { accordionsData } from '@/data/serviceslist-detailed';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const businessDetailsSchema = z.object({
   businessName: z.string().trim().min(1, 'Business name is required').max(100, 'Business name too long'),
@@ -24,7 +26,7 @@ const businessDetailsSchema = z.object({
 });
 
 const servicesSchema = z.object({
-  serviceCategories: z.array(z.string()).min(1, 'Select at least one service category'),
+  selectedServices: z.array(z.string()).min(1, 'Select at least one service'),
 });
 
 const locationSchema = z.object({
@@ -64,8 +66,10 @@ export default function ProOnboarding() {
   });
 
   const [services, setServices] = useState({
-    serviceCategories: [] as string[],
+    selectedServices: [] as string[],
   });
+
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [location, setLocation] = useState({
     zipCode: '',
@@ -127,14 +131,25 @@ export default function ProOnboarding() {
     }
   };
 
-  const handleCategoryChange = (categoryId: string, checked: boolean) => {
+  const handleServiceToggle = (serviceId: string, checked: boolean) => {
     setServices(prev => ({
       ...prev,
-      serviceCategories: checked 
-        ? [...prev.serviceCategories, categoryId]
-        : prev.serviceCategories.filter(id => id !== categoryId)
+      selectedServices: checked 
+        ? [...prev.selectedServices, serviceId]
+        : prev.selectedServices.filter(id => id !== serviceId)
     }));
   };
+
+  // Filter services based on search
+  const filteredAccordions = accordionsData.map(accordion => ({
+    ...accordion,
+    subItems: accordion.subItems.map(subItem => ({
+      ...subItem,
+      services: subItem.services.filter(service =>
+        service.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    })).filter(subItem => subItem.services.length > 0)
+  })).filter(accordion => accordion.subItems.length > 0);
 
   const handleSubmit = async () => {
     if (!validateCurrentStep()) return;
@@ -161,25 +176,18 @@ export default function ProOnboarding() {
 
       if (proProfileError) throw proProfileError;
 
-      // Add service categories
-      if (services.serviceCategories.length > 0) {
-        // Delete existing categories first
-        await supabase
-          .from('pro_service_categories')
-          .delete()
-          .eq('pro_id', user?.id);
-
-        const categoryInserts = services.serviceCategories.map(categoryId => ({
-          pro_id: user?.id,
-          category_id: categoryId
-        }));
-
-        const { error: categoriesError } = await supabase
-          .from('pro_service_categories')
-          .insert(categoryInserts);
-
-        if (categoriesError) throw categoriesError;
-      }
+      // Store selected services in pro_profiles notes field as JSON
+      // This is a simple approach - you could create a separate table for this if needed
+      const servicesData = {
+        selectedServices: services.selectedServices
+      };
+      
+      await supabase
+        .from('pro_profiles')
+        .update({ 
+          notes: JSON.stringify(servicesData)
+        })
+        .eq('pro_id', user?.id);
 
       // Add primary service area (ZIP code)
       await supabase
@@ -281,27 +289,63 @@ export default function ProOnboarding() {
             <p className="text-sm text-muted-foreground">Select all services you provide</p>
             
             <div className="space-y-2">
-              <Label>Service Categories *</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border rounded-lg max-h-96 overflow-y-auto">
-                {categories.map((category) => (
-                  <div key={category.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`cat-${category.id}`}
-                      checked={services.serviceCategories.includes(category.id)}
-                      onCheckedChange={(checked) => 
-                        handleCategoryChange(category.id, checked as boolean)
-                      }
-                    />
-                    <Label htmlFor={`cat-${category.id}`} className="text-sm font-normal cursor-pointer">
-                      {category.name}
-                    </Label>
-                  </div>
-                ))}
+              <Label>Search Services</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search for services..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Selected: {services.serviceCategories.length} service(s)
-              </p>
             </div>
+
+            <div className="border rounded-lg max-h-96 overflow-y-auto">
+              <Accordion type="multiple" className="w-full">
+                {filteredAccordions.map((accordion) => (
+                  <AccordionItem key={accordion.title} value={accordion.title}>
+                    <AccordionTrigger className="px-4 hover:no-underline">
+                      <span className="font-medium">{accordion.title}</span>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-2 px-4 pb-2">
+                        {accordion.subItems.map((subItem) => (
+                          <div key={subItem.title} className="space-y-2">
+                            <h4 className="text-sm font-medium text-muted-foreground mt-2">
+                              {subItem.title}
+                            </h4>
+                            <div className="grid grid-cols-1 gap-2 pl-2">
+                              {subItem.services.map((service) => (
+                                <div key={service.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`service-${service.id}`}
+                                    checked={services.selectedServices.includes(service.id)}
+                                    onCheckedChange={(checked) => 
+                                      handleServiceToggle(service.id, checked as boolean)
+                                    }
+                                  />
+                                  <Label 
+                                    htmlFor={`service-${service.id}`} 
+                                    className="text-sm font-normal cursor-pointer"
+                                  >
+                                    {service.name}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Selected: {services.selectedServices.length} service(s)
+            </p>
           </div>
         );
 
@@ -377,7 +421,7 @@ export default function ProOnboarding() {
               <div className="p-4 border rounded-lg">
                 <h4 className="font-medium mb-2">Services Offered</h4>
                 <p className="text-sm text-muted-foreground">
-                  {services.serviceCategories.length} service categor{services.serviceCategories.length === 1 ? 'y' : 'ies'} selected
+                  {services.selectedServices.length} service{services.selectedServices.length === 1 ? '' : 's'} selected
                 </p>
               </div>
               
