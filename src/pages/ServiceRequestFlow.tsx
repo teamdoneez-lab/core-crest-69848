@@ -227,9 +227,43 @@ export default function ServiceRequestFlow() {
         // fileUrl = fileData.path;
       }
 
+      // Fetch service categories to map the selected services
+      const { data: categories, error: categoriesError } = await supabase
+        .from("service_categories")
+        .select("id, name")
+        .eq("active", true);
+
+      if (categoriesError) throw categoriesError;
+
+      // Map service ID prefixes to category names
+      // "1-x-x" services are under "Auto Repair", etc.
+      const getCategoryId = (serviceIds: string[]): string | null => {
+        if (serviceIds.length === 0) return null;
+        
+        // Check the first service to determine the main category
+        const firstService = serviceIds[0];
+        const categoryPrefix = firstService.split("-")[0];
+        
+        // Map prefixes to category names
+        const categoryMap: Record<string, string> = {
+          "1": "Auto Repair",
+          "2": "Oil Change",
+          "3": "Tire Service",
+          "4": "Car Wash",
+          "5": "Diagnostics",
+        };
+        
+        const categoryName = categoryMap[categoryPrefix];
+        const category = categories?.find(c => c.name === categoryName);
+        return category?.id || null;
+      };
+
+      const categoryId = getCategoryId(formData.service_category);
+
       const { error } = await supabase.from("service_requests").insert({
         customer_id: user.id,
         service_category: formData.service_category,
+        category_id: categoryId,
         year: formData.year,
         vehicle_make: formData.vehicle_make,
         model: formData.vehicle_model,
