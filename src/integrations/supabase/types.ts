@@ -448,6 +448,10 @@ export type Database = {
         Args: { request_id: string }
         Returns: undefined
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       mark_fee_paid: {
         Args: {
           fee_id: string
