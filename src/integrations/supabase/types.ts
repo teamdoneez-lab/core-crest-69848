@@ -289,18 +289,26 @@ export type Database = {
           accepted_pro_id: string | null
           address: string
           appointment_pref: string
-          category_id: string
+          appointment_type: string | null
+          category_id: string | null
           contact_email: string
           contact_phone: string
           created_at: string | null
           customer_id: string
+          description: string | null
+          formatted_address: string | null
           id: string
+          latitude: number | null
+          longitude: number | null
           mileage: number | null
           model: string
           notes: string | null
+          preferred_time: string | null
+          service_category: string[] | null
           status: string
           trim: string | null
           updated_at: string | null
+          urgency: string | null
           vehicle_make: string
           year: number
           zip: string
@@ -310,18 +318,26 @@ export type Database = {
           accepted_pro_id?: string | null
           address: string
           appointment_pref: string
-          category_id: string
+          appointment_type?: string | null
+          category_id?: string | null
           contact_email: string
           contact_phone: string
           created_at?: string | null
           customer_id: string
+          description?: string | null
+          formatted_address?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           mileage?: number | null
           model: string
           notes?: string | null
+          preferred_time?: string | null
+          service_category?: string[] | null
           status?: string
           trim?: string | null
           updated_at?: string | null
+          urgency?: string | null
           vehicle_make: string
           year: number
           zip: string
@@ -331,18 +347,26 @@ export type Database = {
           accepted_pro_id?: string | null
           address?: string
           appointment_pref?: string
-          category_id?: string
+          appointment_type?: string | null
+          category_id?: string | null
           contact_email?: string
           contact_phone?: string
           created_at?: string | null
           customer_id?: string
+          description?: string | null
+          formatted_address?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           mileage?: number | null
           model?: string
           notes?: string | null
+          preferred_time?: string | null
+          service_category?: string[] | null
           status?: string
           trim?: string | null
           updated_at?: string | null
+          urgency?: string | null
           vehicle_make?: string
           year?: number
           zip?: string
