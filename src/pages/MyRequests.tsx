@@ -1,0 +1,404 @@
+import { useState, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useRole } from '@/hooks/useRole';
+import { supabase } from '@/integrations/supabase/client';
+import { Navigation } from '@/components/Navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { Car, MapPin, Calendar, Package, Home, Building2, Edit, Trash2, Eye, RotateCcw } from 'lucide-react';
+import { format } from 'date-fns';
+
+interface ServiceRequest {
+  id: string;
+  vehicle_make: string;
+  model: string;
+  year: number;
+  trim?: string;
+  mileage?: number;
+  service_category: string[] | null;
+  appointment_type?: string;
+  zip: string;
+  address?: string;
+  preferred_time?: string;
+  status: string;
+  urgency?: string;
+  description?: string;
+  created_at: string;
+  service_categories?: {
+    name: string;
+  };
+}
+
+const MyRequests = () => {
+  const { user, loading: authLoading } = useAuth();
+  const { isCustomer, loading: roleLoading } = useRole();
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<ServiceRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [serviceTypeFilter, setServiceTypeFilter] = useState<string>('all');
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && isCustomer) {
+      fetchRequests();
+    }
+  }, [user, isCustomer]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [requests, statusFilter, serviceTypeFilter]);
+
+  if (!authLoading && !roleLoading && (!user || !isCustomer)) {
+    return <Navigate to="/" replace />;
+  }
+
+  const fetchRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('service_requests')
+        .select(`
+          *,
+          service_categories (
+            name
+          )
+        `)
+        .eq('customer_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching requests:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch service requests",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setRequests(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...requests];
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(req => req.status === statusFilter);
+    }
+
+    if (serviceTypeFilter !== 'all') {
+      filtered = filtered.filter(req => req.appointment_type === serviceTypeFilter);
+    }
+
+    setFilteredRequests(filtered);
+  };
+
+  const handleCancelRequest = async (requestId: string) => {
+    try {
+      const { error } = await supabase
+        .from('service_requests')
+        .update({ status: 'cancelled' })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Request cancelled successfully",
+      });
+
+      fetchRequests();
+    } catch (error) {
+      console.error('Error cancelling request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel request",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRebook = (request: ServiceRequest) => {
+    // Navigate to service request flow with pre-filled data
+    navigate('/request-service-flow', { state: { rebookData: request } });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'accepted': return 'bg-green-100 text-green-800';
+      case 'scheduled': return 'bg-blue-100 text-blue-800';
+      case 'in_progress': return 'bg-purple-100 text-purple-800';
+      case 'completed': return 'bg-emerald-100 text-emerald-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending': return '🟡';
+      case 'accepted':
+      case 'scheduled': return '🟢';
+      case 'completed': return '🔵';
+      case 'cancelled': return '🔴';
+      default: return '⚪';
+    }
+  };
+
+  const getUrgencyLabel = (urgency?: string) => {
+    switch (urgency) {
+      case 'immediate': return 'Immediate (1-2 days)';
+      case 'week': return 'Within 1 week';
+      case 'month': return 'Within 1 month';
+      default: return urgency || 'Not specified';
+    }
+  };
+
+  if (authLoading || roleLoading || loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <div className="mx-auto max-w-7xl p-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">My Service Requests</h1>
+          <p className="text-muted-foreground">
+            View and manage all your service requests
+          </p>
+        </div>
+
+        {/* Filters Panel */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Filters</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Status</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="accepted">Accepted</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Service Type</label>
+                <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="mobile">Mobile</SelectItem>
+                    <SelectItem value="shop">Shop</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setServiceTypeFilter('all');
+                  }}
+                  className="w-full"
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Request Cards */}
+        {filteredRequests.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground">
+                {requests.length === 0 
+                  ? "No service requests yet. Create your first request to get started!"
+                  : "No requests match your current filters."}
+              </p>
+              {requests.length === 0 && (
+                <Button className="mt-4" onClick={() => navigate('/request-service-flow')}>
+                  Create Service Request
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-6">
+            {filteredRequests.map((request) => (
+              <Card key={request.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        <Car className="h-5 w-5" />
+                        {request.year} {request.vehicle_make} {request.model}
+                        {request.trim && ` ${request.trim}`}
+                      </CardTitle>
+                      <CardDescription className="mt-1">
+                        Submitted {format(new Date(request.created_at), 'PPP')}
+                      </CardDescription>
+                    </div>
+                    <Badge className={getStatusColor(request.status)}>
+                      {getStatusIcon(request.status)} {request.status.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    {/* Vehicle Info */}
+                    <div>
+                      <h4 className="font-semibold mb-2 flex items-center gap-2">
+                        <Car className="h-4 w-4" />
+                        Vehicle Details
+                      </h4>
+                      {request.mileage && (
+                        <p className="text-sm text-muted-foreground">
+                          Mileage: {request.mileage.toLocaleString()} miles
+                        </p>
+                      )}
+                      {request.urgency && (
+                        <p className="text-sm text-muted-foreground">
+                          Urgency: {getUrgencyLabel(request.urgency)}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Services */}
+                    <div>
+                      <h4 className="font-semibold mb-2 flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        Services
+                      </h4>
+                      {request.service_category && request.service_category.length > 0 ? (
+                        <div className="space-y-1">
+                          {request.service_category.slice(0, 2).map((service, idx) => (
+                            <p key={idx} className="text-sm text-muted-foreground">• {service}</p>
+                          ))}
+                          {request.service_category.length > 2 && (
+                            <p className="text-sm text-primary font-medium">
+                              +{request.service_category.length - 2} more
+                            </p>
+                          )}
+                        </div>
+                      ) : request.service_categories ? (
+                        <p className="text-sm text-muted-foreground">{request.service_categories.name}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Not specified</p>
+                      )}
+                    </div>
+
+                    {/* Location & Type */}
+                    <div>
+                      <h4 className="font-semibold mb-2 flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        Location & Type
+                      </h4>
+                      <p className="text-sm text-muted-foreground">ZIP: {request.zip}</p>
+                      {request.address && (
+                        <p className="text-sm text-muted-foreground truncate">{request.address}</p>
+                      )}
+                      {request.appointment_type && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                          {request.appointment_type === 'mobile' ? (
+                            <><Home className="h-3 w-3" /> Mobile Service</>
+                          ) : (
+                            <><Building2 className="h-3 w-3" /> In-Shop Service</>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Appointment Time */}
+                  {request.preferred_time && (
+                    <div className="mb-4 p-3 bg-muted rounded-lg">
+                      <p className="text-sm font-semibold flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Preferred Appointment Time
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {format(new Date(request.preferred_time), 'PPP p')}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  {request.description && (
+                    <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                      <h4 className="font-semibold mb-1 text-sm">Notes</h4>
+                      <p className="text-sm text-blue-700">{request.description}</p>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-2 pt-4 border-t">
+                    {request.status === 'pending' && (
+                      <>
+                        <Button variant="outline" size="sm" onClick={() => handleCancelRequest(request.id)}>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Cancel Request
+                        </Button>
+                      </>
+                    )}
+
+                    {request.status === 'accepted' && (
+                      <Button variant="outline" size="sm" onClick={() => navigate('/appointments')}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Appointment
+                      </Button>
+                    )}
+
+                    {(request.status === 'completed' || request.status === 'cancelled') && (
+                      <Button variant="outline" size="sm" onClick={() => handleRebook(request)}>
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Rebook
+                      </Button>
+                    )}
+
+                    <div className="text-xs text-muted-foreground ml-auto self-center">
+                      Request ID: {request.id.slice(0, 8)}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MyRequests;

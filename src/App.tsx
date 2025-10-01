@@ -15,6 +15,7 @@ import ProDashboard from "./pages/ProDashboard";
 import ProInbox from "./pages/ProInbox";
 import ServiceRequests from "./pages/ServiceRequests";
 import Appointments from "./pages/Appointments";
+import MyRequests from "./pages/MyRequests";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/pro-dashboard" element={<ProDashboard />} />
             <Route path="/pro-inbox" element={<ProInbox />} />
             <Route path="/service-requests" element={<ServiceRequests />} />
+            <Route path="/my-requests" element={<MyRequests />} />
             <Route path="/appointments" element={<Appointments />} />
             <Route path="/admin" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

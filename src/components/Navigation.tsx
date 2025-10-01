@@ -51,10 +51,10 @@ export function Navigation() {
                     Request Service
                   </Link>
                   <Link 
-                    to="/service-requests" 
+                    to="/my-requests" 
                     className={cn(
                       "text-sm font-medium transition-colors hover:text-primary",
-                      isActive('/service-requests') ? 'text-primary' : 'text-muted-foreground'
+                      isActive('/my-requests') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
                     My Requests

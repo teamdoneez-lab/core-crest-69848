@@ -60,7 +60,7 @@ const Appointments = () => {
           id,
           starts_at,
           notes,
-          service_requests (
+          service_requests!inner (
             id,
             vehicle_make,
             model,
@@ -71,6 +71,7 @@ const Appointments = () => {
             contact_email,
             contact_phone,
             status,
+            customer_id,
             service_categories (
               name
             )
@@ -79,6 +80,7 @@ const Appointments = () => {
             name
           )
         `)
+        .eq('service_requests.customer_id', user?.id)
         .order('starts_at', { ascending: true });
 
       if (error) {
