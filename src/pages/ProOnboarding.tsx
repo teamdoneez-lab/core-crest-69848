@@ -15,25 +15,23 @@ import { ProgressIndicator } from '@/components/ui/progress-indicator';
 import { toast } from '@/hooks/use-toast';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const basicInfoSchema = z.object({
-  fullName: z.string().trim().min(1, 'Full name is required').max(100, 'Name too long'),
-  email: z.string().trim().email('Invalid email address').max(255, 'Email too long'),
-  phone: z.string().trim().min(10, 'Phone number must be at least 10 digits').max(15, 'Phone number too long'),
-  businessName: z.string().trim().max(100, 'Business name too long').optional(),
-});
-
-const businessInfoSchema = z.object({
+const businessDetailsSchema = z.object({
   businessName: z.string().trim().min(1, 'Business name is required').max(100, 'Business name too long'),
-  experience: z.number().min(0, 'Experience cannot be negative').max(50, 'Experience too high'),
-  serviceCategories: z.array(z.string()).min(1, 'Select at least one service category'),
-  serviceAreas: z.string().trim().min(1, 'Enter at least one ZIP code'),
+  businessPhone: z.string().trim().min(10, 'Phone number must be at least 10 digits').max(15, 'Phone too long'),
+  businessAddress: z.string().trim().min(1, 'Business address is required').max(200, 'Address too long'),
+  businessWebsite: z.string().trim().url('Invalid website URL').max(200, 'URL too long').optional().or(z.literal('')),
+  businessDescription: z.string().trim().min(10, 'Description must be at least 10 characters').max(500, 'Description too long'),
 });
 
-const verificationSchema = z.object({
-  licenseNumber: z.string().trim().min(1, 'License number is required').max(50, 'License number too long'),
-  insuranceProvider: z.string().trim().min(1, 'Insurance provider is required').max(100, 'Insurance provider too long'),
-  yearsExperience: z.number().min(0, 'Years of experience cannot be negative').max(50, 'Years too high'),
-  certifications: z.string().trim().max(500, 'Certifications description too long').optional(),
+const servicesSchema = z.object({
+  serviceCategories: z.array(z.string()).min(1, 'Select at least one service category'),
+});
+
+const locationSchema = z.object({
+  zipCode: z.string().trim().min(5, 'ZIP code must be at least 5 digits').max(10, 'ZIP code too long'),
+  city: z.string().trim().min(1, 'City is required').max(100, 'City name too long'),
+  state: z.string().trim().min(2, 'State is required').max(2, 'Use 2-letter state code'),
+  serviceRadius: z.number().min(5, 'Minimum radius is 5 miles').max(100, 'Maximum radius is 100 miles'),
 });
 
 interface ServiceCategory {
@@ -49,25 +47,23 @@ export default function ProOnboarding() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Form data for all steps
-  const [basicInfo, setBasicInfo] = useState({
-    fullName: '',
-    email: user?.email || '',
-    phone: '',
-    businessName: ''
-  });
-
-  const [businessInfo, setBusinessInfo] = useState({
+  const [businessDetails, setBusinessDetails] = useState({
     businessName: '',
-    experience: 0,
-    serviceCategories: [] as string[],
-    serviceAreas: ''
+    businessPhone: '',
+    businessAddress: '',
+    businessWebsite: '',
+    businessDescription: '',
   });
 
-  const [verificationInfo, setVerificationInfo] = useState({
-    licenseNumber: '',
-    insuranceProvider: '',
-    yearsExperience: 0,
-    certifications: ''
+  const [services, setServices] = useState({
+    serviceCategories: [] as string[],
+  });
+
+  const [location, setLocation] = useState({
+    zipCode: '',
+    city: '',
+    state: '',
+    serviceRadius: 25,
   });
 
   useEffect(() => {
@@ -100,13 +96,13 @@ export default function ProOnboarding() {
     try {
       switch (currentStep) {
         case 1:
-          basicInfoSchema.parse(basicInfo);
+          businessDetailsSchema.parse(businessDetails);
           return true;
         case 2:
-          businessInfoSchema.parse(businessInfo);
+          servicesSchema.parse(services);
           return true;
         case 3:
-          verificationSchema.parse(verificationInfo);
+          locationSchema.parse(location);
           return true;
         default:
           return true;
@@ -124,7 +120,7 @@ export default function ProOnboarding() {
   };
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
-    setBusinessInfo(prev => ({
+    setServices(prev => ({
       ...prev,
       serviceCategories: checked 
         ? [...prev.serviceCategories, categoryId]
@@ -137,44 +133,35 @@ export default function ProOnboarding() {
 
     setIsLoading(true);
     try {
-      // Parse ZIP codes
-      const zipCodes = businessInfo.serviceAreas
-        .split(',')
-        .map(zip => zip.trim())
-        .filter(zip => zip.length > 0);
-
-      // Update user profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          name: basicInfo.fullName,
-          phone: basicInfo.phone
-        })
-        .eq('id', user?.id);
-
-      if (profileError) throw profileError;
-
-      // Create professional profile
+      // Create or update professional profile with all data
       const { error: proProfileError } = await supabase
         .from('pro_profiles')
         .upsert({
           pro_id: user?.id,
-          business_name: businessInfo.businessName || basicInfo.businessName,
-          radius_km: 25, // Default radius
-          is_verified: false // Will be verified by admin
+          business_name: businessDetails.businessName,
+          phone: businessDetails.businessPhone,
+          address: businessDetails.businessAddress,
+          website: businessDetails.businessWebsite || null,
+          description: businessDetails.businessDescription,
+          zip_code: location.zipCode,
+          city: location.city,
+          state: location.state,
+          service_radius: location.serviceRadius,
+          profile_complete: true,
+          is_verified: false, // Will be verified by admin
         });
 
       if (proProfileError) throw proProfileError;
 
       // Add service categories
-      if (businessInfo.serviceCategories.length > 0) {
+      if (services.serviceCategories.length > 0) {
         // Delete existing categories first
         await supabase
           .from('pro_service_categories')
           .delete()
           .eq('pro_id', user?.id);
 
-        const categoryInserts = businessInfo.serviceCategories.map(categoryId => ({
+        const categoryInserts = services.serviceCategories.map(categoryId => ({
           pro_id: user?.id,
           category_id: categoryId
         }));
@@ -186,37 +173,32 @@ export default function ProOnboarding() {
         if (categoriesError) throw categoriesError;
       }
 
-      // Add service areas
-      if (zipCodes.length > 0) {
-        // Delete existing areas first
-        await supabase
-          .from('pro_service_areas')
-          .delete()
-          .eq('pro_id', user?.id);
+      // Add primary service area (ZIP code)
+      await supabase
+        .from('pro_service_areas')
+        .delete()
+        .eq('pro_id', user?.id);
 
-        const areaInserts = zipCodes.map(zip => ({
+      const { error: areaError } = await supabase
+        .from('pro_service_areas')
+        .insert({
           pro_id: user?.id,
-          zip: zip
-        }));
+          zip: location.zipCode
+        });
 
-        const { error: areasError } = await supabase
-          .from('pro_service_areas')
-          .insert(areaInserts);
-
-        if (areasError) throw areasError;
-      }
+      if (areaError) throw areaError;
 
       toast({
-        title: 'Application Submitted!',
-        description: 'Your professional application has been submitted for review.'
+        title: 'Registration Complete!',
+        description: 'Your professional profile has been created. Pending admin verification.'
       });
 
       navigate('/pro-dashboard');
     } catch (error) {
-      console.error('Error submitting application:', error);
+      console.error('Error submitting registration:', error);
       toast({
         title: 'Error',
-        description: 'Failed to submit application. Please try again.',
+        description: 'Failed to submit registration. Please try again.',
         variant: 'destructive'
       });
     } finally {
@@ -229,47 +211,57 @@ export default function ProOnboarding() {
       case 1:
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Basic Information</h3>
+            <h3 className="text-lg font-semibold">Business Details</h3>
+            <div className="space-y-2">
+              <Label htmlFor="businessName">Business Name *</Label>
+              <Input
+                id="businessName"
+                value={businessDetails.businessName}
+                onChange={(e) => setBusinessDetails({...businessDetails, businessName: e.target.value})}
+                placeholder="Your Auto Shop LLC"
+              />
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name *</Label>
+                <Label htmlFor="businessPhone">Business Phone *</Label>
                 <Input
-                  id="fullName"
-                  value={basicInfo.fullName}
-                  onChange={(e) => setBasicInfo({...basicInfo, fullName: e.target.value})}
-                  placeholder="Enter your full name"
+                  id="businessPhone"
+                  value={businessDetails.businessPhone}
+                  onChange={(e) => setBusinessDetails({...businessDetails, businessPhone: e.target.value})}
+                  placeholder="(555) 123-4567"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address *</Label>
+                <Label htmlFor="businessWebsite">Business Website (Optional)</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={basicInfo.email}
-                  onChange={(e) => setBasicInfo({...basicInfo, email: e.target.value})}
-                  placeholder="Enter your email"
+                  id="businessWebsite"
+                  value={businessDetails.businessWebsite}
+                  onChange={(e) => setBusinessDetails({...businessDetails, businessWebsite: e.target.value})}
+                  placeholder="https://www.yourshop.com"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number *</Label>
-                <Input
-                  id="phone"
-                  value={basicInfo.phone}
-                  onChange={(e) => setBasicInfo({...basicInfo, phone: e.target.value})}
-                  placeholder="Enter your phone number"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="businessNameBasic">Business Name (Optional)</Label>
-                <Input
-                  id="businessNameBasic"
-                  value={basicInfo.businessName}
-                  onChange={(e) => setBasicInfo({...basicInfo, businessName: e.target.value})}
-                  placeholder="Enter business name if applicable"
-                />
-              </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="businessAddress">Business Address *</Label>
+              <Input
+                id="businessAddress"
+                value={businessDetails.businessAddress}
+                onChange={(e) => setBusinessDetails({...businessDetails, businessAddress: e.target.value})}
+                placeholder="123 Main St, City, State"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="businessDescription">Business Description *</Label>
+              <Textarea
+                id="businessDescription"
+                value={businessDetails.businessDescription}
+                onChange={(e) => setBusinessDetails({...businessDetails, businessDescription: e.target.value})}
+                placeholder="Describe your business, specialties, and what sets you apart..."
+                rows={4}
+              />
             </div>
           </div>
         );
@@ -277,61 +269,29 @@ export default function ProOnboarding() {
       case 2:
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Business Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="businessName">Business Name *</Label>
-                <Input
-                  id="businessName"
-                  value={businessInfo.businessName}
-                  onChange={(e) => setBusinessInfo({...businessInfo, businessName: e.target.value})}
-                  placeholder="Your business name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="experience">Years of Experience *</Label>
-                <Input
-                  id="experience"
-                  type="number"
-                  min="0"
-                  max="50"
-                  value={businessInfo.experience}
-                  onChange={(e) => setBusinessInfo({...businessInfo, experience: Number(e.target.value)})}
-                  placeholder="0"
-                />
-              </div>
-            </div>
+            <h3 className="text-lg font-semibold">Services Offered</h3>
+            <p className="text-sm text-muted-foreground">Select all services you provide</p>
             
             <div className="space-y-2">
               <Label>Service Categories *</Label>
-              <div className="grid grid-cols-2 gap-3 p-3 border rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border rounded-lg max-h-96 overflow-y-auto">
                 {categories.map((category) => (
                   <div key={category.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={`cat-${category.id}`}
-                      checked={businessInfo.serviceCategories.includes(category.id)}
+                      checked={services.serviceCategories.includes(category.id)}
                       onCheckedChange={(checked) => 
                         handleCategoryChange(category.id, checked as boolean)
                       }
                     />
-                    <Label htmlFor={`cat-${category.id}`} className="text-sm font-normal">
+                    <Label htmlFor={`cat-${category.id}`} className="text-sm font-normal cursor-pointer">
                       {category.name}
                     </Label>
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="serviceAreas">Service Areas (ZIP Codes) *</Label>
-              <Input
-                id="serviceAreas"
-                value={businessInfo.serviceAreas}
-                onChange={(e) => setBusinessInfo({...businessInfo, serviceAreas: e.target.value})}
-                placeholder="12345, 12346, 12347"
-              />
-              <p className="text-xs text-muted-foreground">
-                Enter ZIP codes separated by commas
+              <p className="text-xs text-muted-foreground mt-2">
+                Selected: {services.serviceCategories.length} service(s)
               </p>
             </div>
           </div>
@@ -340,49 +300,53 @@ export default function ProOnboarding() {
       case 3:
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Verification Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h3 className="text-lg font-semibold">Location & Service Area</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="licenseNumber">License Number *</Label>
+                <Label htmlFor="zipCode">ZIP Code *</Label>
                 <Input
-                  id="licenseNumber"
-                  value={verificationInfo.licenseNumber}
-                  onChange={(e) => setVerificationInfo({...verificationInfo, licenseNumber: e.target.value})}
-                  placeholder="Enter your mechanic license number"
+                  id="zipCode"
+                  value={location.zipCode}
+                  onChange={(e) => setLocation({...location, zipCode: e.target.value})}
+                  placeholder="12345"
+                  maxLength={10}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="insuranceProvider">Insurance Provider *</Label>
+                <Label htmlFor="city">City *</Label>
                 <Input
-                  id="insuranceProvider"
-                  value={verificationInfo.insuranceProvider}
-                  onChange={(e) => setVerificationInfo({...verificationInfo, insuranceProvider: e.target.value})}
-                  placeholder="Enter your liability insurance provider"
+                  id="city"
+                  value={location.city}
+                  onChange={(e) => setLocation({...location, city: e.target.value})}
+                  placeholder="New York"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="state">State *</Label>
+                <Input
+                  id="state"
+                  value={location.state}
+                  onChange={(e) => setLocation({...location, state: e.target.value.toUpperCase()})}
+                  placeholder="NY"
+                  maxLength={2}
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="yearsExperience">Years of Experience *</Label>
-                <Input
-                  id="yearsExperience"
-                  type="number"
-                  min="0"
-                  max="50"
-                  value={verificationInfo.yearsExperience}
-                  onChange={(e) => setVerificationInfo({...verificationInfo, yearsExperience: Number(e.target.value)})}
-                  placeholder="Enter years of experience"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="certifications">Certifications (Optional)</Label>
-                <Input
-                  id="certifications"
-                  value={verificationInfo.certifications}
-                  onChange={(e) => setVerificationInfo({...verificationInfo, certifications: e.target.value})}
-                  placeholder="ASE, manufacturer certifications, etc."
-                />
-              </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="serviceRadius">Service Radius (miles) *</Label>
+              <Input
+                id="serviceRadius"
+                type="number"
+                min="5"
+                max="100"
+                value={location.serviceRadius}
+                onChange={(e) => setLocation({...location, serviceRadius: Number(e.target.value)})}
+              />
+              <p className="text-xs text-muted-foreground">
+                How far are you willing to travel for service calls?
+              </p>
             </div>
           </div>
         );
@@ -390,33 +354,29 @@ export default function ProOnboarding() {
       case 4:
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold">Review Your Application</h3>
+            <h3 className="text-lg font-semibold">Review Your Registration</h3>
             
             <div className="space-y-4">
               <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">Basic Information</h4>
-                <p className="text-sm text-muted-foreground">Name: {basicInfo.fullName}</p>
-                <p className="text-sm text-muted-foreground">Email: {basicInfo.email}</p>
-                <p className="text-sm text-muted-foreground">Phone: {basicInfo.phone}</p>
-                {basicInfo.businessName && <p className="text-sm text-muted-foreground">Business: {basicInfo.businessName}</p>}
+                <h4 className="font-medium mb-2">Business Details</h4>
+                <p className="text-sm text-muted-foreground">Business: {businessDetails.businessName}</p>
+                <p className="text-sm text-muted-foreground">Phone: {businessDetails.businessPhone}</p>
+                <p className="text-sm text-muted-foreground">Address: {businessDetails.businessAddress}</p>
+                {businessDetails.businessWebsite && <p className="text-sm text-muted-foreground">Website: {businessDetails.businessWebsite}</p>}
+                <p className="text-sm text-muted-foreground">Description: {businessDetails.businessDescription}</p>
               </div>
               
               <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">Business Information</h4>
-                <p className="text-sm text-muted-foreground">Business Name: {businessInfo.businessName}</p>
-                <p className="text-sm text-muted-foreground">Experience: {businessInfo.experience} years</p>
-                <p className="text-sm text-muted-foreground">Service Areas: {businessInfo.serviceAreas}</p>
+                <h4 className="font-medium mb-2">Services Offered</h4>
                 <p className="text-sm text-muted-foreground">
-                  Categories: {businessInfo.serviceCategories.length} selected
+                  {services.serviceCategories.length} service categor{services.serviceCategories.length === 1 ? 'y' : 'ies'} selected
                 </p>
               </div>
               
               <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">Verification</h4>
-                <p className="text-sm text-muted-foreground">License: {verificationInfo.licenseNumber}</p>
-                <p className="text-sm text-muted-foreground">Insurance: {verificationInfo.insuranceProvider}</p>
-                <p className="text-sm text-muted-foreground">Experience: {verificationInfo.yearsExperience} years</p>
-                {verificationInfo.certifications && <p className="text-sm text-muted-foreground">Certifications: {verificationInfo.certifications}</p>}
+                <h4 className="font-medium mb-2">Location & Service Area</h4>
+                <p className="text-sm text-muted-foreground">Location: {location.city}, {location.state} {location.zipCode}</p>
+                <p className="text-sm text-muted-foreground">Service Radius: {location.serviceRadius} miles</p>
               </div>
             </div>
           </div>
@@ -437,9 +397,9 @@ export default function ProOnboarding() {
               <div className="mb-4">
                 <ProgressIndicator currentStep={currentStep} totalSteps={4} />
               </div>
-              <CardTitle>Join DoneEZ Pro</CardTitle>
+              <CardTitle>Professional Registration</CardTitle>
               <CardDescription>
-                Complete your application to start receiving qualified job requests from customers.
+                Register your business to start receiving job requests from customers in your area.
               </CardDescription>
             </CardHeader>
             <CardContent>

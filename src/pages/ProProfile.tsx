@@ -9,14 +9,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
+import { Building2, MapPin, CheckCircle, XCircle, Save, Edit } from 'lucide-react';
 
 const proProfileSchema = z.object({
   business_name: z.string().trim().min(1, 'Business name is required').max(100, 'Business name too long'),
-  notes: z.string().trim().max(1000, 'Notes too long').optional(),
-  radius_km: z.number().min(5, 'Minimum radius is 5km').max(100, 'Maximum radius is 100km'),
+  phone: z.string().trim().min(10, 'Phone must be at least 10 digits').max(15, 'Phone too long').optional().or(z.literal('')),
+  address: z.string().trim().max(200, 'Address too long').optional().or(z.literal('')),
+  website: z.string().trim().url('Invalid website URL').max(200, 'URL too long').optional().or(z.literal('')),
+  description: z.string().trim().max(500, 'Description too long').optional().or(z.literal('')),
+  zip_code: z.string().trim().min(5, 'ZIP code must be at least 5 digits').max(10, 'ZIP code too long').optional().or(z.literal('')),
+  city: z.string().trim().max(100, 'City name too long').optional().or(z.literal('')),
+  state: z.string().trim().max(2, 'Use 2-letter state code').optional().or(z.literal('')),
+  service_radius: z.number().min(5, 'Minimum radius is 5 miles').max(100, 'Maximum radius is 100 miles'),
   service_categories: z.array(z.string()).min(1, 'Select at least one service category'),
   service_areas: z.string().trim().min(1, 'Enter at least one ZIP code')
 });
@@ -28,9 +36,16 @@ interface ServiceCategory {
 
 interface ProProfile {
   business_name: string;
-  notes?: string;
-  radius_km: number;
+  phone?: string;
+  address?: string;
+  website?: string;
+  description?: string;
+  zip_code?: string;
+  city?: string;
+  state?: string;
+  service_radius: number;
   is_verified: boolean;
+  profile_complete: boolean;
 }
 
 export default function ProProfile() {
@@ -39,11 +54,18 @@ export default function ProProfile() {
   const [profile, setProfile] = useState<ProProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   
   const [formData, setFormData] = useState({
     business_name: '',
-    notes: '',
-    radius_km: 25,
+    phone: '',
+    address: '',
+    website: '',
+    description: '',
+    zip_code: '',
+    city: '',
+    state: '',
+    service_radius: 25,
     service_categories: [] as string[],
     service_areas: ''
   });
@@ -83,8 +105,14 @@ export default function ProProfile() {
       setFormData(prev => ({
         ...prev,
         business_name: data.business_name,
-        notes: data.notes || '',
-        radius_km: data.radius_km
+        phone: data.phone || '',
+        address: data.address || '',
+        website: data.website || '',
+        description: data.description || '',
+        zip_code: data.zip_code || '',
+        city: data.city || '',
+        state: data.state || '',
+        service_radius: data.service_radius || 25
       }));
     }
   };
@@ -149,8 +177,14 @@ export default function ProProfile() {
         .upsert({
           pro_id: user?.id,
           business_name: validatedData.business_name,
-          notes: validatedData.notes,
-          radius_km: validatedData.radius_km
+          phone: validatedData.phone || null,
+          address: validatedData.address || null,
+          website: validatedData.website || null,
+          description: validatedData.description || null,
+          zip_code: validatedData.zip_code || null,
+          city: validatedData.city || null,
+          state: validatedData.state || null,
+          service_radius: validatedData.service_radius
         });
 
       if (profileError) throw profileError;
@@ -200,6 +234,7 @@ export default function ProProfile() {
         description: 'Your professional profile has been saved.'
       });
 
+      setIsEditing(false);
       // Refresh data
       await fetchProProfile();
     } catch (error) {
@@ -234,108 +269,258 @@ export default function ProProfile() {
     <RoleGuard allowedRoles={['pro']}>
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="mx-auto max-w-2xl p-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Professional Profile</CardTitle>
-              <CardDescription>
-                Set up your business profile to start receiving service requests
-                {profile?.is_verified && (
-                  <span className="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                    ✓ Verified
-                  </span>
+        <div className="mx-auto max-w-4xl p-6">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h1 className="text-3xl font-bold">Professional Profile</h1>
+              <p className="text-muted-foreground">Manage your business information and settings</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={profile?.is_verified ? "default" : "secondary"}>
+                {profile?.is_verified ? (
+                  <>
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Verified
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-3 w-3 mr-1" />
+                    Pending Verification
+                  </>
                 )}
-              </CardDescription>
+              </Badge>
+              {!isEditing ? (
+                <Button onClick={() => setIsEditing(true)} variant="outline">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button onClick={() => setIsEditing(false)} variant="outline">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSubmit} disabled={isLoading}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {isLoading ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Business Details */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Business Details
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Business Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Business Information</h3>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="business_name">Business Name</Label>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="business_name">Business Name</Label>
+                  {isEditing ? (
                     <Input
                       id="business_name"
                       value={formData.business_name}
                       onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
-                      placeholder="Your Auto Service Business"
                       required
                     />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Service Notes & Pricing (Optional)</Label>
-                    <Textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      placeholder="Describe your services, pricing, specialties..."
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="radius">Service Radius (km)</Label>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{formData.business_name || 'Not provided'}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  {isEditing ? (
                     <Input
-                      id="radius"
-                      type="number"
-                      value={formData.radius_km}
-                      onChange={(e) => setFormData({ ...formData, radius_km: Number(e.target.value) })}
-                      min="5"
-                      max="100"
-                      required
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
-                  </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{formData.phone || 'Not provided'}</p>
+                  )}
                 </div>
+              </div>
 
-                <Separator />
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                {isEditing ? (
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">{formData.address || 'Not provided'}</p>
+                )}
+              </div>
 
-                {/* Service Categories */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Service Categories</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {categories.map((category) => (
-                      <div key={category.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={category.id}
-                          checked={formData.service_categories.includes(category.id)}
-                          onCheckedChange={(checked) => 
-                            handleCategoryChange(category.id, checked as boolean)
-                          }
-                        />
-                        <Label htmlFor={category.id} className="text-sm font-normal">
-                          {category.name}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                {isEditing ? (
+                  <Input
+                    id="website"
+                    value={formData.website}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                    placeholder="https://www.example.com"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {formData.website ? (
+                      <a href={formData.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                        {formData.website}
+                      </a>
+                    ) : (
+                      'Not provided'
+                    )}
+                  </p>
+                )}
+              </div>
 
-                <Separator />
+              <div className="space-y-2">
+                <Label htmlFor="description">Business Description</Label>
+                {isEditing ? (
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={4}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">{formData.description || 'Not provided'}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-                {/* Service Areas */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Service Areas</h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="service_areas">ZIP Codes (comma-separated)</Label>
+          {/* Location & Service Area */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Location & Service Area
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="zip_code">ZIP Code</Label>
+                  {isEditing ? (
                     <Input
-                      id="service_areas"
-                      value={formData.service_areas}
-                      onChange={(e) => setFormData({ ...formData, service_areas: e.target.value })}
-                      placeholder="12345, 12346, 12347"
-                      required
+                      id="zip_code"
+                      value={formData.zip_code}
+                      onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
+                      maxLength={10}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Enter the ZIP codes where you provide services, separated by commas
-                    </p>
-                  </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{formData.zip_code || 'Not provided'}</p>
+                  )}
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="city">City</Label>
+                  {isEditing ? (
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{formData.city || 'Not provided'}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="state">State</Label>
+                  {isEditing ? (
+                    <Input
+                      id="state"
+                      value={formData.state}
+                      onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
+                      maxLength={2}
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{formData.state || 'Not provided'}</p>
+                  )}
+                </div>
+              </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Saving...' : 'Save Profile'}
-                </Button>
-              </form>
+              <div className="space-y-2">
+                <Label htmlFor="service_radius">Service Radius (miles)</Label>
+                {isEditing ? (
+                  <Input
+                    id="service_radius"
+                    type="number"
+                    min="5"
+                    max="100"
+                    value={formData.service_radius}
+                    onChange={(e) => setFormData({ ...formData, service_radius: Number(e.target.value) })}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">{formData.service_radius} miles</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="service_areas">Additional Service Areas (ZIP Codes)</Label>
+                {isEditing ? (
+                  <Input
+                    id="service_areas"
+                    value={formData.service_areas}
+                    onChange={(e) => setFormData({ ...formData, service_areas: e.target.value })}
+                    placeholder="12345, 12346, 12347"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">{formData.service_areas || 'Not provided'}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Enter additional ZIP codes separated by commas
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Services Offered */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Services Offered</CardTitle>
+              <CardDescription>Select the services you provide</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isEditing ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                  {categories.map((category) => (
+                    <div key={category.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={category.id}
+                        checked={formData.service_categories.includes(category.id)}
+                        onCheckedChange={(checked) => 
+                          handleCategoryChange(category.id, checked as boolean)
+                        }
+                      />
+                      <Label htmlFor={category.id} className="text-sm font-normal cursor-pointer">
+                        {category.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {categories
+                    .filter(cat => formData.service_categories.includes(cat.id))
+                    .map(cat => (
+                      <Badge key={cat.id} variant="secondary">
+                        {cat.name}
+                      </Badge>
+                    ))
+                  }
+                  {formData.service_categories.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No services selected</p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -163,31 +163,70 @@ export type Database = {
       }
       pro_profiles: {
         Row: {
+          address: string | null
           business_name: string
+          city: string | null
           created_at: string | null
+          description: string | null
           is_verified: boolean | null
+          latitude: number | null
+          longitude: number | null
           notes: string | null
+          operating_hours: Json | null
+          phone: string | null
           pro_id: string
+          profile_complete: boolean | null
           radius_km: number | null
+          service_radius: number | null
+          state: string | null
           updated_at: string | null
+          verified_address: string | null
+          website: string | null
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
           business_name: string
+          city?: string | null
           created_at?: string | null
+          description?: string | null
           is_verified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           notes?: string | null
+          operating_hours?: Json | null
+          phone?: string | null
           pro_id: string
+          profile_complete?: boolean | null
           radius_km?: number | null
+          service_radius?: number | null
+          state?: string | null
           updated_at?: string | null
+          verified_address?: string | null
+          website?: string | null
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
           business_name?: string
+          city?: string | null
           created_at?: string | null
+          description?: string | null
           is_verified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           notes?: string | null
+          operating_hours?: Json | null
+          phone?: string | null
           pro_id?: string
+          profile_complete?: boolean | null
           radius_km?: number | null
+          service_radius?: number | null
+          state?: string | null
           updated_at?: string | null
+          verified_address?: string | null
+          website?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }
