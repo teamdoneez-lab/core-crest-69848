@@ -39,7 +39,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, name?: string, role?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    // Redirect pros to onboarding, customers to home
+    const redirectUrl = role === 'pro' 
+      ? `${window.location.origin}/pro-onboarding`
+      : `${window.location.origin}/`;
     
     const userData: any = {};
     if (name) userData.name = name;

@@ -83,7 +83,35 @@ export default function ProDashboard() {
     netEarnings: 0
   });
   const [loading, setLoading] = useState(true);
+  const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
   const { toast } = useToast();
+
+  // Check if profile is complete
+  useEffect(() => {
+    if (user && isPro) {
+      checkProfileComplete();
+    }
+  }, [user, isPro]);
+
+  const checkProfileComplete = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pro_profiles')
+        .select('profile_complete')
+        .eq('pro_id', user?.id)
+        .single();
+
+      if (error) {
+        setProfileComplete(false);
+        return;
+      }
+
+      setProfileComplete(data?.profile_complete || false);
+    } catch (error) {
+      console.error('Error checking profile:', error);
+      setProfileComplete(false);
+    }
+  };
 
   useEffect(() => {
     if (user && isPro) {
@@ -91,9 +119,19 @@ export default function ProDashboard() {
     }
   }, [user, isPro]);
 
+  // Check email verification
+  const emailVerified = user?.email_confirmed_at !== null;
+
   // Redirect if not authenticated or not a pro
   if (!authLoading && !roleLoading && (!user || !isPro)) {
     return <Navigate to="/" replace />;
+  }
+
+  // Redirect to onboarding if email not verified or profile incomplete
+  if (!authLoading && !roleLoading && user && isPro) {
+    if (!emailVerified || profileComplete === false) {
+      return <Navigate to="/pro-onboarding" replace />;
+    }
   }
 
   const fetchDashboardData = async () => {

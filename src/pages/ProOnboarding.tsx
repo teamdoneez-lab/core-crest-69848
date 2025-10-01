@@ -45,6 +45,14 @@ export default function ProOnboarding() {
   const [currentStep, setCurrentStep] = useState(1);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [emailVerified, setEmailVerified] = useState<boolean | null>(null);
+
+  // Check email verification status
+  useEffect(() => {
+    if (user) {
+      setEmailVerified(user.email_confirmed_at !== null);
+    }
+  }, [user]);
 
   // Form data for all steps
   const [businessDetails, setBusinessDetails] = useState({
@@ -386,6 +394,37 @@ export default function ProOnboarding() {
         return null;
     }
   };
+
+  // Show email verification notice if email not verified
+  if (emailVerified === false) {
+    return (
+      <RoleGuard allowedRoles={['pro']}>
+        <div className="min-h-screen bg-background">
+          <Navigation />
+          <div className="mx-auto max-w-2xl p-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Email Verification Required</CardTitle>
+                <CardDescription>
+                  Please verify your email address to continue with registration.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4 text-center py-8">
+                  <p className="text-muted-foreground">
+                    We've sent a verification link to your email address. Please check your inbox and click the link to verify your account.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    After verifying your email, refresh this page to continue.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </RoleGuard>
+    );
+  }
 
   return (
     <RoleGuard allowedRoles={['pro']}>
