@@ -140,6 +140,28 @@ export default function ProOnboarding() {
     }));
   };
 
+  const handleSelectAllInSubItem = (subItem: any, checked: boolean) => {
+    const serviceIds = subItem.services.map((s: any) => s.id);
+    setServices(prev => ({
+      ...prev,
+      selectedServices: checked
+        ? [...new Set([...prev.selectedServices, ...serviceIds])]
+        : prev.selectedServices.filter(id => !serviceIds.includes(id))
+    }));
+  };
+
+  const handleSelectAllInAccordion = (accordion: any, checked: boolean) => {
+    const allServiceIds = accordion.subItems.flatMap((subItem: any) => 
+      subItem.services.map((s: any) => s.id)
+    );
+    setServices(prev => ({
+      ...prev,
+      selectedServices: checked
+        ? [...new Set([...prev.selectedServices, ...allServiceIds])]
+        : prev.selectedServices.filter(id => !allServiceIds.includes(id))
+    }));
+  };
+
   // Filter services based on search
   const filteredAccordions = accordionsData.map(accordion => ({
     ...accordion,
@@ -303,43 +325,92 @@ export default function ProOnboarding() {
 
             <div className="border rounded-lg max-h-96 overflow-y-auto">
               <Accordion type="multiple" className="w-full">
-                {filteredAccordions.map((accordion) => (
-                  <AccordionItem key={accordion.title} value={accordion.title}>
-                    <AccordionTrigger className="px-4 hover:no-underline">
-                      <span className="font-medium">{accordion.title}</span>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-2 px-4 pb-2">
-                        {accordion.subItems.map((subItem) => (
-                          <div key={subItem.title} className="space-y-2">
-                            <h4 className="text-sm font-medium text-muted-foreground mt-2">
-                              {subItem.title}
-                            </h4>
-                            <div className="grid grid-cols-1 gap-2 pl-2">
-                              {subItem.services.map((service) => (
-                                <div key={service.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`service-${service.id}`}
-                                    checked={services.selectedServices.includes(service.id)}
-                                    onCheckedChange={(checked) => 
-                                      handleServiceToggle(service.id, checked as boolean)
+                {filteredAccordions.map((accordion) => {
+                  const allAccordionServiceIds = accordion.subItems.flatMap(subItem => 
+                    subItem.services.map(s => s.id)
+                  );
+                  const allAccordionSelected = allAccordionServiceIds.length > 0 && 
+                    allAccordionServiceIds.every(id => services.selectedServices.includes(id));
+                  const someAccordionSelected = allAccordionServiceIds.some(id => 
+                    services.selectedServices.includes(id)
+                  );
+
+                        return (
+                          <AccordionItem key={accordion.title} value={accordion.title}>
+                            <AccordionTrigger className="px-4 hover:no-underline">
+                              <div className="flex items-center gap-2 flex-1">
+                                <Checkbox
+                                  checked={allAccordionSelected}
+                                  ref={(el) => {
+                                    if (el) {
+                                      const input = el.querySelector('input');
+                                      if (input) input.indeterminate = someAccordionSelected && !allAccordionSelected;
                                     }
-                                  />
-                                  <Label 
-                                    htmlFor={`service-${service.id}`} 
-                                    className="text-sm font-normal cursor-pointer"
-                                  >
-                                    {service.name}
-                                  </Label>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
+                                  }}
+                                  onCheckedChange={(checked) => {
+                                    handleSelectAllInAccordion(accordion, checked as boolean);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <span className="font-medium">{accordion.title}</span>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="space-y-2 px-4 pb-2">
+                                {accordion.subItems.map((subItem) => {
+                                  const subItemServiceIds = subItem.services.map(s => s.id);
+                                  const allSubItemSelected = subItemServiceIds.length > 0 && 
+                                    subItemServiceIds.every(id => services.selectedServices.includes(id));
+                                  const someSubItemSelected = subItemServiceIds.some(id => 
+                                    services.selectedServices.includes(id)
+                                  );
+
+                                  return (
+                                    <div key={subItem.title} className="space-y-2">
+                                      <div className="flex items-center gap-2 mt-2">
+                                        <Checkbox
+                                          checked={allSubItemSelected}
+                                          ref={(el) => {
+                                            if (el) {
+                                              const input = el.querySelector('input');
+                                              if (input) input.indeterminate = someSubItemSelected && !allSubItemSelected;
+                                            }
+                                          }}
+                                          onCheckedChange={(checked) => 
+                                            handleSelectAllInSubItem(subItem, checked as boolean)
+                                          }
+                                        />
+                                        <h4 className="text-sm font-medium text-muted-foreground">
+                                          {subItem.title}
+                                        </h4>
+                                      </div>
+                                      <div className="grid grid-cols-1 gap-2 pl-8">
+                                        {subItem.services.map((service) => (
+                                          <div key={service.id} className="flex items-center space-x-2">
+                                            <Checkbox
+                                              id={`service-${service.id}`}
+                                              checked={services.selectedServices.includes(service.id)}
+                                              onCheckedChange={(checked) => 
+                                                handleServiceToggle(service.id, checked as boolean)
+                                              }
+                                            />
+                                            <Label 
+                                              htmlFor={`service-${service.id}`} 
+                                              className="text-sm font-normal cursor-pointer"
+                                            >
+                                              {service.name}
+                                            </Label>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        );
+                })}
               </Accordion>
             </div>
 
