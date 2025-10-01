@@ -13,7 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
-import { Building2, MapPin, CheckCircle, XCircle, Save, Edit } from 'lucide-react';
+import { Building2, MapPin, CheckCircle, XCircle, Save, Edit, Search } from 'lucide-react';
+import { accordionsData } from '@/data/serviceslist-detailed';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const proProfileSchema = z.object({
   business_name: z.string().trim().min(1, 'Business name is required').max(100, 'Business name too long'),
@@ -25,14 +27,9 @@ const proProfileSchema = z.object({
   city: z.string().trim().max(100, 'City name too long').optional().or(z.literal('')),
   state: z.string().trim().max(2, 'Use 2-letter state code').optional().or(z.literal('')),
   service_radius: z.number().min(5, 'Minimum radius is 5 miles').max(100, 'Maximum radius is 100 miles'),
-  service_categories: z.array(z.string()).min(1, 'Select at least one service category'),
+  selectedServices: z.array(z.string()).min(1, 'Select at least one service'),
   service_areas: z.string().trim().min(1, 'Enter at least one ZIP code')
 });
-
-interface ServiceCategory {
-  id: string;
-  name: string;
-}
 
 interface ProProfile {
   business_name: string;
@@ -50,11 +47,11 @@ interface ProProfile {
 
 export default function ProProfile() {
   const { user } = useAuth();
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [profile, setProfile] = useState<ProProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [formData, setFormData] = useState({
     business_name: '',
@@ -66,32 +63,18 @@ export default function ProProfile() {
     city: '',
     state: '',
     service_radius: 25,
-    service_categories: [] as string[],
+    selectedServices: [] as string[],
     service_areas: ''
   });
 
   useEffect(() => {
     if (user) {
       Promise.all([
-        fetchCategories(),
         fetchProProfile(),
-        fetchProServiceCategories(),
         fetchProServiceAreas()
       ]).finally(() => setLoading(false));
     }
   }, [user]);
-
-  const fetchCategories = async () => {
-    const { data } = await supabase
-      .from('service_categories')
-      .select('id, name')
-      .eq('active', true)
-      .order('name');
-    
-    if (data) {
-      setCategories(data);
-    }
-  };
 
   const fetchProProfile = async () => {
     const { data } = await supabase
@@ -102,6 +85,18 @@ export default function ProProfile() {
     
     if (data) {
       setProfile(data);
+      
+      // Parse selectedServices from notes field
+      let selectedServices: string[] = [];
+      if (data.notes) {
+        try {
+          const parsedNotes = JSON.parse(data.notes);
+          selectedServices = parsedNotes.selectedServices || [];
+        } catch (e) {
+          console.error('Error parsing notes:', e);
+        }
+      }
+      
       setFormData(prev => ({
         ...prev,
         business_name: data.business_name,
@@ -112,21 +107,8 @@ export default function ProProfile() {
         zip_code: data.zip_code || '',
         city: data.city || '',
         state: data.state || '',
-        service_radius: data.service_radius || 25
-      }));
-    }
-  };
-
-  const fetchProServiceCategories = async () => {
-    const { data } = await supabase
-      .from('pro_service_categories')
-      .select('category_id')
-      .eq('pro_id', user?.id);
-    
-    if (data) {
-      setFormData(prev => ({
-        ...prev,
-        service_categories: data.map(item => item.category_id)
+        service_radius: data.service_radius || 25,
+        selectedServices
       }));
     }
   };
@@ -145,14 +127,25 @@ export default function ProProfile() {
     }
   };
 
-  const handleCategoryChange = (categoryId: string, checked: boolean) => {
+  const handleServiceToggle = (serviceId: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      service_categories: checked 
-        ? [...prev.service_categories, categoryId]
-        : prev.service_categories.filter(id => id !== categoryId)
+      selectedServices: checked 
+        ? [...prev.selectedServices, serviceId]
+        : prev.selectedServices.filter(id => id !== serviceId)
     }));
   };
+
+  // Filter services based on search
+  const filteredAccordions = accordionsData.map(accordion => ({
+    ...accordion,
+    subItems: accordion.subItems.map(subItem => ({
+      ...subItem,
+      services: subItem.services.filter(service =>
+        service.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    })).filter(subItem => subItem.services.length > 0)
+  })).filter(accordion => accordion.subItems.length > 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,25 +182,17 @@ export default function ProProfile() {
 
       if (profileError) throw profileError;
 
-      // Delete existing service categories
+      // Store selected services in notes field as JSON
+      const servicesData = {
+        selectedServices: validatedData.selectedServices
+      };
+      
       await supabase
-        .from('pro_service_categories')
-        .delete()
+        .from('pro_profiles')
+        .update({ 
+          notes: JSON.stringify(servicesData)
+        })
         .eq('pro_id', user?.id);
-
-      // Insert new service categories
-      if (validatedData.service_categories.length > 0) {
-        const categoryInserts = validatedData.service_categories.map(categoryId => ({
-          pro_id: user?.id,
-          category_id: categoryId
-        }));
-
-        const { error: categoriesError } = await supabase
-          .from('pro_service_categories')
-          .insert(categoryInserts);
-
-        if (categoriesError) throw categoriesError;
-      }
 
       // Delete existing service areas
       await supabase
@@ -490,35 +475,73 @@ export default function ProProfile() {
             </CardHeader>
             <CardContent>
               {isEditing ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
-                  {categories.map((category) => (
-                    <div key={category.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={category.id}
-                        checked={formData.service_categories.includes(category.id)}
-                        onCheckedChange={(checked) => 
-                          handleCategoryChange(category.id, checked as boolean)
-                        }
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Search Services</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search for services..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
                       />
-                      <Label htmlFor={category.id} className="text-sm font-normal cursor-pointer">
-                        {category.name}
-                      </Label>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="border rounded-lg max-h-96 overflow-y-auto">
+                    <Accordion type="multiple" className="w-full">
+                      {filteredAccordions.map((accordion) => (
+                        <AccordionItem key={accordion.title} value={accordion.title}>
+                          <AccordionTrigger className="px-4 hover:no-underline">
+                            <span className="font-medium">{accordion.title}</span>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="space-y-2 px-4 pb-2">
+                              {accordion.subItems.map((subItem) => (
+                                <div key={subItem.title} className="space-y-2">
+                                  <h4 className="text-sm font-medium text-muted-foreground mt-2">
+                                    {subItem.title}
+                                  </h4>
+                                  <div className="grid grid-cols-1 gap-2 pl-2">
+                                    {subItem.services.map((service) => (
+                                      <div key={service.id} className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id={`service-${service.id}`}
+                                          checked={formData.selectedServices.includes(service.id)}
+                                          onCheckedChange={(checked) => 
+                                            handleServiceToggle(service.id, checked as boolean)
+                                          }
+                                        />
+                                        <Label 
+                                          htmlFor={`service-${service.id}`} 
+                                          className="text-sm font-normal cursor-pointer"
+                                        >
+                                          {service.name}
+                                        </Label>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    Selected: {formData.selectedServices.length} service(s)
+                  </p>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {categories
-                    .filter(cat => formData.service_categories.includes(cat.id))
-                    .map(cat => (
-                      <Badge key={cat.id} variant="secondary">
-                        {cat.name}
-                      </Badge>
-                    ))
-                  }
-                  {formData.service_categories.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No services selected</p>
-                  )}
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {formData.selectedServices.length > 0 
+                      ? `${formData.selectedServices.length} service${formData.selectedServices.length === 1 ? '' : 's'} selected`
+                      : 'No services selected'}
+                  </p>
                 </div>
               )}
             </CardContent>
