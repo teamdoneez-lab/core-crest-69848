@@ -55,6 +55,10 @@ export default function ServiceRequests() {
   // Quote modal
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  
+  // Details modal
+  const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -151,7 +155,8 @@ export default function ServiceRequests() {
     }
   };
 
-  const handleQuoteClick = (requestId: string) => {
+  const handleQuoteClick = (requestId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedRequestId(requestId);
     setIsQuoteModalOpen(true);
   };
@@ -160,6 +165,11 @@ export default function ServiceRequests() {
     setIsQuoteModalOpen(false);
     setSelectedRequestId(null);
     fetchServiceRequests();
+  };
+
+  const handleCardClick = (request: ServiceRequest) => {
+    setSelectedRequest(request);
+    setIsDetailsModalOpen(true);
   };
 
   if (loading) {
@@ -293,7 +303,11 @@ export default function ServiceRequests() {
           ) : (
             <div className="grid gap-6">
               {requests.map((request) => (
-                <Card key={request.id}>
+                <Card 
+                  key={request.id} 
+                  className="cursor-pointer transition-shadow hover:shadow-md"
+                  onClick={() => handleCardClick(request)}
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
@@ -345,7 +359,7 @@ export default function ServiceRequests() {
                         Submitted {new Date(request.created_at).toLocaleDateString()} at {new Date(request.created_at).toLocaleTimeString()}
                       </p>
                       <Button 
-                        onClick={() => handleQuoteClick(request.id)}
+                        onClick={(e) => handleQuoteClick(request.id, e)}
                         className="flex items-center gap-2"
                       >
                         <FileText className="h-4 w-4" />
@@ -357,6 +371,116 @@ export default function ServiceRequests() {
               ))}
             </div>
           )}
+
+          {/* Details Modal */}
+          <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Service Request Details</DialogTitle>
+                <DialogDescription>
+                  Complete information about this repair request
+                </DialogDescription>
+              </DialogHeader>
+              {selectedRequest && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Vehicle Information</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Make & Model</p>
+                        <p className="font-medium">{selectedRequest.vehicle_make} {selectedRequest.model}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Year</p>
+                        <p className="font-medium">{selectedRequest.year}</p>
+                      </div>
+                      {selectedRequest.trim && (
+                        <div>
+                          <p className="text-muted-foreground">Trim</p>
+                          <p className="font-medium">{selectedRequest.trim}</p>
+                        </div>
+                      )}
+                      {selectedRequest.mileage && (
+                        <div>
+                          <p className="text-muted-foreground">Mileage</p>
+                          <p className="font-medium">{selectedRequest.mileage.toLocaleString()} miles</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Service Details</h3>
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Service Category</p>
+                        <p className="font-medium">{selectedRequest.service_categories.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Status</p>
+                        <Badge className={getStatusColor(selectedRequest.status)}>
+                          {selectedRequest.status}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Appointment Preference</p>
+                        <p className="font-medium">{getAppointmentPrefLabel(selectedRequest.appointment_pref)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedRequest.notes && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3">Repair Description</h3>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedRequest.notes}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Customer Contact</h3>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Email</p>
+                        <p className="font-medium">{selectedRequest.contact_email}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Phone</p>
+                        <p className="font-medium">{selectedRequest.contact_phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Address</p>
+                        <p className="font-medium">{selectedRequest.address}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">ZIP Code</p>
+                        <p className="font-medium">{selectedRequest.zip}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Request Timeline</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Submitted on {new Date(selectedRequest.created_at).toLocaleDateString()} at {new Date(selectedRequest.created_at).toLocaleTimeString()}
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t flex justify-end">
+                    <Button 
+                      onClick={(e) => {
+                        setIsDetailsModalOpen(false);
+                        handleQuoteClick(selectedRequest.id, e);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Send Quote
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Quote Modal */}
           <Dialog open={isQuoteModalOpen} onOpenChange={setIsQuoteModalOpen}>
