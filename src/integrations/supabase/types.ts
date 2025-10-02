@@ -66,13 +66,6 @@ export type Database = {
             referencedRelation: "service_requests"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "appointments_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: true
-            referencedRelation: "service_requests_masked"
-            referencedColumns: ["id"]
-          },
         ]
       }
       fees: {
@@ -133,13 +126,6 @@ export type Database = {
             referencedRelation: "service_requests"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fees_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "service_requests_masked"
-            referencedColumns: ["id"]
-          },
         ]
       }
       leads: {
@@ -180,13 +166,6 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "service_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_leads_request_id"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "service_requests_masked"
             referencedColumns: ["id"]
           },
         ]
@@ -407,13 +386,6 @@ export type Database = {
             referencedRelation: "service_requests"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "quotes_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "service_requests_masked"
-            referencedColumns: ["id"]
-          },
         ]
       }
       referral_fees: {
@@ -479,13 +451,6 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: true
             referencedRelation: "service_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "referral_fees_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: true
-            referencedRelation: "service_requests_masked"
             referencedColumns: ["id"]
           },
         ]
@@ -618,111 +583,7 @@ export type Database = {
       }
     }
     Views: {
-      service_requests_masked: {
-        Row: {
-          accept_expires_at: string | null
-          accepted_pro_id: string | null
-          address: string | null
-          appointment_pref: string | null
-          appointment_type: string | null
-          category_id: string | null
-          contact_email: string | null
-          contact_phone: string | null
-          created_at: string | null
-          customer_id: string | null
-          description: string | null
-          formatted_address: string | null
-          id: string | null
-          latitude: number | null
-          longitude: number | null
-          mileage: number | null
-          model: string | null
-          notes: string | null
-          preferred_time: string | null
-          service_category: string[] | null
-          status: string | null
-          trim: string | null
-          updated_at: string | null
-          urgency: string | null
-          vehicle_make: string | null
-          year: number | null
-          zip: string | null
-        }
-        Insert: {
-          accept_expires_at?: string | null
-          accepted_pro_id?: string | null
-          address?: never
-          appointment_pref?: string | null
-          appointment_type?: string | null
-          category_id?: string | null
-          contact_email?: never
-          contact_phone?: never
-          created_at?: string | null
-          customer_id?: string | null
-          description?: string | null
-          formatted_address?: never
-          id?: string | null
-          latitude?: number | null
-          longitude?: number | null
-          mileage?: number | null
-          model?: string | null
-          notes?: string | null
-          preferred_time?: string | null
-          service_category?: string[] | null
-          status?: string | null
-          trim?: string | null
-          updated_at?: string | null
-          urgency?: string | null
-          vehicle_make?: string | null
-          year?: number | null
-          zip?: string | null
-        }
-        Update: {
-          accept_expires_at?: string | null
-          accepted_pro_id?: string | null
-          address?: never
-          appointment_pref?: string | null
-          appointment_type?: string | null
-          category_id?: string | null
-          contact_email?: never
-          contact_phone?: never
-          created_at?: string | null
-          customer_id?: string | null
-          description?: string | null
-          formatted_address?: never
-          id?: string | null
-          latitude?: number | null
-          longitude?: number | null
-          mileage?: number | null
-          model?: string | null
-          notes?: string | null
-          preferred_time?: string | null
-          service_category?: string[] | null
-          status?: string | null
-          trim?: string | null
-          updated_at?: string | null
-          urgency?: string | null
-          vehicle_make?: string | null
-          year?: number | null
-          zip?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "service_requests_accepted_pro_id_fkey"
-            columns: ["accepted_pro_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "service_requests_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "service_categories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       accept_lead_and_lock_job: {

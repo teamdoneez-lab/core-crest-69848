@@ -308,42 +308,19 @@ const ProInbox = () => {
 
   const fetchLeads = async () => {
     try {
-      const { data: leadsData, error } = await supabase
+      // First, fetch leads with basic info (masked data)
+      const { data: leadsData, error: leadsError } = await supabase
         .from('leads')
         .select(`
           id,
           status,
           created_at,
-          service_requests (
-            id,
-            vehicle_make,
-            model,
-            year,
-            trim,
-            mileage,
-            address,
-            zip,
-            contact_email,
-            contact_phone,
-            appointment_pref,
-            notes,
-            status,
-            accepted_pro_id,
-            accept_expires_at,
-            service_categories (
-              name
-            ),
-            appointments (
-              id,
-              starts_at,
-              notes
-            )
-          )
+          request_id
         `)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching leads:', error);
+      if (leadsError) {
+        console.error('Error fetching leads:', leadsError);
         toast({
           title: "Error",
           description: "Failed to fetch leads",
@@ -352,7 +329,44 @@ const ProInbox = () => {
         return;
       }
 
-      setLeads(leadsData || []);
+      // Fetch full details for each request using the secure function
+      const leadsWithDetails = await Promise.all(
+        (leadsData || []).map(async (lead) => {
+          const { data: requestDetails, error: detailsError } = await supabase
+            .rpc('get_service_request_details', { request_id: lead.request_id })
+            .single();
+
+          if (detailsError) {
+            console.error('Error fetching request details:', detailsError);
+            return null;
+          }
+
+          // Fetch category and appointment info
+          const { data: category } = await supabase
+            .from('service_categories')
+            .select('name')
+            .eq('id', requestDetails.category_id)
+            .single();
+
+          const { data: appointment } = await supabase
+            .from('appointments')
+            .select('id, starts_at, notes')
+            .eq('request_id', requestDetails.id)
+            .maybeSingle();
+
+          return {
+            ...lead,
+            service_requests: {
+              ...requestDetails,
+              service_categories: category,
+              appointments: appointment ? appointment : undefined
+            }
+          };
+        })
+      );
+
+      // Filter out any null results from errors
+      setLeads(leadsWithDetails.filter(lead => lead !== null) as Lead[]);
     } catch (error) {
       console.error('Error:', error);
     } finally {
