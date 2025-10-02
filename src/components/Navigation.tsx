@@ -25,14 +25,14 @@ export function Navigation() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
             <Link to="/" className="flex items-center">
-              <img src={logo} alt="DoneEZ" className="h-8 w-auto" />
+              <img src={logo} alt="DoneEZ" className="h-8 sm:h-10 w-auto drop-shadow-md" />
             </Link>
             
             <div className="flex space-x-4">
               <Link 
                 to="/" 
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
+                  "text-sm lg:text-base font-medium transition-colors hover:text-primary",
                   isActive('/') ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
@@ -44,7 +44,7 @@ export function Navigation() {
                   <Link 
                     to="/request-service" 
                     className={cn(
-                      "text-sm font-medium transition-colors hover:text-primary",
+                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
                       isActive('/request-service') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
@@ -53,7 +53,7 @@ export function Navigation() {
                   <Link 
                     to="/my-requests" 
                     className={cn(
-                      "text-sm font-medium transition-colors hover:text-primary",
+                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
                       isActive('/my-requests') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
@@ -62,7 +62,7 @@ export function Navigation() {
                   <Link 
                     to="/appointments" 
                     className={cn(
-                      "text-sm font-medium transition-colors hover:text-primary",
+                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
                       isActive('/appointments') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
@@ -76,7 +76,7 @@ export function Navigation() {
                   <Link 
                     to="/pro-profile" 
                     className={cn(
-                      "text-sm font-medium transition-colors hover:text-primary",
+                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
                       isActive('/pro-profile') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
@@ -85,7 +85,7 @@ export function Navigation() {
                   <Link 
                     to="/pro-inbox" 
                     className={cn(
-                      "text-sm font-medium transition-colors hover:text-primary",
+                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
                       isActive('/pro-inbox') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
@@ -94,7 +94,7 @@ export function Navigation() {
                    <Link 
                      to="/service-requests" 
                      className={cn(
-                       "text-sm font-medium transition-colors hover:text-primary",
+                       "text-sm lg:text-base font-medium transition-colors hover:text-primary",
                        isActive('/service-requests') ? 'text-primary' : 'text-muted-foreground'
                      )}
                    >
@@ -107,7 +107,7 @@ export function Navigation() {
                 <Link 
                   to="/admin" 
                   className={cn(
-                    "text-sm font-medium transition-colors hover:text-primary",
+                    "text-sm lg:text-base font-medium transition-colors hover:text-primary",
                     isActive('/admin') ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >
@@ -118,13 +118,13 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm lg:text-base text-muted-foreground">
               Welcome, {profile?.name || user?.email}
             </span>
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="text-sm lg:text-base">
               {profile?.role || 'customer'}
             </Badge>
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
+            <Button variant="outline" size="sm" onClick={handleSignOut} className="text-sm lg:text-base">
               Sign Out
             </Button>
           </div>
