@@ -4,7 +4,7 @@ import { useRole } from '@/hooks/useRole';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import logo from '@/assets/logo.png';
+import logo from '@/assets/logo-new.png';
 
 export function Navigation() {
   const { user, signOut } = useAuth();
