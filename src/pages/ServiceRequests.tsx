@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronLeft, ChevronRight, Filter, X, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Filter, X, FileText, Download } from 'lucide-react';
 import { QuoteForm } from '@/components/pro/QuoteForm';
 
 interface ServiceRequest {
@@ -60,6 +60,10 @@ export default function ServiceRequests() {
   // Details modal
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
+  // Image modal
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -171,6 +175,22 @@ export default function ServiceRequests() {
   const handleCardClick = (request: ServiceRequest) => {
     setSelectedRequest(request);
     setIsDetailsModalOpen(true);
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsImageModalOpen(true);
+  };
+
+  const handleDownloadImage = () => {
+    if (selectedImage) {
+      const link = document.createElement('a');
+      link.href = selectedImage;
+      link.download = `service-request-image-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   if (loading) {
@@ -361,8 +381,13 @@ export default function ServiceRequests() {
                         <img 
                           src={request.image_url} 
                           alt="Vehicle issue" 
-                          className="w-full max-w-sm rounded-lg border shadow-sm object-contain max-h-48"
+                          className="w-full max-w-sm rounded-lg border shadow-sm object-contain max-h-48 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleImageClick(request.image_url!);
+                          }}
                         />
+                        <p className="text-xs text-muted-foreground mt-1">Click to enlarge</p>
                       </div>
                     )}
 
@@ -454,8 +479,10 @@ export default function ServiceRequests() {
                       <img 
                         src={selectedRequest.image_url} 
                         alt="Vehicle issue" 
-                        className="w-full rounded-lg border max-h-96 object-contain"
+                        className="w-full rounded-lg border max-h-96 object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => handleImageClick(selectedRequest.image_url!)}
                       />
+                      <p className="text-xs text-muted-foreground mt-1">Click to enlarge</p>
                     </div>
                   )}
 
@@ -580,6 +607,32 @@ export default function ServiceRequests() {
             </div>
           )}
         </div>
+
+        {/* Image Modal */}
+        <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <span>Service Request Image</span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={handleDownloadImage}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            {selectedImage && (
+              <div className="relative">
+                <img 
+                  src={selectedImage} 
+                  alt="Vehicle issue full size" 
+                  className="w-full h-auto rounded-lg"
+                />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </RoleGuard>
   );

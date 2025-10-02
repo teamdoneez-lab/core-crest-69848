@@ -9,9 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Car, MapPin, Calendar, Package, Home, Building2, Edit, Trash2, Eye, RotateCcw } from 'lucide-react';
+import { Car, MapPin, Calendar, Package, Home, Building2, Edit, Trash2, Eye, RotateCcw, Download, X } from 'lucide-react';
 import { QuotesList } from '@/components/customer/QuotesList';
 import { format } from 'date-fns';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface ServiceRequest {
   id: string;
@@ -43,6 +44,8 @@ const MyRequests = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [serviceTypeFilter, setServiceTypeFilter] = useState<string>('all');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -164,6 +167,22 @@ const MyRequests = () => {
       case 'week': return 'Within 1 week';
       case 'month': return 'Within 1 month';
       default: return urgency || 'Not specified';
+    }
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsImageModalOpen(true);
+  };
+
+  const handleDownloadImage = () => {
+    if (selectedImage) {
+      const link = document.createElement('a');
+      link.href = selectedImage;
+      link.download = `service-request-image-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -371,8 +390,10 @@ const MyRequests = () => {
                       <img 
                         src={request.image_url} 
                         alt="Vehicle issue" 
-                        className="w-full max-w-md rounded-lg border shadow-sm object-contain max-h-64"
+                        className="w-full max-w-md rounded-lg border shadow-sm object-contain max-h-64 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => handleImageClick(request.image_url!)}
                       />
+                      <p className="text-xs text-muted-foreground mt-1">Click to enlarge</p>
                     </div>
                   )}
 
@@ -416,6 +437,32 @@ const MyRequests = () => {
             ))}
           </div>
         )}
+
+        {/* Image Modal */}
+        <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <span>Service Request Image</span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={handleDownloadImage}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            {selectedImage && (
+              <div className="relative">
+                <img 
+                  src={selectedImage} 
+                  alt="Vehicle issue full size" 
+                  className="w-full h-auto rounded-lg"
+                />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
