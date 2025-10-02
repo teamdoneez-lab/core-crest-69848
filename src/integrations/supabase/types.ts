@@ -341,6 +341,7 @@ export type Database = {
           estimated_price: number
           id: string
           notes: string | null
+          payment_status: string | null
           pro_id: string
           request_id: string
           status: string
@@ -352,6 +353,7 @@ export type Database = {
           estimated_price: number
           id?: string
           notes?: string | null
+          payment_status?: string | null
           pro_id: string
           request_id: string
           status?: string
@@ -363,6 +365,7 @@ export type Database = {
           estimated_price?: number
           id?: string
           notes?: string | null
+          payment_status?: string | null
           pro_id?: string
           request_id?: string
           status?: string

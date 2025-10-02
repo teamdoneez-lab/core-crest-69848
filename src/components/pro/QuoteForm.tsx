@@ -23,47 +23,32 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
     setIsSubmitting(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { error } = await supabase.from("quotes").insert({
-        request_id: requestId,
-        pro_id: user.id,
-        estimated_price: parseFloat(estimatedPrice),
-        description,
-        notes,
-        status: "pending",
+      // Create Stripe checkout session for quote payment
+      const { data, error } = await supabase.functions.invoke("create-quote-checkout", {
+        body: {
+          request_id: requestId,
+          estimated_price: parseFloat(estimatedPrice),
+          description,
+          notes,
+        },
       });
 
       if (error) throw error;
 
-      // Send email notification to customer
-      const { data: insertedQuote } = await supabase
-        .from("quotes")
-        .select("id")
-        .eq("request_id", requestId)
-        .eq("pro_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (insertedQuote) {
-        await supabase.functions.invoke("send-quote-email", {
-          body: { quoteId: insertedQuote.id },
+      if (data?.url) {
+        // Redirect to Stripe checkout
+        window.open(data.url, '_blank');
+        
+        toast({
+          title: "Payment Required",
+          description: "Please complete payment to submit your quote. The page will open in a new tab.",
         });
       }
-
-      toast({
-        title: "Quote Submitted",
-        description: "Your quote has been sent to the customer via email",
-      });
-
-      onSuccess();
     } catch (error) {
-      console.error("Error submitting quote:", error);
+      console.error("Error creating quote checkout:", error);
       toast({
         title: "Error",
-        description: "Failed to submit quote",
+        description: "Failed to initiate quote submission",
         variant: "destructive",
       });
     } finally {
@@ -115,8 +100,11 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? "Submitting..." : "Submit Quote"}
+        {isSubmitting ? "Processing..." : "Pay Fee & Submit Quote"}
       </Button>
+      <p className="text-xs text-muted-foreground text-center mt-2">
+        A 10% referral fee (${(parseFloat(estimatedPrice || "0") * 0.10).toFixed(2)}) is required to submit this quote
+      </p>
     </form>
   );
 }

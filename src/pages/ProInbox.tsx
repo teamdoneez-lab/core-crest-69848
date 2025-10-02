@@ -256,6 +256,51 @@ const ProInbox = () => {
     }
   }, [user, isPro]);
 
+  // Handle payment success callback from Stripe
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const payment = searchParams.get('payment');
+    const sessionId = searchParams.get('session_id');
+
+    if (payment === 'success' && sessionId) {
+      verifyQuotePayment(sessionId);
+      // Clean up URL parameters
+      window.history.replaceState({}, '', '/pro-inbox');
+    } else if (payment === 'cancelled') {
+      toast({
+        title: "Payment Cancelled",
+        description: "Quote submission was cancelled. No charges were made.",
+      });
+      // Clean up URL parameters
+      window.history.replaceState({}, '', '/pro-inbox');
+    }
+  }, []);
+
+  const verifyQuotePayment = async (sessionId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-quote-payment", {
+        body: { session_id: sessionId },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Quote Submitted Successfully",
+        description: "Your quote has been sent to the customer via email",
+      });
+
+      // Refresh leads to show updated data
+      fetchLeads();
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      toast({
+        title: "Error",
+        description: "Payment was successful but there was an issue completing the quote. Please contact support.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Redirect if not authenticated or not a pro
   if (!authLoading && !roleLoading && (!user || !isPro)) {
     return <Navigate to="/" replace />;

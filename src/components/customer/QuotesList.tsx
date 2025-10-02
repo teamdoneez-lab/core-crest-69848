@@ -73,7 +73,7 @@ export function QuotesList({ requestId }: QuotesListProps) {
 
       toast({
         title: "Quote Accepted",
-        description: "The professional will be notified to complete payment",
+        description: "The professional has been notified and will proceed with the service",
       });
 
       fetchQuotes();
@@ -89,6 +89,7 @@ export function QuotesList({ requestId }: QuotesListProps) {
 
   const handleDeclineQuote = async (quoteId: string) => {
     try {
+      // Update quote status to declined
       const { error } = await supabase
         .from("quotes")
         .update({ status: "declined" })
@@ -96,10 +97,39 @@ export function QuotesList({ requestId }: QuotesListProps) {
 
       if (error) throw error;
 
-      toast({
-        title: "Quote Declined",
-        description: "The professional has been notified",
-      });
+      // Get the referral fee for this quote to trigger refund
+      const { data: referralFee } = await supabase
+        .from("referral_fees")
+        .select("id, status")
+        .eq("quote_id", quoteId)
+        .eq("status", "paid")
+        .single();
+
+      // If there's a paid referral fee, trigger refund
+      if (referralFee) {
+        const { error: refundError } = await supabase.functions.invoke("refund-referral-fee", {
+          body: { referral_fee_id: referralFee.id },
+        });
+
+        if (refundError) {
+          console.error("Error refunding fee:", refundError);
+          toast({
+            title: "Quote Declined",
+            description: "Quote declined but refund may need manual processing",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Quote Declined",
+            description: "The professional has been notified and the fee has been refunded",
+          });
+        }
+      } else {
+        toast({
+          title: "Quote Declined",
+          description: "The professional has been notified",
+        });
+      }
 
       fetchQuotes();
     } catch (error) {
@@ -183,7 +213,7 @@ export function QuotesList({ requestId }: QuotesListProps) {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Accept this quote?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      By accepting this quote, the professional will be notified to pay the referral fee and proceed with the service.
+                      By accepting this quote, you agree to hire this professional for the service. The professional has already paid the referral fee.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
