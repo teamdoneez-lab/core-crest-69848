@@ -355,6 +355,17 @@ export default function ServiceRequests() {
                       </div>
                     )}
 
+                    {request.image_url && (
+                      <div className="mt-4">
+                        <h4 className="font-medium mb-2">Uploaded Image</h4>
+                        <img 
+                          src={request.image_url} 
+                          alt="Vehicle issue" 
+                          className="w-full max-w-sm rounded-lg border shadow-sm object-contain max-h-48"
+                        />
+                      </div>
+                    )}
+
                     <div className="mt-4 pt-4 border-t flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
                         Submitted {new Date(request.created_at).toLocaleDateString()} at {new Date(request.created_at).toLocaleTimeString()}

@@ -28,6 +28,7 @@ interface ServiceRequest {
   status: string;
   urgency?: string;
   description?: string;
+  image_url?: string;
   created_at: string;
   service_categories?: {
     name: string;
@@ -360,6 +361,18 @@ const MyRequests = () => {
                     <div className="mb-4 p-3 bg-blue-50 rounded-lg">
                       <h4 className="font-semibold mb-1 text-sm">Notes</h4>
                       <p className="text-sm text-blue-700">{request.description}</p>
+                    </div>
+                  )}
+
+                  {/* Uploaded Image */}
+                  {request.image_url && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold mb-2 text-sm">Uploaded Image</h4>
+                      <img 
+                        src={request.image_url} 
+                        alt="Vehicle issue" 
+                        className="w-full max-w-md rounded-lg border shadow-sm object-contain max-h-64"
+                      />
                     </div>
                   )}
 
