@@ -37,9 +37,25 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
 
       if (error) throw error;
 
+      // Send email notification to customer
+      const { data: insertedQuote } = await supabase
+        .from("quotes")
+        .select("id")
+        .eq("request_id", requestId)
+        .eq("pro_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (insertedQuote) {
+        await supabase.functions.invoke("send-quote-email", {
+          body: { quoteId: insertedQuote.id },
+        });
+      }
+
       toast({
         title: "Quote Submitted",
-        description: "Your quote has been sent to the customer",
+        description: "Your quote has been sent to the customer via email",
       });
 
       onSuccess();

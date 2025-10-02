@@ -6,5 +6,8 @@ verify_jwt = true
 [functions.verify-referral-payment]
 verify_jwt = false
 
+[functions.send-quote-email]
+verify_jwt = true
+
 [functions.refund-referral-fee]
 verify_jwt = true
