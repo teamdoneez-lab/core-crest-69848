@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ChevronLeft, ChevronRight, Filter, X, FileText } from 'lucide-react';
+import { QuoteForm } from '@/components/pro/QuoteForm';
 
 interface ServiceRequest {
   id: string;
@@ -49,6 +51,10 @@ export default function ServiceRequests() {
     dateTo: ''
   });
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Quote modal
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -143,6 +149,17 @@ export default function ServiceRequests() {
       case 'flexible': return 'Flexible';
       default: return pref;
     }
+  };
+
+  const handleQuoteClick = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setIsQuoteModalOpen(true);
+  };
+
+  const handleQuoteSuccess = () => {
+    setIsQuoteModalOpen(false);
+    setSelectedRequestId(null);
+    fetchServiceRequests();
   };
 
   if (loading) {
@@ -323,16 +340,41 @@ export default function ServiceRequests() {
                       </div>
                     )}
 
-                    <div className="mt-4 pt-4 border-t">
+                    <div className="mt-4 pt-4 border-t flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
                         Submitted {new Date(request.created_at).toLocaleDateString()} at {new Date(request.created_at).toLocaleTimeString()}
                       </p>
+                      <Button 
+                        onClick={() => handleQuoteClick(request.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        Send Quote
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           )}
+
+          {/* Quote Modal */}
+          <Dialog open={isQuoteModalOpen} onOpenChange={setIsQuoteModalOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Submit Quote</DialogTitle>
+                <DialogDescription>
+                  Send your quote to the customer. A 10% referral fee will be charged.
+                </DialogDescription>
+              </DialogHeader>
+              {selectedRequestId && (
+                <QuoteForm 
+                  requestId={selectedRequestId} 
+                  onSuccess={handleQuoteSuccess}
+                />
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Pagination */}
           {totalPages > 1 && (
