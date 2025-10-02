@@ -22,10 +22,10 @@ export function Navigation() {
   return (
     <nav className="border-b bg-background">
       <div className="mx-auto max-w-6xl px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           <div className="flex items-center space-x-8">
             <Link to="/" className="flex items-center">
-              <img src={logo} alt="DoneEZ" className="h-8 sm:h-10 w-auto drop-shadow-md" />
+              <img src={logo} alt="DoneEZ" className="h-12 md:h-16 w-auto drop-shadow-lg" />
             </Link>
             
             <div className="flex space-x-4">
