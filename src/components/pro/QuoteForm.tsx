@@ -23,32 +23,35 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
     setIsSubmitting(true);
 
     try {
-      // Create Stripe checkout session for quote payment
-      const { data, error } = await supabase.functions.invoke("create-quote-checkout", {
-        body: {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Insert quote directly
+      const { error: quoteError } = await supabase
+        .from("quotes")
+        .insert({
           request_id: requestId,
+          pro_id: user.id,
           estimated_price: parseFloat(estimatedPrice),
           description,
           notes,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        // Redirect to Stripe checkout
-        window.open(data.url, '_blank');
-        
-        toast({
-          title: "Payment Required",
-          description: "Please complete payment to submit your quote. The page will open in a new tab.",
+          status: "pending",
+          payment_status: "pending",
         });
-      }
+
+      if (quoteError) throw quoteError;
+
+      toast({
+        title: "Success",
+        description: "Quote submitted successfully!",
+      });
+      
+      onSuccess();
     } catch (error) {
-      console.error("Error creating quote checkout:", error);
+      console.error("Error submitting quote:", error);
       toast({
         title: "Error",
-        description: "Failed to initiate quote submission",
+        description: "Failed to submit quote",
         variant: "destructive",
       });
     } finally {
@@ -100,11 +103,8 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? "Processing..." : "Pay Fee & Submit Quote"}
+        {isSubmitting ? "Submitting..." : "Submit Quote"}
       </Button>
-      <p className="text-xs text-muted-foreground text-center mt-2">
-        A 10% referral fee (${(parseFloat(estimatedPrice || "0") * 0.10).toFixed(2)}) is required to submit this quote
-      </p>
     </form>
   );
 }

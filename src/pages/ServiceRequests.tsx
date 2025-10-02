@@ -27,6 +27,7 @@ interface ServiceRequest {
   contact_phone: string;
   status: string;
   notes?: string;
+  image_url?: string;
   created_at: string;
   service_categories: {
     name: string;
@@ -436,6 +437,17 @@ export default function ServiceRequests() {
                     </div>
                   )}
 
+                  {selectedRequest.image_url && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3">Uploaded Image</h3>
+                      <img 
+                        src={selectedRequest.image_url} 
+                        alt="Vehicle issue" 
+                        className="w-full rounded-lg border max-h-96 object-contain"
+                      />
+                    </div>
+                  )}
+
                   <div>
                     <h3 className="font-semibold text-lg mb-3">Customer Contact</h3>
                     <div className="space-y-2 text-sm">
@@ -488,7 +500,7 @@ export default function ServiceRequests() {
               <DialogHeader>
                 <DialogTitle>Submit Quote</DialogTitle>
                 <DialogDescription>
-                  Send your quote to the customer. A 10% referral fee will be charged.
+                  Send your quote to the customer
                 </DialogDescription>
               </DialogHeader>
               {selectedRequestId && (

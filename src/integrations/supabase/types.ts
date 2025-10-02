@@ -491,6 +491,7 @@ export type Database = {
           description: string | null
           formatted_address: string | null
           id: string
+          image_url: string | null
           latitude: number | null
           longitude: number | null
           mileage: number | null
@@ -520,6 +521,7 @@ export type Database = {
           description?: string | null
           formatted_address?: string | null
           id?: string
+          image_url?: string | null
           latitude?: number | null
           longitude?: number | null
           mileage?: number | null
@@ -549,6 +551,7 @@ export type Database = {
           description?: string | null
           formatted_address?: string | null
           id?: string
+          image_url?: string | null
           latitude?: number | null
           longitude?: number | null
           mileage?: number | null

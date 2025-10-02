@@ -173,7 +173,12 @@ export default function ServiceRequestFlow() {
       case 5:
         return formData.zip !== "";
       case 6:
-        return formData.preferred_time !== null;
+        if (!formData.preferred_time) {
+          return false;
+        }
+        // Validate that preferred time is in the future
+        const now = new Date();
+        return formData.preferred_time > now;
       case 7:
         return true;
       default:
@@ -183,7 +188,11 @@ export default function ServiceRequestFlow() {
 
   const handleNext = async () => {
     if (!canContinue()) {
-      toast.error("Please complete all required fields");
+      if (currentStep === 6 && formData.preferred_time && formData.preferred_time <= new Date()) {
+        toast.error("Please select a future date and time");
+      } else {
+        toast.error("Please complete all required fields");
+      }
       return;
     }
 
@@ -212,19 +221,23 @@ export default function ServiceRequestFlow() {
 
     try {
       // Upload file if exists
-      let fileUrl = "";
+      let imageUrl = "";
       if (uploadedFile) {
-        // Note: You'll need to set up a Supabase storage bucket first
         const fileExt = uploadedFile.name.split(".").pop();
-        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
         
-        // Placeholder for file upload - implement storage bucket first
-        // const { data: fileData, error: fileError } = await supabase.storage
-        //   .from('service-files')
-        //   .upload(fileName, uploadedFile);
+        const { data: fileData, error: fileError } = await supabase.storage
+          .from('service-images')
+          .upload(fileName, uploadedFile);
         
-        // if (fileError) throw fileError;
-        // fileUrl = fileData.path;
+        if (fileError) throw fileError;
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('service-images')
+          .getPublicUrl(fileName);
+        
+        imageUrl = publicUrl;
       }
 
       // Fetch service categories to map the selected services
@@ -282,6 +295,7 @@ export default function ServiceRequestFlow() {
         contact_email: formData.contact_email,
         appointment_pref: "scheduled",
         status: "pending",
+        image_url: imageUrl || null,
       });
 
       if (error) throw error;

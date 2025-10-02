@@ -231,12 +231,12 @@ const Index = () => {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-3 lg:space-x-4">
-              <Link to="/request-service-flow">
+              <Link to="/auth">
                 <Button variant="outline" className="border-primary/20 bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-300 text-sm lg:text-base px-3 lg:px-4">
                   Request Service
                 </Button>
               </Link>
-              <Link to="/pro-onboarding">
+              <Link to="/auth">
                 <Button className="bg-gradient-primary hover:opacity-90 text-white shadow-elegant transition-all duration-300 text-sm lg:text-base px-3 lg:px-4">
                   Become a Pro
                 </Button>
@@ -276,12 +276,12 @@ const Index = () => {
           {/* Mobile Menu */}
           <div id="mobile-menu" className="md:hidden hidden border-t border-primary/10 bg-background/95 backdrop-blur-xl">
             <div className="px-2 pt-2 pb-3 space-y-2">
-              <Link to="/request-service-flow" className="block">
+              <Link to="/auth" className="block">
                 <Button variant="outline" className="w-full justify-start border-primary/20 bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-300">
                   Request Service
                 </Button>
               </Link>
-              <Link to="/pro-onboarding" className="block">
+              <Link to="/auth" className="block">
                 <Button className="w-full justify-start bg-gradient-primary hover:opacity-90 text-white shadow-elegant transition-all duration-300">
                   Become a Pro
                 </Button>
@@ -325,13 +325,13 @@ const Index = () => {
                 Book instantly, track progress, and pay securely.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center lg:justify-start">
-                <Link to="/request-service-flow" className="w-full sm:w-auto">
+              <Link to="/auth" className="w-full sm:w-auto">
                   <Button size="lg" className="w-full text-base sm:text-lg px-6 py-4 sm:px-10 sm:py-7 bg-gradient-primary hover:opacity-90 shadow-elegant hover:shadow-glow transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
                     <Wrench className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
                     Request Service Now
                   </Button>
                 </Link>
-                <Link to="/pro-onboarding" className="w-full sm:w-auto">
+                <Link to="/auth" className="w-full sm:w-auto">
                   <Button size="lg" variant="outline" className="w-full text-base sm:text-lg px-6 py-4 sm:px-10 sm:py-7 border-2 border-primary/30 hover:border-primary bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-500 transform hover:scale-105">
                     <UserPlus className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
                     Join as Professional
@@ -537,13 +537,13 @@ const Index = () => {
             Join thousands of satisfied customers and professional service providers in revolutionizing auto care
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Link to="/request-service-flow">
+            <Link to="/auth">
               <Button size="lg" className="w-full sm:w-auto text-lg px-10 py-7 bg-white text-primary hover:bg-white/90 shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
                 <Calendar className="mr-3 h-6 w-6" />
                 Book Your Service Today
               </Button>
             </Link>
-            <Link to="/pro-onboarding">
+            <Link to="/auth">
               <Button size="lg" className="w-full sm:w-auto text-lg px-10 py-7 bg-white text-primary hover:bg-white/90 shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
                 <UserPlus className="mr-3 h-6 w-6" />
                 Become a Professional Partner
