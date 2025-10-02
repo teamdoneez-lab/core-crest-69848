@@ -17,29 +17,38 @@ export type Database = {
       appointments: {
         Row: {
           created_at: string
+          final_price: number | null
           id: string
+          inspection_date: string | null
           notes: string | null
           pro_id: string
           request_id: string
           starts_at: string
+          status: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          final_price?: number | null
           id?: string
+          inspection_date?: string | null
           notes?: string | null
           pro_id: string
           request_id: string
           starts_at: string
+          status?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          final_price?: number | null
           id?: string
+          inspection_date?: string | null
           notes?: string | null
           pro_id?: string
           request_id?: string
           starts_at?: string
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -325,6 +334,57 @@ export type Database = {
         }
         Relationships: []
       }
+      quotes: {
+        Row: {
+          created_at: string
+          description: string
+          estimated_price: number
+          id: string
+          notes: string | null
+          pro_id: string
+          request_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          estimated_price: number
+          id?: string
+          notes?: string | null
+          pro_id: string
+          request_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          estimated_price?: number
+          id?: string
+          notes?: string | null
+          pro_id?: string
+          request_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_pro_id_fkey"
+            columns: ["pro_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_fees: {
         Row: {
           amount: number
@@ -332,6 +392,8 @@ export type Database = {
           id: string
           paid_at: string | null
           pro_id: string
+          quote_id: string | null
+          refundable: boolean
           request_id: string
           status: string
           stripe_payment_intent: string | null
@@ -344,6 +406,8 @@ export type Database = {
           id?: string
           paid_at?: string | null
           pro_id: string
+          quote_id?: string | null
+          refundable?: boolean
           request_id: string
           status?: string
           stripe_payment_intent?: string | null
@@ -356,6 +420,8 @@ export type Database = {
           id?: string
           paid_at?: string | null
           pro_id?: string
+          quote_id?: string | null
+          refundable?: boolean
           request_id?: string
           status?: string
           stripe_payment_intent?: string | null
@@ -368,6 +434,13 @@ export type Database = {
             columns: ["pro_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_fees_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
             referencedColumns: ["id"]
           },
           {

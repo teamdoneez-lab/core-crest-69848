@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Car, MapPin, Calendar, Package, Home, Building2, Edit, Trash2, Eye, RotateCcw } from 'lucide-react';
+import { QuotesList } from '@/components/customer/QuotesList';
 import { format } from 'date-fns';
 
 interface ServiceRequest {
@@ -361,6 +362,12 @@ const MyRequests = () => {
                       <p className="text-sm text-blue-700">{request.description}</p>
                     </div>
                   )}
+
+                  {/* Quotes Section */}
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-3">Quotes Received</h4>
+                    <QuotesList requestId={request.id} />
+                  </div>
 
                   {/* Actions */}
                   <div className="flex flex-wrap gap-2 pt-4 border-t">

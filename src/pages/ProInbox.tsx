@@ -14,6 +14,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { QuoteForm } from '@/components/pro/QuoteForm';
 import { Clock, MapPin, Calendar as CalendarIcon, User, Phone, Mail, Car, CheckCircle, PlayCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -643,18 +644,89 @@ const ProInbox = () => {
                       </div>
                     )}
 
-                    <div className="flex gap-2 pt-4 border-t">
-                      {canAcceptLead(lead) && (
-                        <Button 
-                          onClick={() => handleAcceptLead(lead.id, lead.service_requests.id)}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          Accept Lead
-                        </Button>
+                    <div className="flex flex-wrap gap-2 pt-4 border-t">
+                      {canAcceptLead(lead) && lead.status === 'new' && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button className="bg-green-600 hover:bg-green-700">
+                              Submit Quote
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>Submit Your Quote</DialogTitle>
+                              <DialogDescription>
+                                Provide an estimated price and service description for this request.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <QuoteForm 
+                              requestId={request.id}
+                              onSuccess={() => {
+                                fetchLeads();
+                                toast({
+                                  title: "Quote Submitted",
+                                  description: "The customer will review your quote",
+                                });
+                              }}
+                            />
+                          </DialogContent>
+                        </Dialog>
                       )}
                       
-                      {lead.status === 'accepted' && isMyLock && request.status === 'accepted' && (
-                        <AppointmentSchedule lead={lead} onScheduled={fetchLeads} />
+                      {lead.status === 'accepted' && isMyLock && (
+                        <>
+                          {/* Show payment button if quote accepted but fee not paid */}
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button className="bg-blue-600 hover:bg-blue-700">
+                                Pay Referral Fee & Schedule
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Pay Referral Fee</DialogTitle>
+                                <DialogDescription>
+                                  Complete the referral fee payment to schedule your appointment
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <p className="text-sm text-muted-foreground">
+                                  Once payment is confirmed, you'll be able to schedule the appointment with the customer.
+                                </p>
+                                <Button 
+                                  onClick={async () => {
+                                    // Get quote for this request
+                                    const { data: quotes } = await supabase
+                                      .from('quotes')
+                                      .select('id')
+                                      .eq('request_id', request.id)
+                                      .eq('status', 'accepted')
+                                      .single();
+
+                                    if (quotes) {
+                                      const { data, error } = await supabase.functions.invoke('create-referral-checkout', {
+                                        body: { quote_id: quotes.id }
+                                      });
+
+                                      if (error || data.error) {
+                                        toast({
+                                          title: 'Error',
+                                          description: error?.message || data.error,
+                                          variant: 'destructive'
+                                        });
+                                      } else {
+                                        window.open(data.url, '_blank');
+                                      }
+                                    }
+                                  }}
+                                  className="w-full"
+                                >
+                                  Proceed to Payment
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </>
                       )}
                       
                       {request.status === 'scheduled' && isMyLock && (

@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.verify-referral-payment]
 verify_jwt = false
+
+[functions.refund-referral-fee]
+verify_jwt = true

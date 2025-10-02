@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { DollarSign, Download, ExternalLink, CheckCircle } from 'lucide-react';
+import { DollarSign, Download, ExternalLink, CheckCircle, RefreshCcw } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ReferralFee {
@@ -18,6 +18,7 @@ interface ReferralFee {
   paid_at?: string;
   stripe_session_id?: string;
   stripe_payment_intent?: string;
+  refundable?: boolean;
   service_requests: {
     id: string;
     vehicle_make: string;
@@ -91,6 +92,32 @@ export const ReferralFeesTab = () => {
     }
   };
 
+  const handleRefund = async (feeId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('refund-referral-fee', {
+        body: { referral_fee_id: feeId }
+      });
+
+      if (error || data?.error) {
+        throw new Error(error?.message || data.error);
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Referral fee refunded successfully'
+      });
+
+      fetchFees();
+    } catch (error) {
+      console.error('Error refunding fee:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to refund fee',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const exportToCSV = () => {
     const csvData = fees.map(fee => ({
       'Pro Name': fee.profiles?.name || 'N/A',
@@ -127,6 +154,7 @@ export const ReferralFeesTab = () => {
     switch (status) {
       case 'paid': return 'bg-green-100 text-green-800';
       case 'owed': return 'bg-yellow-100 text-yellow-800';
+      case 'refunded': return 'bg-blue-100 text-blue-800';
       case 'canceled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -280,6 +308,44 @@ export const ReferralFeesTab = () => {
                       <DialogFooter>
                         <Button onClick={() => handleMarkPaid(fee.id, 'manual')}>
                           Confirm Payment
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
+                {fee.status === 'paid' && fee.refundable && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <RefreshCcw className="h-4 w-4 mr-2" />
+                        Refund
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Refund Referral Fee</DialogTitle>
+                        <DialogDescription>
+                          This will refund the referral fee via Stripe. This action cannot be undone.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <p className="text-sm text-muted-foreground">
+                          Amount to refund: <span className="font-semibold">${fee.amount.toFixed(2)}</span>
+                        </p>
+                        <p className="text-sm text-yellow-600">
+                          ⚠️ This is typically done when the customer declines after an inspection.
+                        </p>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => {}}>
+                          Cancel
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          onClick={() => handleRefund(fee.id)}
+                        >
+                          Confirm Refund
                         </Button>
                       </DialogFooter>
                     </DialogContent>
