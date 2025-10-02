@@ -40,6 +40,27 @@ export function QuotesList({ requestId }: QuotesListProps) {
 
   useEffect(() => {
     fetchQuotes();
+
+    // Subscribe to real-time updates for new quotes
+    const channel = supabase
+      .channel('quotes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quotes',
+          filter: `request_id=eq.${requestId}`
+        },
+        () => {
+          fetchQuotes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [requestId]);
 
   const fetchQuotes = async () => {
