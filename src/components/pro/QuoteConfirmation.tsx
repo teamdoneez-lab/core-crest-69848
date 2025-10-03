@@ -104,6 +104,14 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
 
       if (error) throw error;
 
+      // Update referral fee if exists
+      const { error: feeError } = await supabase
+        .from("referral_fees")
+        .update({ status: "declined" })
+        .eq("quote_id", quote.id);
+
+      if (feeError) console.error("Error updating referral fee:", feeError);
+
       setIsDeclined(true);
       
       toast({
@@ -111,7 +119,10 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
         description: "Customer has been notified to select another quote.",
       });
 
-      onConfirmed();
+      // Wait a moment before refreshing to ensure state updates
+      setTimeout(() => {
+        onConfirmed();
+      }, 500);
     } catch (error) {
       console.error("Error declining quote:", error);
       toast({
@@ -126,6 +137,36 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
 
   const timeRemaining = getTimeRemaining();
   const isExpired = timeRemaining === "Expired";
+
+  if (isDeclined) {
+    return (
+      <Card className="border-gray-200 bg-gray-50">
+        <CardContent className="pt-6 pb-6">
+          <div className="text-center space-y-2">
+            <p className="text-lg font-semibold text-gray-700">❌ Quote Declined</p>
+            <p className="text-sm text-gray-600">
+              Customer has been notified to select another quote.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isExpired) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="pt-6 pb-6">
+          <div className="text-center space-y-2">
+            <p className="text-lg font-semibold text-red-700">⏰ Quote Expired</p>
+            <p className="text-sm text-red-600">
+              Time limit exceeded. Customer has been notified to select another quote.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-orange-200 bg-orange-50">
@@ -147,18 +188,20 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
         <div className="space-y-2">
           <p className="font-semibold text-lg">${quote.estimated_price.toFixed(2)}</p>
           <p className="text-sm text-muted-foreground">{quote.description}</p>
-          <p className="text-sm font-semibold text-orange-700">
-            {isExpired 
-              ? "⏰ Time expired! Quote will be declined automatically."
-              : `⚡ Confirm now to secure this appointment. ${timeRemaining} remaining.`
-            }
-          </p>
+          <div className="p-3 bg-orange-100 rounded-lg border border-orange-300">
+            <p className="text-sm font-semibold text-orange-800">
+              ⚡ Confirm now to secure this appointment
+            </p>
+            <p className="text-xs text-orange-700 mt-1">
+              {timeRemaining} remaining • Referral fee: ${(quote.estimated_price * 0.1).toFixed(2)}
+            </p>
+          </div>
         </div>
       </CardContent>
       <CardFooter className="gap-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button className="flex-1" disabled={isProcessing || isExpired || isDeclined}>
+            <Button className="flex-1" disabled={isProcessing}>
               <CheckCircle className="mr-2 h-4 w-4" />
               Confirm & Pay Fee
             </Button>
@@ -167,7 +210,7 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
             <AlertDialogHeader>
               <AlertDialogTitle>Confirm this appointment?</AlertDialogTitle>
               <AlertDialogDescription>
-                You will be redirected to pay the referral fee (${quote.estimated_price * 0.1}). Once paid, the appointment will be confirmed and customer contact details will be shared with you.
+                You will be redirected to pay the referral fee (${(quote.estimated_price * 0.1).toFixed(2)}). Once paid, the appointment will be confirmed and customer contact details will be shared with you.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -178,10 +221,28 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <Button variant="outline" className="flex-1" onClick={handleDecline} disabled={isProcessing || isDeclined}>
-          <XCircle className="mr-2 h-4 w-4" />
-          {isDeclined ? "Declined" : "Decline"}
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" className="flex-1" disabled={isProcessing}>
+              <XCircle className="mr-2 h-4 w-4" />
+              Decline
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Decline this quote?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The customer will be notified to select another quote. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDecline} className="bg-red-600 hover:bg-red-700">
+                Decline Quote
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardFooter>
     </Card>
   );

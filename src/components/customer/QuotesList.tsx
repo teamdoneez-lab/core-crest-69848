@@ -174,11 +174,11 @@ export function QuotesList({ requestId }: QuotesListProps) {
   const getStatusBadge = (status: string, isRevised: boolean = false) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
       pending: { variant: "outline", label: isRevised ? "Revised Quote" : "Pending" },
-      pending_confirmation: { variant: "secondary", label: "Awaiting Confirmation" },
-      confirmed: { variant: "default", label: "Confirmed" },
+      pending_confirmation: { variant: "secondary", label: "⏱ Awaiting Confirmation" },
+      confirmed: { variant: "default", label: "✅ Confirmed" },
       accepted: { variant: "default", label: "Accepted" },
-      declined: { variant: "destructive", label: "Declined" },
-      expired: { variant: "destructive", label: "Expired" },
+      declined: { variant: "destructive", label: "❌ Declined" },
+      expired: { variant: "destructive", label: "⏱ Expired" },
     };
 
     const config = variants[status] || variants.pending;
@@ -236,19 +236,32 @@ export function QuotesList({ requestId }: QuotesListProps) {
             <CardDescription>
               Submitted {new Date(quote.created_at).toLocaleDateString()}
               {quote.status === "pending_confirmation" && quote.confirmation_timer_expires_at && (
-                <span className="ml-2 text-orange-600 font-semibold">
-                  • {getTimeRemaining(quote.confirmation_timer_expires_at)}
-                </span>
+                <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded">
+                  <span className="text-orange-700 font-semibold">
+                    ⏱ {getTimeRemaining(quote.confirmation_timer_expires_at)}
+                  </span>
+                </div>
               )}
               {quote.status === "expired" && (
-                <span className="ml-2 text-red-600">
-                  • Professional didn't confirm in time. Please choose another quote.
-                </span>
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                  <span className="text-red-700">
+                    ⏰ Professional didn't confirm in time. Please choose another quote.
+                  </span>
+                </div>
               )}
               {quote.status === "declined" && (
-                <span className="ml-2 text-red-600">
-                  • Professional declined. Please choose another quote.
-                </span>
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                  <span className="text-red-700">
+                    ❌ Professional declined. Please choose another available quote.
+                  </span>
+                </div>
+              )}
+              {quote.status === "confirmed" && (
+                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
+                  <span className="text-green-700 font-semibold">
+                    ✅ Appointment confirmed! Check your appointments for mechanic details.
+                  </span>
+                </div>
               )}
             </CardDescription>
           </CardHeader>
@@ -298,17 +311,40 @@ export function QuotesList({ requestId }: QuotesListProps) {
               </Button>
             </CardFooter>
           )}
+          {(quote.status === "expired" || quote.status === "declined") && (
+            <CardFooter>
+              <div className="w-full text-center">
+                <p className="text-sm text-muted-foreground mb-3">
+                  This quote is no longer available. Select another quote or submit a new request.
+                </p>
+              </div>
+            </CardFooter>
+          )}
           {quote.status === "pending_confirmation" && (
             <CardFooter>
-              <div className="w-full text-center text-sm text-muted-foreground">
-                Awaiting confirmation from professional...
+              <div className="w-full">
+                <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                  <p className="text-sm font-semibold text-orange-700">
+                    ⏳ Awaiting confirmation from professional...
+                  </p>
+                  <p className="text-xs text-orange-600 mt-1">
+                    You'll be notified once they confirm or if they decline.
+                  </p>
+                </div>
               </div>
             </CardFooter>
           )}
           {quote.status === "confirmed" && (
             <CardFooter>
-              <div className="w-full text-center text-sm font-semibold text-green-600">
-                ✓ Confirmed! Check your appointments for details.
+              <div className="w-full">
+                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                  <p className="text-sm font-semibold text-green-700">
+                    ✅ Appointment Confirmed!
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Mechanic contact details and appointment info available in your appointments.
+                  </p>
+                </div>
               </div>
             </CardFooter>
           )}
