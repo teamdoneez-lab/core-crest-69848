@@ -132,7 +132,7 @@ export function QuotesList({ requestId }: QuotesListProps) {
         .select("id, status")
         .eq("quote_id", quoteId)
         .eq("status", "paid")
-        .single();
+        .maybeSingle();
 
       // If there's a paid referral fee, trigger refund
       if (referralFee) {
@@ -166,6 +166,32 @@ export function QuotesList({ requestId }: QuotesListProps) {
       toast({
         title: "Error",
         description: "Failed to decline quote",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelQuote = async (quoteId: string) => {
+    try {
+      // Update quote status to cancelled
+      const { error } = await supabase
+        .from("quotes")
+        .update({ status: "declined" })
+        .eq("id", quoteId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Quote Cancelled",
+        description: "The professional has been notified",
+      });
+
+      fetchQuotes();
+    } catch (error) {
+      console.error("Error cancelling quote:", error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel quote",
         variant: "destructive",
       });
     }
@@ -236,11 +262,21 @@ export function QuotesList({ requestId }: QuotesListProps) {
             <CardDescription>
               Submitted {new Date(quote.created_at).toLocaleDateString()}
               {quote.status === "pending_confirmation" && quote.confirmation_timer_expires_at && (
-                <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded">
-                  <span className="text-orange-700 font-semibold">
-                    ⏱ {getTimeRemaining(quote.confirmation_timer_expires_at)}
-                  </span>
-                </div>
+                <>
+                  {getTimeRemaining(quote.confirmation_timer_expires_at) !== "Expired" ? (
+                    <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded">
+                      <span className="text-orange-700 font-semibold">
+                        ⏱ {getTimeRemaining(quote.confirmation_timer_expires_at)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                      <span className="text-red-700 font-semibold">
+                        ⏰ Expired - Professional didn't confirm in time
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
               {quote.status === "expired" && (
                 <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
@@ -321,17 +357,28 @@ export function QuotesList({ requestId }: QuotesListProps) {
             </CardFooter>
           )}
           {quote.status === "pending_confirmation" && (
-            <CardFooter>
-              <div className="w-full">
-                <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                  <p className="text-sm font-semibold text-orange-700">
-                    ⏳ Awaiting confirmation from professional...
-                  </p>
-                  <p className="text-xs text-orange-600 mt-1">
-                    You'll be notified once they confirm or if they decline.
-                  </p>
+            <CardFooter className="flex-col gap-2">
+              {getTimeRemaining(quote.confirmation_timer_expires_at) !== "Expired" ? (
+                <div className="w-full">
+                  <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <p className="text-sm font-semibold text-orange-700">
+                      ⏳ Awaiting confirmation from professional...
+                    </p>
+                    <p className="text-xs text-orange-600 mt-1">
+                      You'll be notified once they confirm or if they decline.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : null}
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                className="w-full"
+                onClick={() => handleCancelQuote(quote.id)}
+              >
+                <XCircle className="mr-2 h-4 w-4" />
+                Cancel Quote
+              </Button>
             </CardFooter>
           )}
           {quote.status === "confirmed" && (

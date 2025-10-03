@@ -6,14 +6,28 @@ import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, MapPin, Phone, Mail, Car, Clock, User } from 'lucide-react';
+import { Calendar, MapPin, Phone, Mail, Car, Clock, User, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Appointment {
   id: string;
   starts_at: string;
   notes?: string;
+  status: string;
+  pro_id: string;
   service_requests: {
     id: string;
     vehicle_make: string;
@@ -60,6 +74,8 @@ const Appointments = () => {
           id,
           starts_at,
           notes,
+          status,
+          pro_id,
           service_requests!inner (
             id,
             vehicle_make,
@@ -98,6 +114,52 @@ const Appointments = () => {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCompleteJob = async (appointmentId: string, proId: string) => {
+    try {
+      // Update appointment status to completed
+      const { error: appointmentError } = await supabase
+        .from('appointments')
+        .update({ status: 'completed' })
+        .eq('id', appointmentId);
+
+      if (appointmentError) throw appointmentError;
+
+      // Update service request status to completed
+      const appointment = appointments.find(a => a.id === appointmentId);
+      if (appointment) {
+        const { error: requestError } = await supabase
+          .from('service_requests')
+          .update({ status: 'completed' })
+          .eq('id', appointment.service_requests.id);
+
+        if (requestError) throw requestError;
+      }
+
+      // Notify the professional
+      const { error: notifyError } = await supabase.functions.invoke('notify-job-completed', {
+        body: { appointment_id: appointmentId, pro_id: proId }
+      });
+
+      if (notifyError) {
+        console.error('Error notifying professional:', notifyError);
+      }
+
+      toast({
+        title: "Job Completed",
+        description: "The professional has been notified. Thank you!",
+      });
+
+      fetchAppointments();
+    } catch (error) {
+      console.error('Error completing job:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark job as completed",
+        variant: "destructive",
+      });
     }
   };
 
@@ -208,8 +270,34 @@ const Appointments = () => {
                           </div>
                         )}
 
-                        <div className="text-xs text-muted-foreground">
-                          Service Request ID: {appointment.service_requests.id}
+                        <div className="flex items-center justify-between pt-4 border-t">
+                          <div className="text-xs text-muted-foreground">
+                            Service Request ID: {appointment.service_requests.id}
+                          </div>
+                          {appointment.status !== 'completed' && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm">
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Mark Complete
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Mark job as complete?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will notify the professional that the job has been completed. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleCompleteJob(appointment.id, appointment.pro_id)}>
+                                    Confirm
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
