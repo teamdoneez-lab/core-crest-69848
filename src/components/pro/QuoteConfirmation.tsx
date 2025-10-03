@@ -61,10 +61,15 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
   const handleConfirm = async () => {
     setIsProcessing(true);
     try {
+      // Store checkout info for callback
+      sessionStorage.setItem('pending_checkout', JSON.stringify({
+        request_id: quote.request_id,
+        quote_id: quote.id
+      }));
+
       // Create referral fee checkout
       const { data, error } = await supabase.functions.invoke("create-referral-checkout", {
         body: { 
-          request_id: quote.request_id,
           quote_id: quote.id 
         },
       });
@@ -85,6 +90,7 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
         variant: "destructive",
       });
       setIsProcessing(false);
+      sessionStorage.removeItem('pending_checkout');
     }
   };
 

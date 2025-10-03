@@ -193,6 +193,8 @@ export default function ServiceRequests() {
   };
 
   const fetchPendingQuotes = async () => {
+    if (!user?.id) return;
+    
     const { data, error } = await supabase
       .from('quotes')
       .select(`
@@ -210,7 +212,7 @@ export default function ServiceRequests() {
           urgency
         )
       `)
-      .eq('pro_id', user?.id)
+      .eq('pro_id', user.id)
       .eq('status', 'pending_confirmation')
       .order('confirmation_timer_expires_at', { ascending: true });
 

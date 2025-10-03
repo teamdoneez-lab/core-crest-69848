@@ -64,6 +64,8 @@ const MyRequests = () => {
   }
 
   const fetchRequests = async () => {
+    if (!user?.id) return;
+    
     try {
       const { data, error } = await supabase
         .from('service_requests')
@@ -73,7 +75,7 @@ const MyRequests = () => {
             name
           )
         `)
-        .eq('customer_id', user?.id)
+        .eq('customer_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
