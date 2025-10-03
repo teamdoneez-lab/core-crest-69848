@@ -73,6 +73,9 @@ const MyRequests = () => {
           *,
           service_categories (
             name
+          ),
+          referral_fees (
+            status
           )
         `)
         .eq('customer_id', user.id)
@@ -88,7 +91,12 @@ const MyRequests = () => {
         return;
       }
 
-      setRequests(data || []);
+      // Filter out requests with paid referral fees (those are confirmed and should be in appointments)
+      const pendingRequests = (data || []).filter(req => 
+        !req.referral_fees || req.referral_fees.status !== 'paid'
+      );
+
+      setRequests(pendingRequests);
     } catch (error) {
       console.error('Error:', error);
     } finally {
