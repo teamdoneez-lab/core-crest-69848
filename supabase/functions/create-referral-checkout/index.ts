@@ -18,6 +18,12 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+
   try {
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
@@ -36,16 +42,47 @@ serve(async (req) => {
 
     console.log("[REFERRAL-CHECKOUT] Processing quote:", quote_id);
 
-    // Get the referral fee for this quote
-    const { data: referralFee, error: feeError } = await supabaseClient
+    // Get the quote details first
+    const { data: quote, error: quoteError } = await supabaseClient
+      .from("quotes")
+      .select("*, service_requests(id)")
+      .eq("id", quote_id)
+      .single();
+
+    if (quoteError || !quote) {
+      throw new Error("Quote not found");
+    }
+
+    // Get or create the referral fee for this quote
+    let { data: referralFee, error: feeError } = await supabaseClient
       .from("referral_fees")
       .select("*")
       .eq("quote_id", quote_id)
       .eq("pro_id", user.id)
       .single();
 
+    // If referral fee doesn't exist, create it (fallback in case trigger didn't run)
     if (feeError || !referralFee) {
-      throw new Error("Referral fee not found");
+      console.log("[REFERRAL-CHECKOUT] Referral fee not found, creating it...");
+      
+      const { data: newFee, error: createError } = await supabaseAdmin
+        .from("referral_fees")
+        .insert({
+          quote_id,
+          pro_id: user.id,
+          request_id: quote.request_id,
+          amount: quote.estimated_price * 0.10,
+          status: "owed",
+        })
+        .select()
+        .single();
+
+      if (createError || !newFee) {
+        console.error("[REFERRAL-CHECKOUT] Failed to create referral fee:", createError);
+        throw new Error("Failed to create referral fee");
+      }
+
+      referralFee = newFee;
     }
 
     if (referralFee.status === "paid") {
@@ -97,7 +134,7 @@ serve(async (req) => {
     console.log("[REFERRAL-CHECKOUT] Session created:", session.id);
 
     // Update referral fee record with session ID
-    const { error: updateError } = await supabaseClient
+    const { error: updateError } = await supabaseAdmin
       .from("referral_fees")
       .update({
         stripe_session_id: session.id,
