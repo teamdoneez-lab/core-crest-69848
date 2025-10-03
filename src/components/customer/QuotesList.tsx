@@ -25,6 +25,9 @@ interface Quote {
   status: string;
   created_at: string;
   pro_id: string;
+  confirmation_timer_expires_at: string | null;
+  confirmation_timer_minutes: number | null;
+  is_revised: boolean;
   profiles: {
     name: string | null;
   } | null;
@@ -85,16 +88,21 @@ export function QuotesList({ requestId }: QuotesListProps) {
 
   const handleAcceptQuote = async (quoteId: string) => {
     try {
-      const { error } = await supabase
-        .from("quotes")
-        .update({ status: "accepted" })
-        .eq("id", quoteId);
+      const { data, error } = await supabase.rpc("accept_quote_with_timer", {
+        quote_id_input: quoteId,
+      });
 
       if (error) throw error;
+      
+      const result = data as { success: boolean; error?: string; timer_minutes?: number };
+      
+      if (!result.success) {
+        throw new Error(result.error || "Failed to accept quote");
+      }
 
       toast({
-        title: "Quote Accepted",
-        description: "The professional has been notified and will proceed with the service",
+        title: "Quote Selected",
+        description: `The professional has ${result.timer_minutes} minutes to confirm. You'll be notified once they accept.`,
       });
 
       fetchQuotes();
@@ -102,7 +110,7 @@ export function QuotesList({ requestId }: QuotesListProps) {
       console.error("Error accepting quote:", error);
       toast({
         title: "Error",
-        description: "Failed to accept quote",
+        description: error instanceof Error ? error.message : "Failed to accept quote",
         variant: "destructive",
       });
     }
@@ -163,15 +171,34 @@ export function QuotesList({ requestId }: QuotesListProps) {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, isRevised: boolean = false) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
-      pending: { variant: "outline", label: "Pending" },
+      pending: { variant: "outline", label: isRevised ? "Revised Quote" : "Pending" },
+      pending_confirmation: { variant: "secondary", label: "Awaiting Confirmation" },
+      confirmed: { variant: "default", label: "Confirmed" },
       accepted: { variant: "default", label: "Accepted" },
       declined: { variant: "destructive", label: "Declined" },
+      expired: { variant: "destructive", label: "Expired" },
     };
 
     const config = variants[status] || variants.pending;
     return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const getTimeRemaining = (expiresAt: string | null) => {
+    if (!expiresAt) return null;
+    const now = new Date();
+    const expires = new Date(expiresAt);
+    const diff = expires.getTime() - now.getTime();
+    
+    if (diff <= 0) return "Expired";
+    
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 60) return `${minutes} min remaining`;
+    
+    const hours = Math.floor(minutes / 60);
+    const remainingMins = minutes % 60;
+    return `${hours}h ${remainingMins}m remaining`;
   };
 
   if (loading) {
@@ -199,10 +226,20 @@ export function QuotesList({ requestId }: QuotesListProps) {
               <CardTitle className="text-lg">
                 {quote.profiles?.name || "Unknown Pro"}
               </CardTitle>
-              {getStatusBadge(quote.status)}
+              {getStatusBadge(quote.status, quote.is_revised)}
             </div>
             <CardDescription>
               Submitted {new Date(quote.created_at).toLocaleDateString()}
+              {quote.status === "pending_confirmation" && quote.confirmation_timer_expires_at && (
+                <span className="ml-2 text-orange-600 font-semibold">
+                  • {getTimeRemaining(quote.confirmation_timer_expires_at)}
+                </span>
+              )}
+              {quote.status === "expired" && (
+                <span className="ml-2 text-red-600">
+                  • Mechanic didn't confirm in time. Please choose another quote.
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -227,20 +264,20 @@ export function QuotesList({ requestId }: QuotesListProps) {
                 <AlertDialogTrigger asChild>
                   <Button className="flex-1">
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Accept Quote
+                    Select Quote
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Accept this quote?</AlertDialogTitle>
+                    <AlertDialogTitle>Select this quote?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      By accepting this quote, you agree to hire this professional for the service. The professional has already paid the referral fee.
+                      The mechanic will be notified to confirm your appointment. They must confirm within the time limit based on your service urgency.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={() => handleAcceptQuote(quote.id)}>
-                      Accept
+                      Select
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -249,6 +286,20 @@ export function QuotesList({ requestId }: QuotesListProps) {
                 <XCircle className="mr-2 h-4 w-4" />
                 Decline
               </Button>
+            </CardFooter>
+          )}
+          {quote.status === "pending_confirmation" && (
+            <CardFooter>
+              <div className="w-full text-center text-sm text-muted-foreground">
+                Waiting for mechanic to confirm...
+              </div>
+            </CardFooter>
+          )}
+          {quote.status === "confirmed" && (
+            <CardFooter>
+              <div className="w-full text-center text-sm font-semibold text-green-600">
+                Confirmed! Check your appointments for details.
+              </div>
             </CardFooter>
           )}
         </Card>
