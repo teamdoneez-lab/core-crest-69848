@@ -16,6 +16,8 @@ import ProInbox from "./pages/ProInbox";
 import ServiceRequests from "./pages/ServiceRequests";
 import Appointments from "./pages/Appointments";
 import MyRequests from "./pages/MyRequests";
+import MyJobs from "./pages/MyJobs";
+import Earnings from "./pages/Earnings";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +43,8 @@ const App = () => (
             <Route path="/service-requests" element={<ServiceRequests />} />
             <Route path="/my-requests" element={<MyRequests />} />
             <Route path="/appointments" element={<Appointments />} />
+            <Route path="/my-jobs" element={<MyJobs />} />
+            <Route path="/earnings" element={<Earnings />} />
             <Route path="/admin" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

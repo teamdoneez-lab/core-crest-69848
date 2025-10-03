@@ -83,13 +83,31 @@ export function Navigation() {
                     My Profile
                   </Link>
                   <Link 
-                    to="/pro-inbox" 
+                    to="/service-requests" 
                     className={cn(
                       "text-sm lg:text-base font-medium transition-colors hover:text-primary",
-                      isActive('/pro-inbox') ? 'text-primary' : 'text-muted-foreground'
+                      isActive('/service-requests') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
-                    Inbox
+                    New Requests
+                  </Link>
+                  <Link 
+                    to="/my-jobs" 
+                    className={cn(
+                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                      isActive('/my-jobs') ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    My Jobs
+                  </Link>
+                  <Link 
+                    to="/earnings" 
+                    className={cn(
+                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                      isActive('/earnings') ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    Earnings
                   </Link>
                 </>
               )}
