@@ -26,7 +26,7 @@ serve(async (req) => {
     }
 
     // Get appointment and customer details
-    const { data: appointment, error: appointmentError } = await supabaseClient
+    const { data: appointmentData, error: appointmentError } = await supabaseClient
       .from("appointments")
       .select(`
         id,
@@ -38,22 +38,35 @@ serve(async (req) => {
           year,
           customer_id,
           profiles:customer_id (
-            name,
-            email
+            name
           )
         )
       `)
       .eq("id", appointment_id)
       .single();
 
-    if (appointmentError || !appointment) {
+    if (appointmentError || !appointmentData) {
       throw new Error("Appointment not found");
     }
+
+    // Type assertion since we know service_requests is a single object due to !inner
+    const appointment = appointmentData as unknown as {
+      id: string;
+      starts_at: string;
+      service_requests: {
+        id: string;
+        vehicle_make: string;
+        model: string;
+        year: number;
+        customer_id: string;
+        profiles: { name: string };
+      };
+    };
 
     // Get professional details
     const { data: proProfile, error: proError } = await supabaseClient
       .from("profiles")
-      .select("name, email")
+      .select("name")
       .eq("id", pro_id)
       .single();
 
@@ -61,11 +74,16 @@ serve(async (req) => {
       throw new Error("Professional profile not found");
     }
 
+    // Get customer email from auth.users
+    const { data: customerData } = await supabaseClient.auth.admin.getUserById(
+      appointment.service_requests.customer_id
+    );
+
     // Log the notification (you can extend this to send email/SMS)
     console.log("[JOB-COMPLETED] Notification details:", {
       pro_name: proProfile.name,
-      pro_email: proProfile.email,
       customer_name: appointment.service_requests.profiles?.name,
+      customer_email: customerData?.user?.email,
       vehicle: `${appointment.service_requests.year} ${appointment.service_requests.vehicle_make} ${appointment.service_requests.model}`,
       appointment_time: appointment.starts_at,
     });
@@ -85,8 +103,9 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("[JOB-COMPLETED] Error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

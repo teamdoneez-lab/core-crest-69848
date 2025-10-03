@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.send-booking-confirmation]
 verify_jwt = true
+
+[functions.notify-job-completed]
+verify_jwt = true
