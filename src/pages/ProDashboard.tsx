@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { EarningsTab } from '@/components/pro/EarningsTab';
+import { QuoteConfirmation } from '@/components/pro/QuoteConfirmation';
 
 interface ServiceRequest {
   id: string;
@@ -38,6 +39,7 @@ interface ServiceRequest {
   appointment_pref: string;
   notes?: string;
   status: string;
+  urgency?: string;
   service_categories: {
     name: string;
   };
@@ -48,6 +50,22 @@ interface Lead {
   status: 'new' | 'accepted' | 'declined';
   created_at: string;
   service_requests: ServiceRequest;
+}
+
+interface PendingQuote {
+  id: string;
+  estimated_price: number;
+  description: string;
+  status: string;
+  confirmation_timer_expires_at: string | null;
+  confirmation_timer_minutes: number | null;
+  request_id: string;
+  service_requests: {
+    vehicle_make: string;
+    model: string;
+    year: number;
+    urgency: string;
+  };
 }
 
 interface Job {
@@ -76,6 +94,7 @@ export default function ProDashboard() {
   const [activeTab, setActiveTab] = useState('new-requests');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [pendingQuotes, setPendingQuotes] = useState<PendingQuote[]>([]);
   const [earnings, setEarnings] = useState<EarningsData>({
     totalEarnings: 0,
     completedJobs: 0,
@@ -140,6 +159,7 @@ export default function ProDashboard() {
       await Promise.all([
         fetchLeads(),
         fetchJobs(),
+        fetchPendingQuotes(),
         fetchEarnings()
       ]);
     } catch (error) {
@@ -147,6 +167,36 @@ export default function ProDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchPendingQuotes = async () => {
+    const { data, error } = await supabase
+      .from('quotes')
+      .select(`
+        id,
+        estimated_price,
+        description,
+        status,
+        confirmation_timer_expires_at,
+        confirmation_timer_minutes,
+        request_id,
+        service_requests (
+          vehicle_make,
+          model,
+          year,
+          urgency
+        )
+      `)
+      .eq('pro_id', user?.id)
+      .eq('status', 'pending_confirmation')
+      .order('confirmation_timer_expires_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching pending quotes:', error);
+      return;
+    }
+
+    setPendingQuotes(data || []);
   };
 
   const fetchLeads = async () => {
@@ -336,6 +386,22 @@ export default function ProDashboard() {
 
           {/* New Requests Tab */}
           <TabsContent value="new-requests" className="mt-6">
+            {/* Pending Quote Confirmations */}
+            {pendingQuotes.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">🎉 Quotes Selected by Customers</h2>
+                <div className="space-y-4">
+                  {pendingQuotes.map((quote) => (
+                    <QuoteConfirmation 
+                      key={quote.id} 
+                      quote={quote} 
+                      onConfirmed={fetchDashboardData}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mb-6">
               <h2 className="text-xl font-semibold mb-2">Job Requests</h2>
             </div>

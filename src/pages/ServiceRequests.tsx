@@ -12,6 +12,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronLeft, ChevronRight, Filter, X, FileText, Download } from 'lucide-react';
 import { QuoteForm } from '@/components/pro/QuoteForm';
+import { QuoteConfirmation } from '@/components/pro/QuoteConfirmation';
+
+interface PendingQuote {
+  id: string;
+  estimated_price: number;
+  description: string;
+  status: string;
+  confirmation_timer_expires_at: string | null;
+  confirmation_timer_minutes: number | null;
+  request_id: string;
+  service_requests: {
+    vehicle_make: string;
+    model: string;
+    year: number;
+    urgency: string;
+  };
+}
 
 interface ServiceRequest {
   id: string;
@@ -37,6 +54,7 @@ interface ServiceRequest {
 export default function ServiceRequests() {
   const { user } = useAuth();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [pendingQuotes, setPendingQuotes] = useState<PendingQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   
@@ -68,6 +86,7 @@ export default function ServiceRequests() {
   useEffect(() => {
     if (user) {
       fetchServiceRequests();
+      fetchPendingQuotes();
     }
   }, [user, currentPage, filters]);
 
@@ -170,6 +189,37 @@ export default function ServiceRequests() {
     setIsQuoteModalOpen(false);
     setSelectedRequestId(null);
     fetchServiceRequests();
+    fetchPendingQuotes();
+  };
+
+  const fetchPendingQuotes = async () => {
+    const { data, error } = await supabase
+      .from('quotes')
+      .select(`
+        id,
+        estimated_price,
+        description,
+        status,
+        confirmation_timer_expires_at,
+        confirmation_timer_minutes,
+        request_id,
+        service_requests (
+          vehicle_make,
+          model,
+          year,
+          urgency
+        )
+      `)
+      .eq('pro_id', user?.id)
+      .eq('status', 'pending_confirmation')
+      .order('confirmation_timer_expires_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching pending quotes:', error);
+      return;
+    }
+
+    setPendingQuotes(data || []);
   };
 
   const handleCardClick = (request: ServiceRequest) => {
@@ -309,6 +359,28 @@ export default function ServiceRequests() {
               </Card>
             )}
           </div>
+
+          {/* Pending Quote Confirmations */}
+          {pendingQuotes.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-4">🎉 Quotes Selected by Customers</h2>
+              <p className="text-muted-foreground mb-6">
+                Customers have selected your quotes! Confirm now to secure these appointments.
+              </p>
+              <div className="space-y-4">
+                {pendingQuotes.map((quote) => (
+                  <QuoteConfirmation 
+                    key={quote.id} 
+                    quote={quote} 
+                    onConfirmed={() => {
+                      fetchServiceRequests();
+                      fetchPendingQuotes();
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {requests.length === 0 ? (
             <Card>
