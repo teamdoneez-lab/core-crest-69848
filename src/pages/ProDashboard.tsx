@@ -246,9 +246,14 @@ export default function ProDashboard() {
         created_at,
         service_categories (
           name
+        ),
+        referral_fees!inner (
+          status
         )
       `)
       .eq('accepted_pro_id', user?.id)
+      .eq('referral_fees.status', 'paid')
+      .in('status', ['in_progress', 'scheduled', 'completed'])
       .order('created_at', { ascending: false });
 
     if (error) {

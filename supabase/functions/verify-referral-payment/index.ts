@@ -70,14 +70,24 @@ serve(async (req) => {
         }
       }
 
-      // Update service request status
+      // Update service request status to in_progress
       const { error: requestError } = await supabaseClient
         .from('service_requests')
-        .update({ status: 'confirmed' })
+        .update({ status: 'in_progress' })
         .eq('id', request_id);
 
       if (requestError) {
         console.error("[VERIFY-PAYMENT] Error updating request:", requestError);
+      }
+
+      // Update appointment status to confirmed
+      const { error: appointmentError } = await supabaseClient
+        .from('appointments')
+        .update({ status: 'confirmed' })
+        .eq('request_id', request_id);
+
+      if (appointmentError) {
+        console.error("[VERIFY-PAYMENT] Error updating appointment:", appointmentError);
       }
 
       return new Response(JSON.stringify({ 

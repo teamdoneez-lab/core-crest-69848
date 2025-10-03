@@ -97,6 +97,7 @@ const Appointments = () => {
           )
         `)
         .eq('service_requests.customer_id', user?.id)
+        .in('status', ['confirmed', 'in_progress', 'scheduled', 'completed'])
         .order('starts_at', { ascending: true });
 
       if (error) {
