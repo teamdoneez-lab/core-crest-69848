@@ -68,7 +68,7 @@ const Appointments = () => {
 
   const fetchAppointments = async () => {
     try {
-      // Fetch service requests with paid referral fees (confirmed jobs)
+      // First, get all in_progress service requests
       const { data: requestsData, error: requestsError } = await supabase
         .from('service_requests')
         .select(`
@@ -84,20 +84,6 @@ const Appointments = () => {
           status,
           service_categories (
             name
-          ),
-          referral_fees (
-            status,
-            paid_at
-          ),
-          appointments (
-            id,
-            starts_at,
-            notes,
-            status,
-            pro_id,
-            profiles (
-              name
-            )
           )
         `)
         .eq('customer_id', user?.id)
@@ -105,7 +91,7 @@ const Appointments = () => {
         .order('created_at', { ascending: false });
 
       if (requestsError) {
-        console.error('Error fetching appointments:', requestsError);
+        console.error('Error fetching requests:', requestsError);
         toast({
           title: "Error",
           description: "Failed to fetch appointments",
@@ -114,13 +100,53 @@ const Appointments = () => {
         return;
       }
 
-      console.log('Appointments data:', requestsData);
+      if (!requestsData || requestsData.length === 0) {
+        setAppointments([]);
+        setLoading(false);
+        return;
+      }
 
-      // Filter for paid referral fees and transform to appointment format
-      const transformedAppointments = (requestsData || [])
-        .filter(req => req.referral_fees?.[0]?.status === 'paid')
+      // Get referral fees for these requests
+      const requestIds = requestsData.map(r => r.id);
+      const { data: feesData, error: feesError } = await supabase
+        .from('referral_fees')
+        .select('request_id, status, paid_at')
+        .in('request_id', requestIds)
+        .eq('status', 'paid');
+
+      if (feesError) {
+        console.error('Error fetching fees:', feesError);
+      }
+
+      // Get appointments for these requests
+      const { data: appointmentsData, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          request_id,
+          starts_at,
+          notes,
+          status,
+          pro_id,
+          profiles (
+            name
+          )
+        `)
+        .in('request_id', requestIds);
+
+      if (appointmentsError) {
+        console.error('Error fetching appointments:', appointmentsError);
+      }
+
+      // Create maps for easy lookup
+      const feesMap = new Map(feesData?.map(f => [f.request_id, f]) || []);
+      const appointmentsMap = new Map(appointmentsData?.map(a => [a.request_id, a]) || []);
+
+      // Filter and transform - only include requests with paid fees
+      const transformedAppointments = requestsData
+        .filter(req => feesMap.has(req.id))
         .map(req => {
-          const appointment = req.appointments?.[0];
+          const appointment = appointmentsMap.get(req.id);
           return {
             id: appointment?.id || req.id,
             starts_at: appointment?.starts_at || null,
