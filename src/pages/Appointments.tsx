@@ -68,6 +68,8 @@ const Appointments = () => {
 
   const fetchAppointments = async () => {
     try {
+      console.log('[APPOINTMENTS] Starting fetch...');
+      
       // First, get all in_progress service requests
       const { data: requestsData, error: requestsError } = await supabase
         .from('service_requests')
@@ -91,7 +93,7 @@ const Appointments = () => {
         .order('created_at', { ascending: false });
 
       if (requestsError) {
-        console.error('Error fetching requests:', requestsError);
+        console.error('[APPOINTMENTS] Error fetching requests:', requestsError);
         toast({
           title: "Error",
           description: "Failed to fetch appointments",
@@ -100,7 +102,10 @@ const Appointments = () => {
         return;
       }
 
+      console.log('[APPOINTMENTS] Requests data:', requestsData);
+
       if (!requestsData || requestsData.length === 0) {
+        console.log('[APPOINTMENTS] No in_progress requests found');
         setAppointments([]);
         setLoading(false);
         return;
@@ -108,6 +113,8 @@ const Appointments = () => {
 
       // Get referral fees for these requests
       const requestIds = requestsData.map(r => r.id);
+      console.log('[APPOINTMENTS] Fetching fees for request IDs:', requestIds);
+      
       const { data: feesData, error: feesError } = await supabase
         .from('referral_fees')
         .select('request_id, status, paid_at')
@@ -115,8 +122,10 @@ const Appointments = () => {
         .eq('status', 'paid');
 
       if (feesError) {
-        console.error('Error fetching fees:', feesError);
+        console.error('[APPOINTMENTS] Error fetching fees:', feesError);
       }
+      
+      console.log('[APPOINTMENTS] Fees data:', feesData);
 
       // Get appointments for these requests
       const { data: appointmentsData, error: appointmentsError } = await supabase
@@ -135,18 +144,28 @@ const Appointments = () => {
         .in('request_id', requestIds);
 
       if (appointmentsError) {
-        console.error('Error fetching appointments:', appointmentsError);
+        console.error('[APPOINTMENTS] Error fetching appointments:', appointmentsError);
       }
+      
+      console.log('[APPOINTMENTS] Appointments data:', appointmentsData);
 
       // Create maps for easy lookup
       const feesMap = new Map(feesData?.map(f => [f.request_id, f]) || []);
       const appointmentsMap = new Map(appointmentsData?.map(a => [a.request_id, a]) || []);
 
+      console.log('[APPOINTMENTS] Fees map size:', feesMap.size);
+      console.log('[APPOINTMENTS] Appointments map size:', appointmentsMap.size);
+
       // Filter and transform - only include requests with paid fees
       const transformedAppointments = requestsData
-        .filter(req => feesMap.has(req.id))
+        .filter(req => {
+          const hasPaidFee = feesMap.has(req.id);
+          console.log(`[APPOINTMENTS] Request ${req.id} has paid fee:`, hasPaidFee);
+          return hasPaidFee;
+        })
         .map(req => {
           const appointment = appointmentsMap.get(req.id);
+          console.log(`[APPOINTMENTS] Mapping request ${req.id}, appointment:`, appointment);
           return {
             id: appointment?.id || req.id,
             starts_at: appointment?.starts_at || null,
@@ -170,10 +189,10 @@ const Appointments = () => {
           };
         });
 
-      console.log('Transformed appointments:', transformedAppointments);
+      console.log('[APPOINTMENTS] Final transformed appointments:', transformedAppointments);
       setAppointments(transformedAppointments);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('[APPOINTMENTS] Unexpected error:', error);
     } finally {
       setLoading(false);
     }
