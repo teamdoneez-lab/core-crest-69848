@@ -70,10 +70,20 @@ serve(async (req) => {
         }
       }
 
-      // Update service request status to in_progress
+      // Get the pro_id from the quote or referral fee
+      const { data: feeData } = await supabaseClient
+        .from('referral_fees')
+        .select('pro_id')
+        .eq('request_id', request_id)
+        .single();
+
+      // Update service request status to in_progress and set accepted_pro_id
       const { error: requestError } = await supabaseClient
         .from('service_requests')
-        .update({ status: 'in_progress' })
+        .update({ 
+          status: 'in_progress',
+          accepted_pro_id: feeData?.pro_id || null
+        })
         .eq('id', request_id);
 
       if (requestError) {
