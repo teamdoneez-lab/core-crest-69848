@@ -41,15 +41,15 @@ export function Navigation() {
 
               {isCustomer && (
                 <>
-                  <Link 
-                    to="/request-service" 
-                    className={cn(
-                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
-                      isActive('/request-service') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    Request Service
-                  </Link>
+              <Link 
+                to="/service-request-flow" 
+                className={cn(
+                  "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                  isActive('/service-request-flow') ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                Request Service
+              </Link>
                   <Link 
                     to="/my-requests" 
                     className={cn(

@@ -743,7 +743,16 @@ const AdminDashboard = () => {
                 filterData(requests, 'requests').map((request) => (
                 <Card key={request.id}>
                    <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
+                    <div className="flex gap-4 items-start">
+                       {request.image_url && (
+                         <div className="flex-shrink-0">
+                           <img 
+                             src={request.image_url} 
+                             alt="Service request" 
+                             className="w-24 h-24 object-cover rounded-md"
+                           />
+                         </div>
+                       )}
                        <div className="flex-1">
                          <h3 className="font-semibold">{request.service_categories?.name || 'Unknown Service'}</h3>
                          <p className="text-sm font-medium">

@@ -167,7 +167,7 @@ const Index = () => {
                         My Profile
                       </Button>
                     </Link>
-                    <Link to="/pro-inbox">
+                    <Link to="/service-requests">
                       <Button variant="outline" className="w-full h-20 text-lg">
                         <Wrench className="mr-2 h-6 w-6" />
                         Service Requests
