@@ -244,9 +244,6 @@ export default function MyJobs() {
                         <MessageCircle className="h-4 w-4" />
                         Contact Customer
                       </Button>
-                      <Button>
-                        Update Status
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
