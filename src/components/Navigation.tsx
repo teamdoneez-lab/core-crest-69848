@@ -91,15 +91,6 @@ export function Navigation() {
                   >
                     Inbox
                   </Link>
-                   <Link 
-                     to="/service-requests" 
-                     className={cn(
-                       "text-sm lg:text-base font-medium transition-colors hover:text-primary",
-                       isActive('/service-requests') ? 'text-primary' : 'text-muted-foreground'
-                     )}
-                   >
-                     Service Requests
-                   </Link>
                 </>
               )}
 
