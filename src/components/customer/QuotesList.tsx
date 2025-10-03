@@ -223,9 +223,14 @@ export function QuotesList({ requestId }: QuotesListProps) {
         <Card key={quote.id}>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">
-                {quote.profiles?.name || "Unknown Pro"}
-              </CardTitle>
+              <div>
+                <CardTitle className="text-lg">
+                  {quote.profiles?.name || "Unknown Professional"}
+                </CardTitle>
+                <Badge variant="secondary" className="mt-1">
+                  ✓ Verified Professional
+                </Badge>
+              </div>
               {getStatusBadge(quote.status, quote.is_revised)}
             </div>
             <CardDescription>
@@ -237,7 +242,12 @@ export function QuotesList({ requestId }: QuotesListProps) {
               )}
               {quote.status === "expired" && (
                 <span className="ml-2 text-red-600">
-                  • Mechanic didn't confirm in time. Please choose another quote.
+                  • Professional didn't confirm in time. Please choose another quote.
+                </span>
+              )}
+              {quote.status === "declined" && (
+                <span className="ml-2 text-red-600">
+                  • Professional declined. Please choose another quote.
                 </span>
               )}
             </CardDescription>
@@ -271,7 +281,7 @@ export function QuotesList({ requestId }: QuotesListProps) {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Select this quote?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      The mechanic will be notified to confirm your appointment. They must confirm within the time limit based on your service urgency.
+                      The professional will be notified to confirm your appointment. They must confirm within the time limit based on your service urgency.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -291,14 +301,14 @@ export function QuotesList({ requestId }: QuotesListProps) {
           {quote.status === "pending_confirmation" && (
             <CardFooter>
               <div className="w-full text-center text-sm text-muted-foreground">
-                Waiting for mechanic to confirm...
+                Awaiting confirmation from professional...
               </div>
             </CardFooter>
           )}
           {quote.status === "confirmed" && (
             <CardFooter>
               <div className="w-full text-center text-sm font-semibold text-green-600">
-                Confirmed! Check your appointments for details.
+                ✓ Confirmed! Check your appointments for details.
               </div>
             </CardFooter>
           )}

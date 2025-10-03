@@ -56,7 +56,7 @@ export function AppointmentCancellation({
       toast({
         title: "Appointment Cancelled",
         description: hasRevisedQuote 
-          ? "The revised quote was declined. The mechanic's fee has been refunded."
+          ? "The revised quote was declined. The professional's fee has been refunded."
           : "Your appointment has been cancelled.",
       });
 
@@ -78,7 +78,7 @@ export function AppointmentCancellation({
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Cancellations are only allowed if the mechanic has submitted a revised quote that you declined. 
+          ⚠️ Cancellations are only allowed if the professional has submitted a revised quote that you declined. 
           Please contact support if you need assistance.
         </AlertDescription>
       </Alert>
@@ -98,7 +98,7 @@ export function AppointmentCancellation({
           <AlertDialogTitle>Cancel this appointment?</AlertDialogTitle>
           <AlertDialogDescription>
             {hasRevisedQuote 
-              ? "You are declining the revised quote. The mechanic's referral fee will be refunded. You can create a new service request if needed."
+              ? "You are declining the revised quote. The professional's referral fee will be refunded. You can create a new service request if needed."
               : "Are you sure you want to cancel this appointment? This action cannot be undone."
             }
           </AlertDialogDescription>

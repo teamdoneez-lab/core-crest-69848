@@ -123,9 +123,9 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">
-            Customer Selected Your Quote!
+            🎉 Customer Selected Your Quote!
           </CardTitle>
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="font-semibold">
             <Clock className="h-3 w-3 mr-1" />
             {timeRemaining}
           </Badge>
@@ -140,8 +140,8 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
           <p className="text-sm text-muted-foreground">{quote.description}</p>
           <p className="text-sm font-semibold text-orange-700">
             {isExpired 
-              ? "Time expired! Quote will be declined automatically."
-              : `Confirm now to secure this appointment. ${timeRemaining} remaining.`
+              ? "⏰ Time expired! Quote will be declined automatically."
+              : `⚡ Confirm now to secure this appointment. ${timeRemaining} remaining.`
             }
           </p>
         </div>
@@ -158,7 +158,7 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
             <AlertDialogHeader>
               <AlertDialogTitle>Confirm this appointment?</AlertDialogTitle>
               <AlertDialogDescription>
-                You will be redirected to pay the referral fee. Once paid, the appointment will be confirmed and customer details will be shared with you.
+                You will be redirected to pay the referral fee (${quote.estimated_price * 0.1}). Once paid, the appointment will be confirmed and customer contact details will be shared with you.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
