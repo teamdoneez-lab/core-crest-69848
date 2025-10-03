@@ -263,18 +263,54 @@ const ProInbox = () => {
     const sessionId = searchParams.get('session_id');
 
     if (payment === 'success' && sessionId) {
-      verifyQuotePayment(sessionId);
+      // Check if it's a referral fee payment or quote payment
+      const pendingCheckout = sessionStorage.getItem('pending_checkout');
+      if (pendingCheckout) {
+        const { request_id } = JSON.parse(pendingCheckout);
+        verifyReferralPayment(sessionId, request_id);
+        sessionStorage.removeItem('pending_checkout');
+      } else {
+        verifyQuotePayment(sessionId);
+      }
       // Clean up URL parameters
       window.history.replaceState({}, '', '/pro-inbox');
     } else if (payment === 'cancelled') {
       toast({
         title: "Payment Cancelled",
-        description: "Quote submission was cancelled. No charges were made.",
+        description: "Payment was cancelled. No charges were made.",
       });
+      sessionStorage.removeItem('pending_checkout');
       // Clean up URL parameters
       window.history.replaceState({}, '', '/pro-inbox');
     }
   }, []);
+
+  const verifyReferralPayment = async (sessionId: string, requestId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-referral-payment", {
+        body: { session_id: sessionId, request_id: requestId },
+      });
+
+      if (error) throw error;
+
+      if (data?.paid) {
+        toast({
+          title: "✅ Payment Successful!",
+          description: "Your appointment is confirmed. Customer has been notified.",
+        });
+      }
+
+      // Refresh leads to show updated data
+      fetchLeads();
+    } catch (error) {
+      console.error("Error verifying referral payment:", error);
+      toast({
+        title: "Error",
+        description: "Payment was successful but there was an issue confirming the appointment. Please contact support.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const verifyQuotePayment = async (sessionId: string) => {
     try {

@@ -37,6 +37,9 @@ serve(async (req) => {
     if (session.payment_status === 'paid') {
       console.log("[VERIFY-PAYMENT] Payment confirmed, updating fee record");
 
+      // Get quote_id from metadata
+      const quote_id = session.metadata?.quote_id;
+
       // Update fee record
       const { error: updateError } = await supabaseClient
         .from('referral_fees')
@@ -54,6 +57,28 @@ serve(async (req) => {
       }
 
       console.log("[VERIFY-PAYMENT] Fee marked as paid");
+
+      // Update quote status to confirmed
+      if (quote_id) {
+        const { error: quoteError } = await supabaseClient
+          .from('quotes')
+          .update({ status: 'confirmed' })
+          .eq('id', quote_id);
+
+        if (quoteError) {
+          console.error("[VERIFY-PAYMENT] Error updating quote:", quoteError);
+        }
+      }
+
+      // Update service request status
+      const { error: requestError } = await supabaseClient
+        .from('service_requests')
+        .update({ status: 'confirmed' })
+        .eq('id', request_id);
+
+      if (requestError) {
+        console.error("[VERIFY-PAYMENT] Error updating request:", requestError);
+      }
 
       return new Response(JSON.stringify({ 
         success: true, 

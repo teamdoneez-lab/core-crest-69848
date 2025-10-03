@@ -40,6 +40,7 @@ interface QuoteConfirmationProps {
 
 export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDeclined, setIsDeclined] = useState(false);
 
   const getTimeRemaining = () => {
     if (!quote.confirmation_timer_expires_at) return null;
@@ -97,6 +98,8 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
 
       if (error) throw error;
 
+      setIsDeclined(true);
+      
       toast({
         title: "Quote Declined",
         description: "Customer has been notified to select another quote.",
@@ -149,7 +152,7 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
       <CardFooter className="gap-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button className="flex-1" disabled={isProcessing || isExpired}>
+            <Button className="flex-1" disabled={isProcessing || isExpired || isDeclined}>
               <CheckCircle className="mr-2 h-4 w-4" />
               Confirm & Pay Fee
             </Button>
@@ -169,9 +172,9 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <Button variant="outline" className="flex-1" onClick={handleDecline} disabled={isProcessing}>
+        <Button variant="outline" className="flex-1" onClick={handleDecline} disabled={isProcessing || isDeclined}>
           <XCircle className="mr-2 h-4 w-4" />
-          Decline
+          {isDeclined ? "Declined" : "Decline"}
         </Button>
       </CardFooter>
     </Card>
