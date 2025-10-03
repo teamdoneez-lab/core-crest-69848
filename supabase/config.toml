@@ -1,19 +1,1 @@
 project_id = "cxraykdmlshcntqjumpc"
-
-[functions.create-referral-checkout]
-verify_jwt = true
-
-[functions.verify-referral-payment]
-verify_jwt = false
-
-[functions.send-quote-email]
-verify_jwt = true
-
-[functions.refund-referral-fee]
-verify_jwt = true
-
-[functions.create-quote-checkout]
-verify_jwt = true
-
-[functions.verify-quote-payment]
-verify_jwt = true
