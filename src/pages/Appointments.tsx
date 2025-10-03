@@ -68,40 +68,44 @@ const Appointments = () => {
 
   const fetchAppointments = async () => {
     try {
-      const { data: appointmentsData, error } = await supabase
-        .from('appointments')
+      // Fetch service requests with paid referral fees (confirmed jobs)
+      const { data: requestsData, error: requestsError } = await supabase
+        .from('service_requests')
         .select(`
           id,
-          starts_at,
-          notes,
+          vehicle_make,
+          model,
+          year,
+          trim,
+          address,
+          zip,
+          contact_email,
+          contact_phone,
           status,
-          pro_id,
-          service_requests!inner (
-            id,
-            vehicle_make,
-            model,
-            year,
-            trim,
-            address,
-            zip,
-            contact_email,
-            contact_phone,
+          service_categories (
+            name
+          ),
+          referral_fees!inner (
             status,
-            customer_id,
-            service_categories (
+            paid_at
+          ),
+          appointments (
+            id,
+            starts_at,
+            notes,
+            status,
+            pro_id,
+            profiles (
               name
             )
-          ),
-          profiles (
-            name
           )
         `)
-        .eq('service_requests.customer_id', user?.id)
-        .in('status', ['confirmed', 'in_progress', 'scheduled', 'completed'])
-        .order('starts_at', { ascending: true });
+        .eq('customer_id', user?.id)
+        .eq('referral_fees.status', 'paid')
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching appointments:', error);
+      if (requestsError) {
+        console.error('Error fetching appointments:', requestsError);
         toast({
           title: "Error",
           description: "Failed to fetch appointments",
@@ -110,7 +114,33 @@ const Appointments = () => {
         return;
       }
 
-      setAppointments(appointmentsData || []);
+      // Transform to appointment format
+      const transformedAppointments = (requestsData || []).map(req => {
+        const appointment = req.appointments?.[0];
+        return {
+          id: appointment?.id || req.id,
+          starts_at: appointment?.starts_at || null,
+          notes: appointment?.notes,
+          status: appointment?.status || 'pending_scheduling',
+          pro_id: appointment?.pro_id,
+          service_requests: {
+            id: req.id,
+            vehicle_make: req.vehicle_make,
+            model: req.model,
+            year: req.year,
+            trim: req.trim,
+            address: req.address,
+            zip: req.zip,
+            contact_email: req.contact_email,
+            contact_phone: req.contact_phone,
+            status: req.status,
+            service_categories: req.service_categories
+          },
+          profiles: appointment?.profiles || { name: 'Professional' }
+        };
+      });
+
+      setAppointments(transformedAppointments);
     } catch (error) {
       console.error('Error:', error);
     } finally {
