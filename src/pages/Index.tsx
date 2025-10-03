@@ -161,22 +161,22 @@ const Index = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Link to="/pro-profile">
-                      <Button className="w-full h-20 text-lg">
-                        <Users className="mr-2 h-6 w-6" />
-                        My Profile
-                      </Button>
-                    </Link>
                     <Link to="/service-requests">
-                      <Button variant="outline" className="w-full h-20 text-lg">
+                      <Button className="w-full h-20 text-lg">
                         <Wrench className="mr-2 h-6 w-6" />
-                        Service Requests
+                        New Requests
                       </Button>
                     </Link>
-                    <Link to="/appointments">
+                    <Link to="/my-jobs">
                       <Button variant="outline" className="w-full h-20 text-lg">
-                        <Clock className="mr-2 h-6 w-6" />
-                        Appointments
+                        <CheckCircle className="mr-2 h-6 w-6" />
+                        My Jobs
+                      </Button>
+                    </Link>
+                    <Link to="/earnings">
+                      <Button variant="outline" className="w-full h-20 text-lg">
+                        <DollarSign className="mr-2 h-6 w-6" />
+                        Earning Jobs
                       </Button>
                     </Link>
                   </div>
