@@ -365,7 +365,7 @@ export default function ProDashboard() {
         {/* Header */}
         <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Pro Dashboard</h1>
+            <h1 className="text-3xl font-bold">Professional Dashboard</h1>
             <p className="text-muted-foreground">Manage your jobs and grow your business</p>
           </div>
           <Link to="/pro-profile">
