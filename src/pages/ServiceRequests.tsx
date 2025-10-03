@@ -222,7 +222,41 @@ export default function ServiceRequests() {
       return;
     }
 
-    setPendingQuotes(data || []);
+    // Filter and auto-expire quotes that are past their expiration time
+    const now = new Date();
+    const validQuotes = [];
+    const expiredQuotes = [];
+
+    for (const quote of data || []) {
+      if (quote.confirmation_timer_expires_at) {
+        const expiresAt = new Date(quote.confirmation_timer_expires_at);
+        if (expiresAt <= now) {
+          expiredQuotes.push(quote);
+        } else {
+          validQuotes.push(quote);
+        }
+      } else {
+        validQuotes.push(quote);
+      }
+    }
+
+    // Update expired quotes in the database
+    if (expiredQuotes.length > 0) {
+      for (const expiredQuote of expiredQuotes) {
+        await supabase
+          .from('quotes')
+          .update({ status: 'expired' })
+          .eq('id', expiredQuote.id);
+
+        // Update referral fee if exists
+        await supabase
+          .from('referral_fees')
+          .update({ status: 'expired' })
+          .eq('quote_id', expiredQuote.id);
+      }
+    }
+
+    setPendingQuotes(validQuotes);
   };
 
   const handleCardClick = (request: ServiceRequest) => {

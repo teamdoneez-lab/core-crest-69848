@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,7 @@ interface QuoteConfirmationProps {
 export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeclined, setIsDeclined] = useState(false);
+  const [hasExpired, setHasExpired] = useState(false);
 
   const getTimeRemaining = () => {
     if (!quote.confirmation_timer_expires_at) return null;
@@ -137,6 +138,46 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
 
   const timeRemaining = getTimeRemaining();
   const isExpired = timeRemaining === "Expired";
+
+  // Auto-update expired quotes
+  useEffect(() => {
+    const updateExpiredQuote = async () => {
+      if (isExpired && !hasExpired) {
+        setHasExpired(true);
+        try {
+          // Update quote status to expired
+          const { error } = await supabase
+            .from("quotes")
+            .update({ status: "expired" })
+            .eq("id", quote.id);
+
+          if (error) {
+            console.error("Error updating expired quote:", error);
+            return;
+          }
+
+          // Update referral fee if exists
+          const { error: feeError } = await supabase
+            .from("referral_fees")
+            .update({ status: "expired" })
+            .eq("quote_id", quote.id);
+
+          if (feeError) {
+            console.error("Error updating referral fee:", feeError);
+          }
+
+          // Notify parent to refresh
+          setTimeout(() => {
+            onConfirmed();
+          }, 2000);
+        } catch (error) {
+          console.error("Error processing expired quote:", error);
+        }
+      }
+    };
+
+    updateExpiredQuote();
+  }, [isExpired, hasExpired, quote.id, onConfirmed]);
 
   if (isDeclined) {
     return (
