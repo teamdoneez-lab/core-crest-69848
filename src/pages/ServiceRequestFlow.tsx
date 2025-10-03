@@ -300,6 +300,27 @@ export default function ServiceRequestFlow() {
 
       if (error) throw error;
 
+      // Send confirmation email
+      try {
+        const serviceNames = getSelectedServiceNames();
+        const vehicleInfo = `${formData.year} ${formData.vehicle_make} ${formData.vehicle_model}${formData.trim ? ' ' + formData.trim : ''}`;
+        
+        await supabase.functions.invoke('send-booking-confirmation', {
+          body: {
+            email: formData.contact_email,
+            name: user.email?.split('@')[0] || 'Customer',
+            services: serviceNames,
+            vehicle: vehicleInfo,
+            preferredTime: formData.preferred_time?.toLocaleString() || 'Not specified',
+            appointmentType: formData.appointment_type,
+            zip: formData.zip,
+          }
+        });
+      } catch (emailError) {
+        console.error("Failed to send confirmation email:", emailError);
+        // Don't fail the whole request if email fails
+      }
+
       toast.success("Service request submitted successfully!");
       navigate("/request-confirmation");
     } catch (error: any) {

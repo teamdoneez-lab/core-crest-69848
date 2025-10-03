@@ -113,7 +113,8 @@ const MyRequests = () => {
       const { error } = await supabase
         .from('service_requests')
         .update({ status: 'cancelled' })
-        .eq('id', requestId);
+        .eq('id', requestId)
+        .eq('customer_id', user?.id);
 
       if (error) throw error;
 
