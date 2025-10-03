@@ -311,67 +311,95 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          last_violation_at: string | null
           name: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
+          violation_flags: number | null
         }
         Insert: {
           created_at?: string | null
           id: string
+          last_violation_at?: string | null
           name?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
+          violation_flags?: number | null
         }
         Update: {
           created_at?: string | null
           id?: string
+          last_violation_at?: string | null
           name?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
+          violation_flags?: number | null
         }
         Relationships: []
       }
       quotes: {
         Row: {
+          confirmation_timer_expires_at: string | null
+          confirmation_timer_minutes: number | null
           created_at: string
           description: string
           estimated_price: number
           id: string
+          is_revised: boolean | null
           notes: string | null
+          original_quote_id: string | null
           payment_status: string | null
           pro_id: string
           request_id: string
+          revised_at: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          confirmation_timer_expires_at?: string | null
+          confirmation_timer_minutes?: number | null
           created_at?: string
           description: string
           estimated_price: number
           id?: string
+          is_revised?: boolean | null
           notes?: string | null
+          original_quote_id?: string | null
           payment_status?: string | null
           pro_id: string
           request_id: string
+          revised_at?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          confirmation_timer_expires_at?: string | null
+          confirmation_timer_minutes?: number | null
           created_at?: string
           description?: string
           estimated_price?: number
           id?: string
+          is_revised?: boolean | null
           notes?: string | null
+          original_quote_id?: string | null
           payment_status?: string | null
           pro_id?: string
           request_id?: string
+          revised_at?: string | null
           status?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "quotes_original_quote_id_fkey"
+            columns: ["original_quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quotes_pro_id_fkey"
             columns: ["pro_id"]
@@ -391,6 +419,7 @@ export type Database = {
       referral_fees: {
         Row: {
           amount: number
+          cancellation_reason: string | null
           created_at: string
           id: string
           paid_at: string | null
@@ -405,6 +434,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          cancellation_reason?: string | null
           created_at?: string
           id?: string
           paid_at?: string | null
@@ -419,6 +449,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          cancellation_reason?: string | null
           created_at?: string
           id?: string
           paid_at?: string | null
@@ -593,6 +624,17 @@ export type Database = {
         Args: { lead_id: string }
         Returns: Json
       }
+      accept_quote_with_timer: {
+        Args: { quote_id_input: string }
+        Returns: Json
+      }
+      cancel_appointment_with_validation: {
+        Args: {
+          appointment_id_input: string
+          cancellation_reason_input: string
+        }
+        Returns: Json
+      }
       create_admin_user: {
         Args: { admin_email: string; admin_password?: string }
         Returns: Json
@@ -601,9 +643,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      expire_timed_out_quotes: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       generate_leads_for_request: {
         Args: { request_id: string }
         Returns: undefined
+      }
+      get_confirmation_timer_minutes: {
+        Args: { urgency_value: string }
+        Returns: number
       }
       get_service_request_details: {
         Args: { request_id: string }
