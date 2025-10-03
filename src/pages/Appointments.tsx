@@ -221,8 +221,9 @@ const Appointments = () => {
     );
   }
 
-  const upcomingAppointments = appointments.filter(apt => isUpcoming(apt.starts_at));
-  const pastAppointments = appointments.filter(apt => !isUpcoming(apt.starts_at));
+  const upcomingAppointments = appointments.filter(apt => apt.starts_at && isUpcoming(apt.starts_at));
+  const pastAppointments = appointments.filter(apt => apt.starts_at && !isUpcoming(apt.starts_at));
+  const pendingScheduling = appointments.filter(apt => !apt.starts_at);
 
   return (
     <div className="min-h-screen bg-background">
@@ -245,6 +246,70 @@ const Appointments = () => {
           </Card>
         ) : (
           <div className="space-y-6">
+            {pendingScheduling.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-semibold mb-4">Pending Scheduling</h2>
+                <div className="space-y-4">
+                  {pendingScheduling.map((appointment) => (
+                    <Card key={appointment.id}>
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-lg">
+                              {appointment.service_requests.service_categories.name}
+                            </CardTitle>
+                            <CardDescription className="flex items-center gap-2 mt-1">
+                              <Car className="h-4 w-4" />
+                              {appointment.service_requests.year} {appointment.service_requests.vehicle_make} {appointment.service_requests.model}
+                              {appointment.service_requests.trim && ` ${appointment.service_requests.trim}`}
+                            </CardDescription>
+                          </div>
+                          <Badge className="bg-yellow-100 text-yellow-800">
+                            AWAITING SCHEDULE
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="mb-4 p-3 bg-yellow-50 rounded-lg">
+                          <p className="text-sm text-yellow-700">
+                            The professional will schedule an appointment time with you soon.
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="font-semibold mb-2 flex items-center gap-2">
+                              <MapPin className="h-4 w-4" />
+                              Service Location
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {appointment.service_requests.address}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              ZIP: {appointment.service_requests.zip}
+                            </p>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-2 flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              Professional
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {appointment.profiles.name}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-4 border-t mt-4">
+                          <div className="text-xs text-muted-foreground">
+                            Service Request ID: {appointment.service_requests.id}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {upcomingAppointments.length > 0 && (
               <div>
                 <h2 className="text-2xl font-semibold mb-4">Upcoming Appointments</h2>
