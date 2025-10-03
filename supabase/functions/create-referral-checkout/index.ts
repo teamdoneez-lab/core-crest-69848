@@ -42,15 +42,21 @@ serve(async (req) => {
 
     console.log("[REFERRAL-CHECKOUT] Processing quote:", quote_id);
 
-    // Get the quote details first
-    const { data: quote, error: quoteError } = await supabaseClient
+    // Get the quote details using admin client to bypass RLS
+    const { data: quote, error: quoteError } = await supabaseAdmin
       .from("quotes")
-      .select("*, service_requests(id)")
+      .select("estimated_price, request_id, pro_id")
       .eq("id", quote_id)
       .single();
 
     if (quoteError || !quote) {
+      console.error("[REFERRAL-CHECKOUT] Quote fetch error:", quoteError);
       throw new Error("Quote not found");
+    }
+
+    // Verify the quote belongs to the authenticated user
+    if (quote.pro_id !== user.id) {
+      throw new Error("Unauthorized: Quote does not belong to this professional");
     }
 
     // Get or create the referral fee for this quote
