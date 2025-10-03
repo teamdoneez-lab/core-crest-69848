@@ -59,7 +59,7 @@ serve(async (req) => {
       throw new Error("Unauthorized: Quote does not belong to this professional");
     }
 
-    // Get or create the referral fee for this quote
+    // Get the referral fee for this quote (should already exist from trigger)
     let { data: referralFee, error: feeError } = await supabaseClient
       .from("referral_fees")
       .select("*")
@@ -67,28 +67,55 @@ serve(async (req) => {
       .eq("pro_id", user.id)
       .single();
 
-    // If referral fee doesn't exist, create it (fallback in case trigger didn't run)
+    // If not found by quote_id, try to find by request_id (in case of existing fee)
     if (feeError || !referralFee) {
-      console.log("[REFERRAL-CHECKOUT] Referral fee not found, creating it...");
+      console.log("[REFERRAL-CHECKOUT] Referral fee not found by quote_id, checking request_id...");
       
-      const { data: newFee, error: createError } = await supabaseAdmin
+      const { data: existingFee, error: existingError } = await supabaseClient
         .from("referral_fees")
-        .insert({
-          quote_id,
-          pro_id: user.id,
-          request_id: quote.request_id,
-          amount: quote.estimated_price * 0.10,
-          status: "owed",
-        })
-        .select()
-        .single();
+        .select("*")
+        .eq("request_id", quote.request_id)
+        .eq("pro_id", user.id)
+        .maybeSingle();
 
-      if (createError || !newFee) {
-        console.error("[REFERRAL-CHECKOUT] Failed to create referral fee:", createError);
-        throw new Error("Failed to create referral fee");
+      if (existingFee) {
+        // Update existing fee with the quote_id
+        console.log("[REFERRAL-CHECKOUT] Found existing fee, updating with quote_id...");
+        const { data: updatedFee, error: updateError } = await supabaseAdmin
+          .from("referral_fees")
+          .update({ quote_id })
+          .eq("id", existingFee.id)
+          .select()
+          .single();
+
+        if (updateError || !updatedFee) {
+          console.error("[REFERRAL-CHECKOUT] Failed to update referral fee:", updateError);
+          throw new Error("Failed to update referral fee");
+        }
+
+        referralFee = updatedFee;
+      } else {
+        // Create new fee if none exists
+        console.log("[REFERRAL-CHECKOUT] Creating new referral fee...");
+        const { data: newFee, error: createError } = await supabaseAdmin
+          .from("referral_fees")
+          .insert({
+            quote_id,
+            pro_id: user.id,
+            request_id: quote.request_id,
+            amount: quote.estimated_price * 0.10,
+            status: "owed",
+          })
+          .select()
+          .single();
+
+        if (createError || !newFee) {
+          console.error("[REFERRAL-CHECKOUT] Failed to create referral fee:", createError);
+          throw new Error("Failed to create referral fee");
+        }
+
+        referralFee = newFee;
       }
-
-      referralFee = newFee;
     }
 
     if (referralFee.status === "paid") {
