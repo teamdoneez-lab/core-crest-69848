@@ -315,14 +315,11 @@ const Index = () => {
             <div className="text-center lg:text-left space-y-8 animate-fade-in">
               <h1 className="text-5xl md:text-7xl font-bold tracking-tight font-playfair leading-tight">
                 <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent drop-shadow-sm">
-                  Professional Auto Services
+                  Auto Care, The Easy Way
                 </span>
-                <br />
-                <span className="text-foreground/90 text-4xl md:text-5xl">At Your Doorstep</span>
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                Connect with <span className="font-semibold text-primary">verified automotive professionals</span> for quality repairs, maintenance, and services. 
-                Book instantly, track progress, and pay securely.
+                Request service, connect with trusted pros ready to help, and get back on the road with confidence.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center lg:justify-start">
               <Link to="/auth" className="w-full sm:w-auto">
