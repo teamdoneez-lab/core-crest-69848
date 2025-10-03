@@ -85,7 +85,7 @@ const Appointments = () => {
           service_categories (
             name
           ),
-          referral_fees!inner (
+          referral_fees (
             status,
             paid_at
           ),
@@ -101,7 +101,7 @@ const Appointments = () => {
           )
         `)
         .eq('customer_id', user?.id)
-        .eq('referral_fees.status', 'paid')
+        .eq('status', 'in_progress')
         .order('created_at', { ascending: false });
 
       if (requestsError) {
@@ -114,32 +114,37 @@ const Appointments = () => {
         return;
       }
 
-      // Transform to appointment format
-      const transformedAppointments = (requestsData || []).map(req => {
-        const appointment = req.appointments?.[0];
-        return {
-          id: appointment?.id || req.id,
-          starts_at: appointment?.starts_at || null,
-          notes: appointment?.notes,
-          status: appointment?.status || 'pending_scheduling',
-          pro_id: appointment?.pro_id,
-          service_requests: {
-            id: req.id,
-            vehicle_make: req.vehicle_make,
-            model: req.model,
-            year: req.year,
-            trim: req.trim,
-            address: req.address,
-            zip: req.zip,
-            contact_email: req.contact_email,
-            contact_phone: req.contact_phone,
-            status: req.status,
-            service_categories: req.service_categories
-          },
-          profiles: appointment?.profiles || { name: 'Professional' }
-        };
-      });
+      console.log('Appointments data:', requestsData);
 
+      // Filter for paid referral fees and transform to appointment format
+      const transformedAppointments = (requestsData || [])
+        .filter(req => req.referral_fees?.[0]?.status === 'paid')
+        .map(req => {
+          const appointment = req.appointments?.[0];
+          return {
+            id: appointment?.id || req.id,
+            starts_at: appointment?.starts_at || null,
+            notes: appointment?.notes,
+            status: appointment?.status || 'pending_scheduling',
+            pro_id: appointment?.pro_id,
+            service_requests: {
+              id: req.id,
+              vehicle_make: req.vehicle_make,
+              model: req.model,
+              year: req.year,
+              trim: req.trim,
+              address: req.address,
+              zip: req.zip,
+              contact_email: req.contact_email,
+              contact_phone: req.contact_phone,
+              status: req.status,
+              service_categories: req.service_categories
+            },
+            profiles: appointment?.profiles || { name: 'Professional' }
+          };
+        });
+
+      console.log('Transformed appointments:', transformedAppointments);
       setAppointments(transformedAppointments);
     } catch (error) {
       console.error('Error:', error);
