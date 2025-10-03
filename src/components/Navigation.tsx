@@ -74,6 +74,15 @@ export function Navigation() {
               {isPro && (
                 <>
                   <Link 
+                    to="/pro-profile" 
+                    className={cn(
+                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                      isActive('/pro-profile') ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    My Profile
+                  </Link>
+                  <Link 
                     to="/service-requests" 
                     className={cn(
                       "text-sm lg:text-base font-medium transition-colors hover:text-primary",

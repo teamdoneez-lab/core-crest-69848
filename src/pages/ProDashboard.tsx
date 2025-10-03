@@ -363,17 +363,9 @@ export default function ProDashboard() {
       <Navigation />
       <div className="mx-auto max-w-7xl p-6">
         {/* Header */}
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Professional Dashboard</h1>
-            <p className="text-muted-foreground">Manage your jobs and grow your business</p>
-          </div>
-          <Link to="/pro-profile">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Profile Settings
-            </Button>
-          </Link>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">Professional Dashboard</h1>
+          <p className="text-muted-foreground">Manage your jobs and grow your business</p>
         </div>
 
         {/* Main Content */}
