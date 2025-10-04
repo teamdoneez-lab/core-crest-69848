@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { ReferralFeesTab } from '@/components/admin/ReferralFeesTab';
 import { ProDetailModal } from '@/components/admin/ProDetailModal';
 import { CustomerDetailModal } from '@/components/admin/CustomerDetailModal';
+import { ProfessionalDetailModal } from '@/components/admin/ProfessionalDetailModal';
 
 interface Customer {
   id: string;
@@ -93,12 +94,16 @@ const AdminDashboard = () => {
   const [dateFilter, setDateFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [customersPage, setCustomersPage] = useState(1);
+  const [prosPage, setProsPage] = useState(1);
   const [requestsPage, setRequestsPage] = useState(1);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [selectedProId, setSelectedProId] = useState<string | null>(null);
   const [isProDetailOpen, setIsProDetailOpen] = useState(false);
   const [isCustomerDetailOpen, setIsCustomerDetailOpen] = useState(false);
+  const [isProfessionalDetailOpen, setIsProfessionalDetailOpen] = useState(false);
   const customersPerPage = 10;
+  const prosPerPage = 10;
   const requestsPerPage = 10;
   const { toast } = useToast();
 
@@ -724,62 +729,121 @@ const AdminDashboard = () => {
                   </CardContent>
                 </Card>
               ) : (
-                filterData(pros, 'pros').map((pro) => (
-                <Card key={pro.id}>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold">{pro?.name || 'Unknown Professional'}</h3>
-                        {pro.pro_profiles && pro.pro_profiles.length > 0 && (
-                          <p className="text-sm font-medium">{pro.pro_profiles[0].business_name}</p>
-                        )}
-                        <p className="text-sm text-muted-foreground">ID: {pro.id}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Joined: {format(new Date(pro.created_at), 'PPP')}
-                        </p>
-                        {pro.phone && (
-                          <p className="text-sm text-muted-foreground">
-                            <Phone className="h-3 w-3 inline mr-1" />
-                            {pro.phone}
-                          </p>
-                        )}
-                        {pro.pro_profiles && pro.pro_profiles.length > 0 && (
-                          <p className="text-sm text-muted-foreground">
-                            Service radius: {pro.pro_profiles[0].radius_km}km
-                          </p>
-                        )}
-                      </div>
-                       <div className="flex flex-col gap-2 items-end">
-                        <Badge>{pro.role}</Badge>
-                        {pro.pro_profiles && pro.pro_profiles.length > 0 && (
-                          <>
-                            <Badge className={pro.pro_profiles[0].is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                              {pro.pro_profiles[0].is_verified ? 'Verified' : 'Unverified'}
-                            </Badge>
-                            <Button
-                              size="sm"
-                              variant={pro.pro_profiles[0].is_verified ? 'outline' : 'default'}
-                              onClick={() => handleToggleProVerification(pro.id, pro.pro_profiles[0].is_verified)}
+                <>
+                  {filterData(pros, 'pros')
+                    .slice((prosPage - 1) * prosPerPage, prosPage * prosPerPage)
+                    .map((pro) => (
+                    <Card key={pro.id}>
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-semibold">{pro?.name || 'Unknown Professional'}</h3>
+                            {pro.pro_profiles && pro.pro_profiles.length > 0 && (
+                              <p className="text-sm font-medium">{pro.pro_profiles[0].business_name}</p>
+                            )}
+                            <p className="text-sm text-muted-foreground">ID: {pro.id}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Joined: {format(new Date(pro.created_at), 'PPP')}
+                            </p>
+                            {pro.phone && (
+                              <p className="text-sm text-muted-foreground">
+                                <Phone className="h-3 w-3 inline mr-1" />
+                                {pro.phone}
+                              </p>
+                            )}
+                            {pro.pro_profiles && pro.pro_profiles.length > 0 && (
+                              <p className="text-sm text-muted-foreground">
+                                Service radius: {pro.pro_profiles[0].radius_km}km
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-2 items-end">
+                            <Badge>{pro.role}</Badge>
+                            {pro.pro_profiles && pro.pro_profiles.length > 0 && (
+                              <>
+                                <Badge className={pro.pro_profiles[0].is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                                  {pro.pro_profiles[0].is_verified ? 'Verified' : 'Unverified'}
+                                </Badge>
+                                <Button
+                                  size="sm"
+                                  variant={pro.pro_profiles[0].is_verified ? 'outline' : 'default'}
+                                  onClick={() => handleToggleProVerification(pro.id, pro.pro_profiles[0].is_verified)}
+                                >
+                                  {pro.pro_profiles[0].is_verified ? (
+                                    <>
+                                      <ShieldOff className="h-4 w-4 mr-2" />
+                                      Unverify
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ShieldCheck className="h-4 w-4 mr-2" />
+                                      Verify
+                                    </>
+                                  )}
+                                </Button>
+                              </>
+                            )}
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedProId(pro.id);
+                                setIsProfessionalDetailOpen(true);
+                              }}
                             >
-                              {pro.pro_profiles[0].is_verified ? (
-                                <>
-                                  <ShieldOff className="h-4 w-4 mr-2" />
-                                  Unverify
-                                </>
-                              ) : (
-                                <>
-                                  <ShieldCheck className="h-4 w-4 mr-2" />
-                                  Verify
-                                </>
-                              )}
+                              <Info className="h-4 w-4 mr-2" />
+                              Pro Detail
                             </Button>
-                          </>
-                        )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  {/* Pagination */}
+                  {filterData(pros, 'pros').length > prosPerPage && (
+                    <div className="flex items-center justify-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setProsPage(p => Math.max(1, p - 1))}
+                        disabled={prosPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center gap-2">
+                        {Array.from({ 
+                          length: Math.ceil(filterData(pros, 'pros').length / prosPerPage) 
+                        }, (_, i) => i + 1).map((page) => (
+                          <Button
+                            key={page}
+                            variant={page === prosPage ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setProsPage(page)}
+                            className="w-10"
+                          >
+                            {page}
+                          </Button>
+                        ))}
                       </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setProsPage(p => Math.min(
+                          Math.ceil(filterData(pros, 'pros').length / prosPerPage),
+                          p + 1
+                        ))}
+                        disabled={prosPage >= Math.ceil(filterData(pros, 'pros').length / prosPerPage)}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-                ))
+                  )}
+                </>
               )}
             </div>
           </TabsContent>
@@ -1038,6 +1102,12 @@ const AdminDashboard = () => {
             onOpenChange={setIsCustomerDetailOpen}
           />
         )}
+
+        <ProfessionalDetailModal 
+          proId={selectedProId}
+          open={isProfessionalDetailOpen}
+          onOpenChange={setIsProfessionalDetailOpen}
+        />
       </div>
     </div>
   );
