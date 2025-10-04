@@ -102,7 +102,7 @@ export default function Earnings() {
           )
         `)
         .eq('accepted_pro_id', user?.id)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'in_progress'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -214,9 +214,9 @@ export default function Earnings() {
           </Card>
         </div>
 
-        {/* Completed Jobs List */}
+        {/* Jobs List */}
         <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-4">Completed Jobs History</h2>
+          <h2 className="text-xl font-semibold mb-4">Jobs History</h2>
         </div>
 
         {completedJobs.length === 0 ? (
@@ -254,8 +254,8 @@ export default function Earnings() {
                         </CardDescription>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <Badge className="bg-green-100 text-green-800">
-                          Completed
+                        <Badge className={job.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}>
+                          {job.status === 'completed' ? 'Completed' : 'In Progress'}
                         </Badge>
                         {appointment?.starts_at && (
                           <div className="text-xs text-muted-foreground flex items-center gap-1">
