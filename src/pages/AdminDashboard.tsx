@@ -507,10 +507,10 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ${fees.reduce((sum, f) => sum + f.amount, 0).toFixed(2)}
+                ${fees.filter(f => f.status === 'paid').reduce((sum, f) => sum + f.amount, 0).toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
-                {fees.length} total fees
+                {fees.filter(f => f.status === 'paid').length} paid fees
               </p>
             </CardContent>
           </Card>
