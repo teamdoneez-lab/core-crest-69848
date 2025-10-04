@@ -786,19 +786,17 @@ const AdminDashboard = () => {
                             <Badge className={getStatusColor(request.status)}>
                               {request.status.replace('_', ' ').toUpperCase()}
                             </Badge>
-                            {request.accepted_pro_id && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedRequestId(request.id);
-                                  setIsProDetailOpen(true);
-                                }}
-                              >
-                                <Info className="h-4 w-4 mr-2" />
-                                Pro Detail
-                              </Button>
-                            )}
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedRequestId(request.id);
+                                setIsProDetailOpen(true);
+                              }}
+                            >
+                              <Info className="h-4 w-4 mr-2" />
+                              Pro Detail
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
