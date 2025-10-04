@@ -17,6 +17,7 @@ import { Users, Car, DollarSign, FileText, Download, CheckCircle, Calendar, Phon
 import { format } from 'date-fns';
 import { ReferralFeesTab } from '@/components/admin/ReferralFeesTab';
 import { ProDetailModal } from '@/components/admin/ProDetailModal';
+import { CustomerDetailModal } from '@/components/admin/CustomerDetailModal';
 
 interface Customer {
   id: string;
@@ -91,9 +92,13 @@ const AdminDashboard = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [customersPage, setCustomersPage] = useState(1);
   const [requestsPage, setRequestsPage] = useState(1);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [isProDetailOpen, setIsProDetailOpen] = useState(false);
+  const [isCustomerDetailOpen, setIsCustomerDetailOpen] = useState(false);
+  const customersPerPage = 10;
   const requestsPerPage = 10;
   const { toast } = useToast();
 
@@ -605,28 +610,89 @@ const AdminDashboard = () => {
                   </CardContent>
                 </Card>
               ) : (
-                filterData(customers, 'customers').map((customer) => (
-                <Card key={customer.id}>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold">{customer?.name || 'Unknown Customer'}</h3>
-                        <p className="text-sm text-muted-foreground">ID: {customer.id}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Joined: {format(new Date(customer.created_at), 'PPP')}
-                        </p>
-                        {customer.phone && (
-                          <p className="text-sm text-muted-foreground">
-                            <Phone className="h-3 w-3 inline mr-1" />
-                            {customer.phone}
-                          </p>
-                        )}
+                <>
+                  {filterData(customers, 'customers')
+                    .slice((customersPage - 1) * customersPerPage, customersPage * customersPerPage)
+                    .map((customer) => (
+                    <Card key={customer.id}>
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-semibold">{customer?.name || 'Unknown Customer'}</h3>
+                            <p className="text-sm text-muted-foreground">ID: {customer.id}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Joined: {format(new Date(customer.created_at), 'PPP')}
+                            </p>
+                            {customer.phone && (
+                              <p className="text-sm text-muted-foreground">
+                                <Phone className="h-3 w-3 inline mr-1" />
+                                {customer.phone}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-2 items-end">
+                            <Badge>{customer.role}</Badge>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedCustomerId(customer.id);
+                                setIsCustomerDetailOpen(true);
+                              }}
+                            >
+                              <Info className="h-4 w-4 mr-2" />
+                              Customer Detail
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  {/* Pagination */}
+                  {filterData(customers, 'customers').length > customersPerPage && (
+                    <div className="flex items-center justify-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCustomersPage(p => Math.max(1, p - 1))}
+                        disabled={customersPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center gap-2">
+                        {Array.from({ 
+                          length: Math.ceil(filterData(customers, 'customers').length / customersPerPage) 
+                        }, (_, i) => i + 1).map((page) => (
+                          <Button
+                            key={page}
+                            variant={page === customersPage ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setCustomersPage(page)}
+                            className="w-10"
+                          >
+                            {page}
+                          </Button>
+                        ))}
                       </div>
-                      <Badge>{customer.role}</Badge>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCustomersPage(p => Math.min(
+                          Math.ceil(filterData(customers, 'customers').length / customersPerPage),
+                          p + 1
+                        ))}
+                        disabled={customersPage >= Math.ceil(filterData(customers, 'customers').length / customersPerPage)}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-                ))
+                  )}
+                </>
               )}
             </div>
           </TabsContent>
@@ -956,12 +1022,20 @@ const AdminDashboard = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Pro Detail Modal */}
+        {/* Modals */}
         {selectedRequestId && (
           <ProDetailModal
             requestId={selectedRequestId}
             open={isProDetailOpen}
             onOpenChange={setIsProDetailOpen}
+          />
+        )}
+        
+        {selectedCustomerId && (
+          <CustomerDetailModal
+            customerId={selectedCustomerId}
+            open={isCustomerDetailOpen}
+            onOpenChange={setIsCustomerDetailOpen}
           />
         )}
       </div>
