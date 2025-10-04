@@ -357,10 +357,6 @@ export function QuotesList({ requestId }: QuotesListProps) {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-              <Button variant="outline" className="flex-1" onClick={() => handleDeclineQuote(quote.id)}>
-                <XCircle className="mr-2 h-4 w-4" />
-                Decline
-              </Button>
             </CardFooter>
           )}
           {(quote.status === "expired" || quote.status === "declined") && (
