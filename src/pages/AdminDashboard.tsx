@@ -536,7 +536,7 @@ const AdminDashboard = () => {
               
               <div className="flex gap-4">
                 <div>
-                  <Label htmlFor="status-filter" className="flex items-center gap-2 mb-2">
+                  {/* <Label htmlFor="status-filter" className="flex items-center gap-2 mb-2">
                     <Filter className="h-4 w-4" />
                     Status
                   </Label>
@@ -554,7 +554,7 @@ const AdminDashboard = () => {
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                       <SelectItem value="paid">Paid</SelectItem>
                     </SelectContent>
-                  </Select>
+                  </Select> */}
                 </div>
                 
                 <div>
