@@ -300,10 +300,23 @@ const Appointments = () => {
     );
   }
 
-  const upcomingAppointments = appointments.filter(apt => apt.starts_at && isUpcoming(apt.starts_at) && apt.status !== 'completed');
-  const pastAppointments = appointments.filter(apt => apt.starts_at && !isUpcoming(apt.starts_at) && apt.status !== 'completed');
-  const pendingScheduling = appointments.filter(apt => !apt.starts_at && apt.status !== 'completed');
-  const completedAppointments = appointments.filter(apt => apt.status === 'completed');
+  const upcomingAppointments = appointments.filter(apt => 
+    apt.starts_at && 
+    isUpcoming(apt.starts_at) && 
+    apt.service_requests.status !== 'completed'
+  );
+  const pastAppointments = appointments.filter(apt => 
+    apt.starts_at && 
+    !isUpcoming(apt.starts_at) && 
+    apt.service_requests.status !== 'completed'
+  );
+  const pendingScheduling = appointments.filter(apt => 
+    !apt.starts_at && 
+    apt.service_requests.status !== 'completed'
+  );
+  const completedAppointments = appointments.filter(apt => 
+    apt.service_requests.status === 'completed'
+  );
 
   return (
     <div className="min-h-screen bg-background">
