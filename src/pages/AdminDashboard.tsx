@@ -55,6 +55,7 @@ interface Pro {
 
 const addProSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }).max(255),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }).max(100),
   name: z.string().trim().min(1, { message: "Name is required" }).max(100),
   phone: z.string().trim().optional(),
   businessName: z.string().trim().min(1, { message: "Business name is required" }).max(200),
@@ -140,6 +141,7 @@ const AdminDashboard = () => {
     resolver: zodResolver(addProSchema),
     defaultValues: {
       email: '',
+      password: '',
       name: '',
       phone: '',
       businessName: '',
@@ -367,49 +369,27 @@ const AdminDashboard = () => {
 
   const handleAddPro = async (data: AddProFormData) => {
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: data.email,
-        email_confirm: true,
-        user_metadata: {
-          name: data.name,
-          role: 'pro'
-        }
-      });
-
-      if (authError) throw authError;
-
-      const userId = authData.user.id;
-
-      // Update profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ 
+      // Call edge function to create pro user
+      const { data: result, error } = await supabase.functions.invoke('create-pro-user', {
+        body: {
+          email: data.email,
+          password: data.password,
           name: data.name,
           phone: data.phone || null,
-          role: 'pro'
-        })
-        .eq('id', userId);
-
-      if (profileError) throw profileError;
-
-      // Create pro profile
-      const { error: proProfileError } = await supabase
-        .from('pro_profiles')
-        .insert({
-          pro_id: userId,
-          business_name: data.businessName,
-          phone: data.phone || null,
+          businessName: data.businessName,
           address: data.address,
           city: data.city,
           state: data.state,
-          zip_code: data.zipCode,
-          radius_km: data.serviceRadius,
-          is_verified: false,
-          profile_complete: false
-        });
+          zipCode: data.zipCode,
+          serviceRadius: data.serviceRadius
+        }
+      });
 
-      if (proProfileError) throw proProfileError;
+      if (error) throw error;
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create professional');
+      }
 
       toast({
         title: 'Success',
@@ -850,6 +830,20 @@ const AdminDashboard = () => {
                                 <FormLabel>Email Address *</FormLabel>
                                 <FormControl>
                                   <Input type="email" placeholder="professional@example.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={addProForm.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Password *</FormLabel>
+                                <FormControl>
+                                  <Input type="password" placeholder="Minimum 6 characters" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
