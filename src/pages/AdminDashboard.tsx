@@ -18,6 +18,10 @@ import { format } from 'date-fns';
 import { ReferralFeesTab } from '@/components/admin/ReferralFeesTab';
 import { ProDetailModal } from '@/components/admin/ProDetailModal';
 import { CustomerDetailModal } from '@/components/admin/CustomerDetailModal';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 interface Customer {
   id: string;
@@ -48,6 +52,20 @@ interface Pro {
     email: string;
   };
 }
+
+const addProSchema = z.object({
+  email: z.string().trim().email({ message: "Invalid email address" }).max(255),
+  name: z.string().trim().min(1, { message: "Name is required" }).max(100),
+  phone: z.string().trim().optional(),
+  businessName: z.string().trim().min(1, { message: "Business name is required" }).max(200),
+  address: z.string().trim().min(1, { message: "Address is required" }).max(300),
+  city: z.string().trim().min(1, { message: "City is required" }).max(100),
+  state: z.string().trim().min(2, { message: "State is required" }).max(50),
+  zipCode: z.string().trim().min(5, { message: "Valid zip code required" }).max(10),
+  serviceRadius: z.number().min(1).max(200).default(25),
+});
+
+type AddProFormData = z.infer<typeof addProSchema>;
 
 interface ServiceRequest {
   id: string;
@@ -112,10 +130,26 @@ const AdminDashboard = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [isProDetailOpen, setIsProDetailOpen] = useState(false);
   const [isCustomerDetailOpen, setIsCustomerDetailOpen] = useState(false);
+  const [isAddProDialogOpen, setIsAddProDialogOpen] = useState(false);
   const customersPerPage = 10;
   const prosPerPage = 10;
   const requestsPerPage = 10;
   const { toast } = useToast();
+
+  const addProForm = useForm<AddProFormData>({
+    resolver: zodResolver(addProSchema),
+    defaultValues: {
+      email: '',
+      name: '',
+      phone: '',
+      businessName: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      serviceRadius: 25,
+    },
+  });
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -326,6 +360,70 @@ const AdminDashboard = () => {
       toast({
         title: 'Error',
         description: 'Failed to assign professional',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleAddPro = async (data: AddProFormData) => {
+    try {
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: data.email,
+        email_confirm: true,
+        user_metadata: {
+          name: data.name,
+          role: 'pro'
+        }
+      });
+
+      if (authError) throw authError;
+
+      const userId = authData.user.id;
+
+      // Update profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          name: data.name,
+          phone: data.phone || null,
+          role: 'pro'
+        })
+        .eq('id', userId);
+
+      if (profileError) throw profileError;
+
+      // Create pro profile
+      const { error: proProfileError } = await supabase
+        .from('pro_profiles')
+        .insert({
+          pro_id: userId,
+          business_name: data.businessName,
+          phone: data.phone || null,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          zip_code: data.zipCode,
+          radius_km: data.serviceRadius,
+          is_verified: false,
+          profile_complete: false
+        });
+
+      if (proProfileError) throw proProfileError;
+
+      toast({
+        title: 'Success',
+        description: 'Professional added successfully'
+      });
+
+      setIsAddProDialogOpen(false);
+      addProForm.reset();
+      fetchPros();
+    } catch (error: any) {
+      console.error('Error adding professional:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to add professional',
         variant: 'destructive'
       });
     }
@@ -727,41 +825,172 @@ const AdminDashboard = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Dialog>
+                <Dialog open={isAddProDialogOpen} onOpenChange={setIsAddProDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline">
                       <Users className="h-4 w-4 mr-2" />
                       Add Pro +
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>Add New Professional</DialogTitle>
                       <DialogDescription>
-                        Invite a professional by entering their email address. They will receive an invitation to join the platform.
+                        Create a new professional account with complete profile information.
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="pro-email">Email Address</Label>
-                        <Input
-                          id="pro-email"
-                          type="email"
-                          placeholder="professional@example.com"
+                    <Form {...addProForm}>
+                      <form onSubmit={addProForm.handleSubmit(handleAddPro)} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={addProForm.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email Address *</FormLabel>
+                                <FormControl>
+                                  <Input type="email" placeholder="professional@example.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={addProForm.control}
+                            name="name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Full Name *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="John Doe" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={addProForm.control}
+                            name="phone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Phone Number</FormLabel>
+                                <FormControl>
+                                  <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={addProForm.control}
+                            name="businessName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Business Name *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Auto Repair Shop" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        <FormField
+                          control={addProForm.control}
+                          name="address"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Street Address *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="123 Main Street" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="pro-name">Full Name</Label>
-                        <Input
-                          id="pro-name"
-                          type="text"
-                          placeholder="John Doe"
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormField
+                            control={addProForm.control}
+                            name="city"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>City *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="New York" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={addProForm.control}
+                            name="state"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>State *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="NY" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={addProForm.control}
+                            name="zipCode"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Zip Code *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="10001" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        <FormField
+                          control={addProForm.control}
+                          name="serviceRadius"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Service Radius (km) *</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  placeholder="25" 
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 25)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button type="submit">Send Invitation</Button>
-                    </DialogFooter>
+                        
+                        <DialogFooter>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => {
+                              setIsAddProDialogOpen(false);
+                              addProForm.reset();
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type="submit">Add Professional</Button>
+                        </DialogFooter>
+                      </form>
+                    </Form>
                   </DialogContent>
                 </Dialog>
                 <Button onClick={() => exportToCSV(filterData(pros, 'pros'), 'professionals')}>
