@@ -70,7 +70,7 @@ const Appointments = () => {
     try {
       console.log('[APPOINTMENTS] Starting fetch...');
       
-      // First, get all in_progress service requests
+      // First, get all in_progress and completed service requests
       const { data: requestsData, error: requestsError } = await supabase
         .from('service_requests')
         .select(`
@@ -89,7 +89,7 @@ const Appointments = () => {
           )
         `)
         .eq('customer_id', user?.id)
-        .eq('status', 'in_progress')
+        .in('status', ['in_progress', 'completed'])
         .order('created_at', { ascending: false });
 
       if (requestsError) {
@@ -266,9 +266,10 @@ const Appointments = () => {
     );
   }
 
-  const upcomingAppointments = appointments.filter(apt => apt.starts_at && isUpcoming(apt.starts_at));
-  const pastAppointments = appointments.filter(apt => apt.starts_at && !isUpcoming(apt.starts_at));
-  const pendingScheduling = appointments.filter(apt => !apt.starts_at);
+  const upcomingAppointments = appointments.filter(apt => apt.starts_at && isUpcoming(apt.starts_at) && apt.status !== 'completed');
+  const pastAppointments = appointments.filter(apt => apt.starts_at && !isUpcoming(apt.starts_at) && apt.status !== 'completed');
+  const pendingScheduling = appointments.filter(apt => !apt.starts_at && apt.status !== 'completed');
+  const completedAppointments = appointments.filter(apt => apt.status === 'completed');
 
   return (
     <div className="min-h-screen bg-background">
@@ -309,8 +310,8 @@ const Appointments = () => {
                               {appointment.service_requests.trim && ` ${appointment.service_requests.trim}`}
                             </CardDescription>
                           </div>
-                          <Badge className="bg-yellow-100 text-yellow-800">
-                            AWAITING SCHEDULE
+                          <Badge className="bg-blue-100 text-blue-800">
+                            IN PROGRESS
                           </Badge>
                         </div>
                       </CardHeader>
@@ -468,6 +469,67 @@ const Appointments = () => {
                               </AlertDialogContent>
                             </AlertDialog>
                           )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {completedAppointments.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-semibold mb-4">Completed Appointments</h2>
+                <div className="space-y-4">
+                  {completedAppointments.map((appointment) => (
+                    <Card key={appointment.id} className="border-green-200 bg-green-50/30">
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-lg">
+                              {appointment.service_requests.service_categories.name}
+                            </CardTitle>
+                            <CardDescription className="flex items-center gap-2 mt-1">
+                              <Car className="h-4 w-4" />
+                              {appointment.service_requests.year} {appointment.service_requests.vehicle_make} {appointment.service_requests.model}
+                            </CardDescription>
+                          </div>
+                          <Badge className="bg-green-100 text-green-800">
+                            COMPLETED
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            {appointment.starts_at && (
+                              <p className="text-sm text-muted-foreground mb-1">
+                                <Clock className="h-4 w-4 inline mr-2" />
+                                {format(new Date(appointment.starts_at), 'PPP p')}
+                              </p>
+                            )}
+                            <p className="text-sm text-muted-foreground">
+                              <User className="h-4 w-4 inline mr-2" />
+                              Professional: {appointment.profiles.name}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm text-muted-foreground">
+                              <MapPin className="h-4 w-4 inline mr-2" />
+                              {appointment.service_requests.address}, {appointment.service_requests.zip}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-4 border-t mt-4">
+                          <div className="text-xs text-muted-foreground">
+                            Service Request ID: {appointment.service_requests.id}
+                          </div>
+                          <div className="flex items-center gap-2 text-green-600">
+                            <CheckCircle className="h-4 w-4" />
+                            <span className="text-sm font-medium">Job Completed</span>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
