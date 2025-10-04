@@ -245,43 +245,7 @@ export const ReferralFeesTab = () => {
                   )}
                 </div>
 
-                {/* /* {fee.status === 'owed' && (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button size="sm">
-                        Mark Paid
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Mark Fee as Paid</DialogTitle>
-                        <DialogDescription>
-                          Record manual payment for this referral fee
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div>
-                          <Label>Payment Method</Label>
-                          <Select defaultValue="manual">
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="manual">Manual/Cash</SelectItem>
-                              <SelectItem value="check">Check</SelectItem>
-                              <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button onClick={() => handleMarkPaid(fee.id, 'manual')}>
-                          Confirm Payment
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                )} */ 
+                
 
                 {fee.status === 'paid' && fee.refundable && (
                   <Dialog>
