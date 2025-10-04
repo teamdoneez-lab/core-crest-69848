@@ -156,14 +156,12 @@ const Appointments = () => {
       console.log('[APPOINTMENTS] Fees map size:', feesMap.size);
       console.log('[APPOINTMENTS] Appointments map size:', appointmentsMap.size);
 
-      // Filter and transform - only include requests with paid fees AND actual appointments
+      // Filter and transform - only include requests with paid fees
       const transformedAppointments = requestsData
         .filter(req => {
           const hasPaidFee = feesMap.has(req.id);
-          const hasAppointment = appointmentsMap.has(req.id);
-          console.log(`[APPOINTMENTS] Request ${req.id} has paid fee:`, hasPaidFee, ', has appointment:', hasAppointment);
-          // Only show if there's a paid fee AND an actual appointment record
-          return hasPaidFee && hasAppointment;
+          console.log(`[APPOINTMENTS] Request ${req.id} has paid fee:`, hasPaidFee);
+          return hasPaidFee;
         })
         .map(req => {
           const appointment = appointmentsMap.get(req.id);
