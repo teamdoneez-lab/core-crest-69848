@@ -28,8 +28,8 @@ interface Quote {
   confirmation_timer_expires_at: string | null;
   confirmation_timer_minutes: number | null;
   is_revised: boolean;
-  profiles: {
-    name: string | null;
+  pro_profiles: {
+    business_name: string | null;
   } | null;
 }
 
@@ -68,17 +68,33 @@ export function QuotesList({ requestId }: QuotesListProps) {
 
   const fetchQuotes = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch quotes
+      const { data: quotesData, error: quotesError } = await supabase
         .from("quotes")
-        .select(`
-          *,
-          profiles:pro_id (name)
-        `)
+        .select("*")
         .eq("request_id", requestId)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setQuotes(data || []);
+      if (quotesError) throw quotesError;
+
+      // Fetch pro profiles for each quote
+      if (quotesData && quotesData.length > 0) {
+        const proIds = [...new Set(quotesData.map(q => q.pro_id))];
+        const { data: proProfilesData } = await supabase
+          .from("pro_profiles")
+          .select("pro_id, business_name")
+          .in("pro_id", proIds);
+
+        // Merge the data
+        const quotesWithProfiles = quotesData.map(quote => ({
+          ...quote,
+          pro_profiles: proProfilesData?.find(p => p.pro_id === quote.pro_id) || null
+        }));
+
+        setQuotes(quotesWithProfiles);
+      } else {
+        setQuotes([]);
+      }
     } catch (error) {
       console.error("Error fetching quotes:", error);
     } finally {
@@ -251,7 +267,7 @@ export function QuotesList({ requestId }: QuotesListProps) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg">
-                  {quote.profiles?.business_name || "Unknown Professional"}
+                  {quote.pro_profiles?.business_name || "Unknown Professional"}
                 </CardTitle>
                 <Badge variant="secondary" className="mt-1">
                   ✓ Verified Professional
