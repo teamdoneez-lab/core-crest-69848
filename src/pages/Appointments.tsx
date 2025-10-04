@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, MapPin, Phone, Mail, Car, Clock, User, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, Phone, Mail, Car, Clock, User, CheckCircle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   AlertDialog,
@@ -239,6 +239,40 @@ const Appointments = () => {
       toast({
         title: "Error",
         description: "Failed to mark job as completed",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteAppointment = async (appointmentId: string, requestId: string) => {
+    try {
+      // Delete the appointment
+      const { error: appointmentError } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', appointmentId);
+
+      if (appointmentError) throw appointmentError;
+
+      // Optionally update service request status
+      const { error: requestError } = await supabase
+        .from('service_requests')
+        .update({ status: 'archived' })
+        .eq('id', requestId);
+
+      if (requestError) throw requestError;
+
+      toast({
+        title: "Appointment Deleted",
+        description: "The appointment has been removed from your history.",
+      });
+
+      fetchAppointments();
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete appointment",
         variant: "destructive",
       });
     }
@@ -526,9 +560,36 @@ const Appointments = () => {
                           <div className="text-xs text-muted-foreground">
                             Service Request ID: {appointment.service_requests.id}
                           </div>
-                          <div className="flex items-center gap-2 text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span className="text-sm font-medium">Job Completed</span>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 text-green-600">
+                              <CheckCircle className="h-4 w-4" />
+                              <span className="text-sm font-medium">Job Completed</span>
+                            </div>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm">
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete this appointment?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently remove this appointment from your history. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleDeleteAppointment(appointment.id, appointment.service_requests.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </div>
                       </CardContent>
