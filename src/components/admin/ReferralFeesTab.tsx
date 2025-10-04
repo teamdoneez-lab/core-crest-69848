@@ -216,10 +216,22 @@ export const ReferralFeesTab = () => {
                     Amount: <span className="font-semibold">${fee.amount.toFixed(2)}</span>
                   </div>
 
-                  <div className="text-xs text-muted-foreground">
-                    Created: {format(new Date(fee.created_at), 'PPP p')}
-                    {fee.paid_at && ` • Paid: ${format(new Date(fee.paid_at), 'PPP p')}`}
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Request ID:</span>{' '}
+                    <span className="font-mono text-xs">{fee.service_requests?.id || 'N/A'}</span>
                   </div>
+
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Date:</span>{' '}
+                    {fee.paid_at ? format(new Date(fee.paid_at), 'PPP p') : format(new Date(fee.created_at), 'PPP p')}
+                  </div>
+
+                  {fee.stripe_payment_intent && (
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Transaction ID:</span>{' '}
+                      <span className="font-mono text-xs">{fee.stripe_payment_intent}</span>
+                    </div>
+                  )}
 
                   {fee.stripe_session_id && (
                     <a 
