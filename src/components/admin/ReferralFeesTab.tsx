@@ -33,7 +33,9 @@ interface ReferralFee {
 export const ReferralFeesTab = () => {
   const [fees, setFees] = useState<ReferralFee[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('paid');
+  const [currentPage, setCurrentPage] = useState(1);
+  const feesPerPage = 10;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -147,8 +149,11 @@ export const ReferralFeesTab = () => {
     ? fees 
     : fees.filter(fee => fee.status === statusFilter);
 
-  const totalOwed = fees.filter(f => f.status === 'owed').reduce((sum, f) => sum + f.amount, 0);
-  const totalPaid = fees.filter(f => f.status === 'paid').reduce((sum, f) => sum + f.amount, 0);
+  // Pagination
+  const totalPages = Math.ceil(filteredFees.length / feesPerPage);
+  const startIndex = (currentPage - 1) * feesPerPage;
+  const endIndex = startIndex + feesPerPage;
+  const paginatedFees = filteredFees.slice(startIndex, endIndex);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -166,54 +171,6 @@ export const ReferralFeesTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Owed</CardTitle>
-            <DollarSign className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              ${totalOwed.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {fees.filter(f => f.status === 'owed').length} pending payments
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              ${totalPaid.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {fees.filter(f => f.status === 'paid').length} paid fees
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${(totalOwed + totalPaid).toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {fees.length} total fees
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Filters and Export */}
       <div className="flex justify-between items-center">
         <div className="flex gap-2">
@@ -237,7 +194,7 @@ export const ReferralFeesTab = () => {
 
       {/* Fees List */}
       <div className="space-y-4">
-        {filteredFees.map((fee) => (
+        {paginatedFees.map((fee) => (
           <Card key={fee.id}>
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
@@ -364,6 +321,31 @@ export const ReferralFeesTab = () => {
           </Card>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
