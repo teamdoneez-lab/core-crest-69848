@@ -281,7 +281,7 @@ export const ReferralFeesTab = () => {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-                )} */ */}
+                )} */ 
 
                 {fee.status === 'paid' && fee.refundable && (
                   <Dialog>
