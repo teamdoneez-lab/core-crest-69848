@@ -254,6 +254,14 @@ const Appointments = () => {
 
       if (appointmentError) throw appointmentError;
 
+      // Mark service request as cancelled so it won't appear again
+      const { error: requestError } = await supabase
+        .from('service_requests')
+        .update({ status: 'cancelled' })
+        .eq('id', requestId);
+
+      if (requestError) throw requestError;
+
       toast({
         title: "Appointment Deleted",
         description: "The appointment has been removed from your history.",
