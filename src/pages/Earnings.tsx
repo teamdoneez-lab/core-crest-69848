@@ -120,27 +120,35 @@ export default function Earnings() {
       // Calculate summary
       let totalRevenue = 0;
       let totalFees = 0;
+      let completedJobsFees = 0;
       
       (data || []).forEach(job => {
         const appointment = job.appointments;
         const referralFee = job.referral_fees;
         const confirmedQuote = job.quotes?.find(q => q.status === 'confirmed');
         
-        // Use final_price if available, otherwise use estimated_price from quote
-        const revenue = appointment?.final_price || confirmedQuote?.estimated_price || 0;
-        totalRevenue += Number(revenue);
-        
-        // Use stored referral fee amount
+        // Total Referral Fees: sum from both completed and in_progress jobs
         if (referralFee?.amount) {
           totalFees += Number(referralFee.amount);
+        }
+        
+        // Total Revenue: only from completed jobs
+        if (job.status === 'completed') {
+          const revenue = appointment?.final_price || confirmedQuote?.estimated_price || 0;
+          totalRevenue += Number(revenue);
+          
+          // Fees from completed jobs for net earnings calculation
+          if (referralFee?.amount) {
+            completedJobsFees += Number(referralFee.amount);
+          }
         }
       });
 
       setSummary({
-        totalJobs: data?.length || 0,
+        totalJobs: data?.filter(j => j.status === 'completed').length || 0,
         totalRevenue,
         totalFees,
-        netEarnings: totalRevenue - totalFees
+        netEarnings: totalRevenue - completedJobsFees
       });
 
     } catch (error) {
