@@ -180,7 +180,7 @@ export const ReferralFeesTab = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="owed">Owed</SelectItem>
+              {/* <SelectItem value="owed">Owed</SelectItem> */}
               <SelectItem value="paid">Paid</SelectItem>
               <SelectItem value="canceled">Canceled</SelectItem>
             </SelectContent>
