@@ -71,12 +71,17 @@ interface ServiceRequest {
 interface Fee {
   id: string;
   amount: number;
-  fee_type: string;
   status: string;
-  due_date: string;
-  paid_at?: string;
-  payment_method?: string;
   created_at: string;
+  paid_at?: string;
+  quote_id?: string;
+  pro_id: string;
+  request_id: string;
+  stripe_session_id?: string;
+  stripe_payment_intent?: string;
+  refundable?: boolean;
+  cancellation_reason?: string;
+  updated_at: string;
   service_requests: {
     id: string;
     vehicle_make: string;
@@ -206,7 +211,7 @@ const AdminDashboard = () => {
 
   const fetchFees = async () => {
     const { data, error } = await supabase
-      .from('fees')
+      .from('referral_fees')
       .select(`
         *,
         service_requests (id, vehicle_make, model, year),
