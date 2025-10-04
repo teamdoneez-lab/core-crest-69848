@@ -464,9 +464,6 @@ export default function ServiceRequests() {
                           <Badge className={hasQuote ? '' : getStatusColor(request.status)} variant={hasQuote ? 'default' : undefined}>
                             {hasQuote ? 'Sent Quote' : request.status}
                           </Badge>
-                          <Badge variant="outline">
-                            {getAppointmentPrefLabel(request.appointment_pref)}
-                          </Badge>
                         </div>
                       </div>
                     </CardHeader>
