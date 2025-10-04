@@ -21,9 +21,11 @@ interface CompletedJob {
     name: string;
   };
   referral_fees: {
+    id: string;
     amount: number;
     status: string;
     paid_at: string | null;
+    stripe_payment_intent: string | null;
   };
   appointments: {
     starts_at: string;
@@ -79,9 +81,11 @@ export default function Earnings() {
             name
           ),
           referral_fees (
+            id,
             amount,
             status,
-            paid_at
+            paid_at,
+            stripe_payment_intent
           ),
           appointments (
             starts_at,
@@ -248,24 +252,47 @@ export default function Earnings() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Revenue</p>
-                        <p className="text-lg font-semibold">${revenue.toFixed(2)}</p>
+                    <div className="space-y-4">
+                      {/* Request & Payment Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-muted/50 rounded-lg">
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">Request ID</p>
+                          <p className="text-sm font-mono mt-1">{job.id.slice(0, 8)}...</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">Payment ID</p>
+                          <p className="text-sm font-mono mt-1">
+                            {referralFee?.stripe_payment_intent 
+                              ? referralFee.stripe_payment_intent.slice(0, 12) + '...'
+                              : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">Completed Date</p>
+                          <p className="text-sm mt-1">{format(new Date(job.created_at), 'MMM dd, yyyy')}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Referral Fee</p>
-                        <p className="text-lg font-semibold text-red-600">-${fee.toFixed(2)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Net Earnings</p>
-                        <p className="text-lg font-semibold text-green-600">${netEarning.toFixed(2)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Fee Status</p>
-                        <Badge variant={referralFee?.status === 'paid' ? 'default' : 'secondary'}>
-                          {referralFee?.status || 'Unknown'}
-                        </Badge>
+
+                      {/* Financial Details */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Revenue</p>
+                          <p className="text-lg font-semibold">${revenue.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Referral Fee</p>
+                          <p className="text-lg font-semibold text-red-600">-${fee.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Net Earnings</p>
+                          <p className="text-lg font-semibold text-green-600">${netEarning.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Fee Status</p>
+                          <Badge variant={referralFee?.status === 'paid' ? 'default' : 'secondary'}>
+                            {referralFee?.status || 'Unknown'}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
