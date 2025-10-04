@@ -461,7 +461,7 @@ export default function ServiceRequests() {
                           </CardDescription>
                         </div>
                         <div className="flex gap-2">
-                          <Badge className={getStatusColor(request.status)}>
+                          <Badge className={hasQuote ? '' : getStatusColor(request.status)} variant={hasQuote ? 'default' : undefined}>
                             {hasQuote ? 'Sent Quote' : request.status}
                           </Badge>
                           <Badge variant="outline">
