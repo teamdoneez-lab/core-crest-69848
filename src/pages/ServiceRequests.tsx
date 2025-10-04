@@ -49,6 +49,11 @@ interface ServiceRequest {
   service_categories: {
     name: string;
   };
+  quotes?: Array<{
+    id: string;
+    status: string;
+    pro_id: string;
+  }>;
 }
 
 export default function ServiceRequests() {
@@ -65,7 +70,7 @@ export default function ServiceRequests() {
   // Filters
   const [filters, setFilters] = useState({
     location: '',
-    status: 'all',
+    status: 'pending',
     dateFrom: '',
     dateTo: ''
   });
@@ -94,23 +99,25 @@ export default function ServiceRequests() {
     try {
       setLoading(true);
       
-      // Build query with filters
+      // Build query with filters - only show pending requests
       let query = supabase
         .from('service_requests')
         .select(`
           *,
           service_categories (
             name
+          ),
+          quotes!quotes_request_id_fkey (
+            id,
+            status,
+            pro_id
           )
-        `, { count: 'exact' });
+        `, { count: 'exact' })
+        .eq('status', 'pending'); // Always filter for pending requests
 
-      // Apply filters
+      // Apply additional filters
       if (filters.location) {
         query = query.or(`zip.ilike.%${filters.location}%,address.ilike.%${filters.location}%`);
-      }
-      
-      if (filters.status !== 'all') {
-        query = query.eq('status', filters.status);
       }
       
       if (filters.dateFrom) {
@@ -150,7 +157,7 @@ export default function ServiceRequests() {
   const clearFilters = () => {
     setFilters({
       location: '',
-      status: 'all',
+      status: 'pending',
       dateFrom: '',
       dateTo: ''
     });
@@ -432,89 +439,96 @@ export default function ServiceRequests() {
             </Card>
           ) : (
             <div className="grid gap-6">
-              {requests.map((request) => (
-                <Card 
-                  key={request.id} 
-                  className="cursor-pointer transition-shadow hover:shadow-md"
-                  onClick={() => handleCardClick(request)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">
-                          {request.vehicle_make} {request.model} {request.year}
-                          {request.trim && ` ${request.trim}`}
-                        </CardTitle>
-                        <CardDescription>
-                          {request.service_categories.name} • {request.zip}
-                        </CardDescription>
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge className={getStatusColor(request.status)}>
-                          {request.status}
-                        </Badge>
-                        <Badge variant="outline">
-                          {getAppointmentPrefLabel(request.appointment_pref)}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-medium mb-2">Vehicle Details</h4>
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          {request.mileage && <p>Mileage: {request.mileage.toLocaleString()}</p>}
-                          <p>Contact: {request.contact_email}</p>
-                          <p>Phone: {request.contact_phone}</p>
+              {requests.map((request) => {
+                // Check if the current pro has already sent a quote for this request
+                const hasQuote = request.quotes?.some(q => q.pro_id === user?.id);
+                
+                return (
+                  <Card 
+                    key={request.id} 
+                    className="cursor-pointer transition-shadow hover:shadow-md"
+                    onClick={() => handleCardClick(request)}
+                  >
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">
+                            {request.vehicle_make} {request.model} {request.year}
+                            {request.trim && ` ${request.trim}`}
+                          </CardTitle>
+                          <CardDescription>
+                            {request.service_categories.name} • {request.zip}
+                          </CardDescription>
+                        </div>
+                        <div className="flex gap-2">
+                          <Badge className={getStatusColor(request.status)}>
+                            {hasQuote ? 'Sent Quote' : request.status}
+                          </Badge>
+                          <Badge variant="outline">
+                            {getAppointmentPrefLabel(request.appointment_pref)}
+                          </Badge>
                         </div>
                       </div>
-                      <div>
-                        <h4 className="font-medium mb-2">Location</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {request.address}
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-medium mb-2">Vehicle Details</h4>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            {request.mileage && <p>Mileage: {request.mileage.toLocaleString()}</p>}
+                            <p>Contact: {request.contact_email}</p>
+                            <p>Phone: {request.contact_phone}</p>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-medium mb-2">Location</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {request.address}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {request.notes && (
+                        <div className="mt-4">
+                          <h4 className="font-medium mb-2">Additional Notes</h4>
+                          <p className="text-sm text-muted-foreground">{request.notes}</p>
+                        </div>
+                      )}
+
+                      {request.image_url && (
+                        <div className="mt-4">
+                          <h4 className="font-medium mb-2">Uploaded Image</h4>
+                          <img 
+                            src={request.image_url} 
+                            alt="Vehicle issue" 
+                            className="w-full max-w-sm rounded-lg border shadow-sm object-contain max-h-48 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleImageClick(request.image_url!);
+                            }}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">Click to enlarge</p>
+                        </div>
+                      )}
+
+                      <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Submitted {new Date(request.created_at).toLocaleDateString()} at {new Date(request.created_at).toLocaleTimeString()}
                         </p>
+                        {!hasQuote && (
+                          <Button 
+                            onClick={(e) => handleQuoteClick(request.id, e)}
+                            className="flex items-center gap-2"
+                          >
+                            <FileText className="h-4 w-4" />
+                            Send Quote
+                          </Button>
+                        )}
                       </div>
-                    </div>
-                    
-                    {request.notes && (
-                      <div className="mt-4">
-                        <h4 className="font-medium mb-2">Additional Notes</h4>
-                        <p className="text-sm text-muted-foreground">{request.notes}</p>
-                      </div>
-                    )}
-
-                    {request.image_url && (
-                      <div className="mt-4">
-                        <h4 className="font-medium mb-2">Uploaded Image</h4>
-                        <img 
-                          src={request.image_url} 
-                          alt="Vehicle issue" 
-                          className="w-full max-w-sm rounded-lg border shadow-sm object-contain max-h-48 cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleImageClick(request.image_url!);
-                          }}
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">Click to enlarge</p>
-                      </div>
-                    )}
-
-                    <div className="mt-4 pt-4 border-t flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground">
-                        Submitted {new Date(request.created_at).toLocaleDateString()} at {new Date(request.created_at).toLocaleTimeString()}
-                      </p>
-                      <Button 
-                        onClick={(e) => handleQuoteClick(request.id, e)}
-                        className="flex items-center gap-2"
-                      >
-                        <FileText className="h-4 w-4" />
-                        Send Quote
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
 
@@ -625,16 +639,18 @@ export default function ServiceRequests() {
                   </div>
 
                   <div className="pt-4 border-t flex justify-end">
-                    <Button 
-                      onClick={(e) => {
-                        setIsDetailsModalOpen(false);
-                        handleQuoteClick(selectedRequest.id, e);
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <FileText className="h-4 w-4" />
-                      Send Quote
-                    </Button>
+                    {selectedRequest && !selectedRequest.quotes?.some(q => q.pro_id === user?.id) && (
+                      <Button 
+                        onClick={(e) => {
+                          setIsDetailsModalOpen(false);
+                          handleQuoteClick(selectedRequest.id, e);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        Send Quote
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
