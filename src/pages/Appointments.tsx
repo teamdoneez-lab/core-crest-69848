@@ -310,8 +310,8 @@ const Appointments = () => {
                               {appointment.service_requests.trim && ` ${appointment.service_requests.trim}`}
                             </CardDescription>
                           </div>
-                          <Badge className="bg-blue-100 text-blue-800">
-                            IN PROGRESS
+                          <Badge className={getStatusColor(appointment.service_requests.status)}>
+                            {appointment.service_requests.status.replace('_', ' ').toUpperCase()}
                           </Badge>
                         </div>
                       </CardHeader>
