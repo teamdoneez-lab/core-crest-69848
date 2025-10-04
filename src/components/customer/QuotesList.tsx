@@ -251,7 +251,7 @@ export function QuotesList({ requestId }: QuotesListProps) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg">
-                  {quote.profiles?.name || "Unknown Professional"}
+                  {quote.profiles?.business_name || "Unknown Professional"}
                 </CardTitle>
                 <Badge variant="secondary" className="mt-1">
                   ✓ Verified Professional
