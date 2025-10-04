@@ -124,10 +124,13 @@ export default function Earnings() {
       (data || []).forEach(job => {
         const appointment = job.appointments;
         const referralFee = job.referral_fees;
+        const confirmedQuote = job.quotes?.find(q => q.status === 'confirmed');
         
-        if (appointment?.final_price) {
-          totalRevenue += Number(appointment.final_price);
-        }
+        // Use final_price if available, otherwise use estimated_price from quote
+        const revenue = appointment?.final_price || confirmedQuote?.estimated_price || 0;
+        totalRevenue += Number(revenue);
+        
+        // Use stored referral fee amount
         if (referralFee?.amount) {
           totalFees += Number(referralFee.amount);
         }
