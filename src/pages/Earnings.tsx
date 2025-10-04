@@ -257,14 +257,12 @@ export default function Earnings() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-muted/50 rounded-lg">
                         <div>
                           <p className="text-xs font-medium text-muted-foreground">Request ID</p>
-                          <p className="text-sm font-mono mt-1">{job.id.slice(0, 8)}...</p>
+                          <p className="text-sm font-mono mt-1 break-all">{job.id}</p>
                         </div>
                         <div>
                           <p className="text-xs font-medium text-muted-foreground">Payment ID</p>
-                          <p className="text-sm font-mono mt-1">
-                            {referralFee?.stripe_payment_intent 
-                              ? referralFee.stripe_payment_intent.slice(0, 12) + '...'
-                              : 'N/A'}
+                          <p className="text-sm font-mono mt-1 break-all">
+                            {referralFee?.stripe_payment_intent || 'N/A'}
                           </p>
                         </div>
                         <div>
