@@ -726,10 +726,49 @@ const AdminDashboard = () => {
                   {filterData(pros, 'pros').length} professionals found
                 </p>
               </div>
-              <Button onClick={() => exportToCSV(filterData(pros, 'pros'), 'professionals')}>
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
+              <div className="flex gap-2">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Users className="h-4 w-4 mr-2" />
+                      Add Pro +
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New Professional</DialogTitle>
+                      <DialogDescription>
+                        Invite a professional by entering their email address. They will receive an invitation to join the platform.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="pro-email">Email Address</Label>
+                        <Input
+                          id="pro-email"
+                          type="email"
+                          placeholder="professional@example.com"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="pro-name">Full Name</Label>
+                        <Input
+                          id="pro-name"
+                          type="text"
+                          placeholder="John Doe"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Send Invitation</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <Button onClick={() => exportToCSV(filterData(pros, 'pros'), 'professionals')}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
+              </div>
             </div>
             
             <div className="grid gap-4">
