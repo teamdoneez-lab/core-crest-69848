@@ -254,14 +254,6 @@ const Appointments = () => {
 
       if (appointmentError) throw appointmentError;
 
-      // Optionally update service request status
-      const { error: requestError } = await supabase
-        .from('service_requests')
-        .update({ status: 'archived' })
-        .eq('id', requestId);
-
-      if (requestError) throw requestError;
-
       toast({
         title: "Appointment Deleted",
         description: "The appointment has been removed from your history.",

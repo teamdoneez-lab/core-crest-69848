@@ -150,9 +150,10 @@ const MyRequests = () => {
 
   const handleDeleteRequest = async (requestId: string) => {
     try {
+      // Just delete the service request record
       const { error } = await supabase
         .from('service_requests')
-        .update({ status: 'archived' })
+        .delete()
         .eq('id', requestId)
         .eq('customer_id', user?.id);
 
