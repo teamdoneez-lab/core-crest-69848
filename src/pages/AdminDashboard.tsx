@@ -591,11 +591,10 @@ const AdminDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="pros">Professionals</TabsTrigger>
             <TabsTrigger value="requests">Requests</TabsTrigger>
-            <TabsTrigger value="fees">Service Fees</TabsTrigger>
             <TabsTrigger value="referral-fees">Referral Fees</TabsTrigger>
           </TabsList>
 
@@ -999,104 +998,6 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Fees Tab */}
-          <TabsContent value="fees" className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h2 className="text-2xl font-semibold">Fees & Payments</h2>
-                <p className="text-sm text-muted-foreground">
-                  {filterData(fees, 'fees').length} fees found
-                </p>
-              </div>
-              <Button onClick={() => exportToCSV(filterData(fees, 'fees'), 'fees')}>
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-            </div>
-            
-            <div className="grid gap-4">
-              {filterData(fees, 'fees').length === 0 ? (
-                <Card>
-                  <CardContent className="p-8 text-center">
-                    <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-lg font-medium mb-2">No fees found</p>
-                    <p className="text-sm text-muted-foreground">
-                      Try adjusting your search or filter criteria
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                filterData(fees, 'fees').map((fee) => (
-                <Card key={fee.id}>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold">${fee.amount.toFixed(2)} - {fee.fee_type.replace('_', ' ')}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Pro: {fee.profiles?.name || 'Unknown Professional'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Vehicle: {fee.service_requests?.year || 'N/A'} {fee.service_requests?.vehicle_make || 'Unknown'} {fee.service_requests?.model || 'Vehicle'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Due: {format(new Date(fee.due_date), 'PPP')}
-                        </p>
-                        {fee.paid_at && (
-                          <p className="text-sm text-muted-foreground">
-                            Paid: {format(new Date(fee.paid_at), 'PPP')}
-                          </p>
-                        )}
-                        {fee.payment_method && (
-                          <p className="text-sm text-muted-foreground">
-                            Method: {fee.payment_method}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-2 items-end">
-                        <Badge className={getStatusColor(fee.status)}>
-                          {fee.status.toUpperCase()}
-                        </Badge>
-                        {fee.status === 'pending' && (
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm">
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Mark Paid
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Mark Fee as Paid</DialogTitle>
-                                <DialogDescription>
-                                  Mark this ${fee.amount.toFixed(2)} fee as paid
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div>
-                                <Label htmlFor="payment-method">Payment Method</Label>
-                                <Select onValueChange={(value) => handleMarkFeePaid(fee.id, value)}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select payment method" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="cash">Cash</SelectItem>
-                                    <SelectItem value="credit_card">Credit Card</SelectItem>
-                                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                                    <SelectItem value="check">Check</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
 
           {/* Referral Fees Tab */}
           <TabsContent value="referral-fees" className="space-y-4">
