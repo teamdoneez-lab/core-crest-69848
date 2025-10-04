@@ -27,6 +27,10 @@ interface CompletedJob {
     paid_at: string | null;
     stripe_payment_intent: string | null;
   };
+  quotes: Array<{
+    estimated_price: number;
+    status: string;
+  }>;
   appointments: {
     starts_at: string;
     status: string;
@@ -86,6 +90,10 @@ export default function Earnings() {
             status,
             paid_at,
             stripe_payment_intent
+          ),
+          quotes (
+            estimated_price,
+            status
           ),
           appointments (
             starts_at,
@@ -221,9 +229,12 @@ export default function Earnings() {
             {completedJobs.map((job) => {
               const appointment = job.appointments;
               const referralFee = job.referral_fees;
-              const revenue = appointment?.final_price || 0;
-              // Calculate referral fee as 10% of revenue
-              const fee = revenue * 0.10;
+              const confirmedQuote = job.quotes?.find(q => q.status === 'confirmed');
+              
+              // Use final_price if available, otherwise use estimated_price from quote
+              const revenue = appointment?.final_price || confirmedQuote?.estimated_price || 0;
+              // Use stored referral fee amount from database
+              const fee = referralFee?.amount || 0;
               const netEarning = revenue - fee;
               
               return (
