@@ -347,6 +347,30 @@ const Appointments = () => {
                           <div className="text-xs text-muted-foreground">
                             Service Request ID: {appointment.service_requests.id}
                           </div>
+                          {appointment.status !== 'completed' && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm">
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Mark Complete
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Mark job as complete?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will notify the professional that the job has been completed. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleCompleteJob(appointment.id, appointment.pro_id)}>
+                                    Confirm
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -493,6 +517,36 @@ const Appointments = () => {
                               {appointment.service_requests.address}, {appointment.service_requests.zip}
                             </p>
                           </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-4 border-t mt-4">
+                          <div className="text-xs text-muted-foreground">
+                            Service Request ID: {appointment.service_requests.id}
+                          </div>
+                          {appointment.status !== 'completed' && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm">
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Mark Complete
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Mark job as complete?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will notify the professional that the job has been completed. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleCompleteJob(appointment.id, appointment.pro_id)}>
+                                    Confirm
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
