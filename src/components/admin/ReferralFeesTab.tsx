@@ -245,7 +245,7 @@ export const ReferralFeesTab = () => {
                   )}
                 </div>
 
-                /* {fee.status === 'owed' && (
+                {/* /* {fee.status === 'owed' && (
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button size="sm">
@@ -281,7 +281,7 @@ export const ReferralFeesTab = () => {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-                )} */
+                )} */ */}
 
                 {fee.status === 'paid' && fee.refundable && (
                   <Dialog>
