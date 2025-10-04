@@ -222,7 +222,8 @@ export default function Earnings() {
               const appointment = job.appointments;
               const referralFee = job.referral_fees;
               const revenue = appointment?.final_price || 0;
-              const fee = referralFee?.amount || 0;
+              // Calculate referral fee as 10% of revenue
+              const fee = revenue * 0.10;
               const netEarning = revenue - fee;
               
               return (
@@ -278,7 +279,7 @@ export default function Earnings() {
                           <p className="text-lg font-semibold">${revenue.toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Referral Fee</p>
+                          <p className="text-sm font-medium text-muted-foreground">Referral Fee (10%)</p>
                           <p className="text-lg font-semibold text-red-600">-${fee.toFixed(2)}</p>
                         </div>
                         <div>
