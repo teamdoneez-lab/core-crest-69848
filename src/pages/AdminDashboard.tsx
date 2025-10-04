@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Car, DollarSign, FileText, Download, CheckCircle, Calendar, Phone, Mail, MapPin, Search, Filter, RefreshCw, UserCheck, UserX, ShieldCheck, ShieldOff, UserCog } from 'lucide-react';
+import { Users, Car, DollarSign, FileText, Download, CheckCircle, Calendar, Phone, Mail, MapPin, Search, Filter, RefreshCw, UserCheck, UserX, ShieldCheck, ShieldOff, UserCog, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { ReferralFeesTab } from '@/components/admin/ReferralFeesTab';
+import { ProDetailModal } from '@/components/admin/ProDetailModal';
 
 interface Customer {
   id: string;
@@ -90,6 +91,10 @@ const AdminDashboard = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [requestsPage, setRequestsPage] = useState(1);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [isProDetailOpen, setIsProDetailOpen] = useState(false);
+  const requestsPerPage = 10;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -740,85 +745,110 @@ const AdminDashboard = () => {
                   </CardContent>
                 </Card>
               ) : (
-                filterData(requests, 'requests').map((request) => (
-                <Card key={request.id}>
-                   <CardContent className="p-6">
-                    <div className="flex gap-4 items-start">
-                       {request.image_url && (
-                         <div className="flex-shrink-0">
-                           <img 
-                             src={request.image_url} 
-                             alt="Service request" 
-                             className="w-24 h-24 object-cover rounded-md"
-                           />
-                         </div>
-                       )}
-                       <div className="flex-1">
-                         <h3 className="font-semibold">{request.service_categories?.name || 'Unknown Service'}</h3>
-                         <p className="text-sm font-medium">
-                           {request.year} {request.vehicle_make} {request.model}
-                         </p>
-                         <p className="text-sm text-muted-foreground">
-                           Customer: {request.profiles?.name || 'Unknown Customer'}
-                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          <MapPin className="h-3 w-3 inline mr-1" />
-                          {request.address}, {request.zip}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          <Mail className="h-3 w-3 inline mr-1" />
-                          {request.contact_email}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          <Calendar className="h-3 w-3 inline mr-1" />
-                          {format(new Date(request.created_at), 'PPP')}
-                        </p>
-                      </div>
-                      <div className="flex flex-col gap-2 items-end">
-                        <Badge className={getStatusColor(request.status)}>
-                          {request.status.replace('_', ' ').toUpperCase()}
-                        </Badge>
-                        {request.status === 'pending' && (
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm">
-                                <UserCog className="h-4 w-4 mr-2" />
-                                Assign Pro
+                <>
+                  {filterData(requests, 'requests')
+                    .slice((requestsPage - 1) * requestsPerPage, requestsPage * requestsPerPage)
+                    .map((request) => (
+                    <Card key={request.id}>
+                      <CardContent className="p-6">
+                        <div className="flex gap-4 items-start">
+                          {request.image_url && (
+                            <div className="flex-shrink-0">
+                              <img 
+                                src={request.image_url} 
+                                alt="Service request" 
+                                className="w-24 h-24 object-cover rounded-md"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <h3 className="font-semibold">{request.service_categories?.name || 'Unknown Service'}</h3>
+                            <p className="text-sm font-medium">
+                              {request.year} {request.vehicle_make} {request.model}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Customer: {request.profiles?.name || 'Unknown Customer'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              <MapPin className="h-3 w-3 inline mr-1" />
+                              {request.address}, {request.zip}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              <Mail className="h-3 w-3 inline mr-1" />
+                              {request.contact_email}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              <Calendar className="h-3 w-3 inline mr-1" />
+                              {format(new Date(request.created_at), 'PPP')}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-2 items-end">
+                            <Badge className={getStatusColor(request.status)}>
+                              {request.status.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                            {request.accepted_pro_id && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedRequestId(request.id);
+                                  setIsProDetailOpen(true);
+                                }}
+                              >
+                                <Info className="h-4 w-4 mr-2" />
+                                Pro Detail
                               </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Assign Professional</DialogTitle>
-                                <DialogDescription>
-                                  Select a professional to manually assign to this request
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div>
-                                <Label htmlFor="pro-select">Select Professional</Label>
-                                <Select onValueChange={(value) => handleAssignProToRequest(request.id, value)}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Choose a professional" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {pros
-                                      .filter(p => p.pro_profiles && p.pro_profiles.length > 0 && p.pro_profiles[0].is_verified)
-                                      .map(pro => (
-                                        <SelectItem key={pro.id} value={pro.id}>
-                                          {pro.name} - {pro.pro_profiles[0].business_name}
-                                        </SelectItem>
-                                      ))
-                                    }
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        )}
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  {/* Pagination */}
+                  {filterData(requests, 'requests').length > requestsPerPage && (
+                    <div className="flex items-center justify-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRequestsPage(p => Math.max(1, p - 1))}
+                        disabled={requestsPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center gap-2">
+                        {Array.from({ 
+                          length: Math.ceil(filterData(requests, 'requests').length / requestsPerPage) 
+                        }, (_, i) => i + 1).map((page) => (
+                          <Button
+                            key={page}
+                            variant={page === requestsPage ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setRequestsPage(page)}
+                            className="w-10"
+                          >
+                            {page}
+                          </Button>
+                        ))}
                       </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRequestsPage(p => Math.min(
+                          Math.ceil(filterData(requests, 'requests').length / requestsPerPage),
+                          p + 1
+                        ))}
+                        disabled={requestsPage >= Math.ceil(filterData(requests, 'requests').length / requestsPerPage)}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-                ))
+                  )}
+                </>
               )}
             </div>
           </TabsContent>
@@ -927,6 +957,15 @@ const AdminDashboard = () => {
             <ReferralFeesTab />
           </TabsContent>
         </Tabs>
+
+        {/* Pro Detail Modal */}
+        {selectedRequestId && (
+          <ProDetailModal
+            requestId={selectedRequestId}
+            open={isProDetailOpen}
+            onOpenChange={setIsProDetailOpen}
+          />
+        )}
       </div>
     </div>
   );
