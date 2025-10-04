@@ -87,7 +87,7 @@ const MyRequests = () => {
           )
         `)
         .eq('customer_id', user.id)
-        .in('status', ['pending', 'completed'])
+        .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
       if (error) {
