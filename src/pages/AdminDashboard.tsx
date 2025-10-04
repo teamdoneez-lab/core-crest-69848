@@ -18,7 +18,6 @@ import { format } from 'date-fns';
 import { ReferralFeesTab } from '@/components/admin/ReferralFeesTab';
 import { ProDetailModal } from '@/components/admin/ProDetailModal';
 import { CustomerDetailModal } from '@/components/admin/CustomerDetailModal';
-import { ProfessionalDetailModal } from '@/components/admin/ProfessionalDetailModal';
 
 interface Customer {
   id: string;
@@ -39,7 +38,15 @@ interface Pro {
     business_name: string;
     is_verified: boolean;
     radius_km: number;
+    phone?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip_code?: string;
   }[];
+  auth_users?: {
+    email: string;
+  };
 }
 
 interface ServiceRequest {
@@ -98,10 +105,8 @@ const AdminDashboard = () => {
   const [requestsPage, setRequestsPage] = useState(1);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
-  const [selectedProId, setSelectedProId] = useState<string | null>(null);
   const [isProDetailOpen, setIsProDetailOpen] = useState(false);
   const [isCustomerDetailOpen, setIsCustomerDetailOpen] = useState(false);
-  const [isProfessionalDetailOpen, setIsProfessionalDetailOpen] = useState(false);
   const customersPerPage = 10;
   const prosPerPage = 10;
   const requestsPerPage = 10;
@@ -167,14 +172,20 @@ const AdminDashboard = () => {
       .select('*')
       .in('pro_id', proIds);
 
+    // Fetch emails from auth.users
+    const { data: usersData } = await supabase.auth.admin.listUsers();
+    const users = usersData?.users || [];
+    
     // Combine the data
     const prosWithProfiles = data?.map(pro => ({
       ...pro,
-      pro_profiles: proProfilesData?.filter(pp => pp.pro_id === pro.id) || []
+      pro_profiles: proProfilesData?.filter(pp => pp.pro_id === pro.id) || [],
+      auth_users: { email: users?.find(u => u.id === pro.id)?.email || 'N/A' }
     }));
 
     setPros(prosWithProfiles || []);
   };
+
 
   const fetchRequests = async () => {
     const { data, error } = await supabase
@@ -736,7 +747,7 @@ const AdminDashboard = () => {
                     <Card key={pro.id}>
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="flex-1">
                             <h3 className="font-semibold">{pro?.name || 'Unknown Professional'}</h3>
                             {pro.pro_profiles && pro.pro_profiles.length > 0 && (
                               <p className="text-sm font-medium">{pro.pro_profiles[0].business_name}</p>
@@ -745,17 +756,35 @@ const AdminDashboard = () => {
                             <p className="text-sm text-muted-foreground">
                               Joined: {format(new Date(pro.created_at), 'PPP')}
                             </p>
-                            {pro.phone && (
-                              <p className="text-sm text-muted-foreground">
-                                <Phone className="h-3 w-3 inline mr-1" />
-                                {pro.phone}
-                              </p>
-                            )}
-                            {pro.pro_profiles && pro.pro_profiles.length > 0 && (
-                              <p className="text-sm text-muted-foreground">
-                                Service radius: {pro.pro_profiles[0].radius_km}km
-                              </p>
-                            )}
+                            
+                            <div className="mt-3 space-y-1">
+                              {pro.auth_users?.email && (
+                                <p className="text-sm text-muted-foreground">
+                                  <Mail className="h-3 w-3 inline mr-1" />
+                                  {pro.auth_users.email}
+                                </p>
+                              )}
+                              {(pro.phone || (pro.pro_profiles && pro.pro_profiles.length > 0 && pro.pro_profiles[0].phone)) && (
+                                <p className="text-sm text-muted-foreground">
+                                  <Phone className="h-3 w-3 inline mr-1" />
+                                  {pro.pro_profiles?.[0]?.phone || pro.phone}
+                                </p>
+                              )}
+                              {pro.pro_profiles && pro.pro_profiles.length > 0 && pro.pro_profiles[0].address && (
+                                <p className="text-sm text-muted-foreground">
+                                  <MapPin className="h-3 w-3 inline mr-1" />
+                                  {pro.pro_profiles[0].address}
+                                  {pro.pro_profiles[0].city && `, ${pro.pro_profiles[0].city}`}
+                                  {pro.pro_profiles[0].state && `, ${pro.pro_profiles[0].state}`}
+                                  {pro.pro_profiles[0].zip_code && ` ${pro.pro_profiles[0].zip_code}`}
+                                </p>
+                              )}
+                              {pro.pro_profiles && pro.pro_profiles.length > 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                  Service radius: {pro.pro_profiles[0].radius_km}km
+                                </p>
+                              )}
+                            </div>
                           </div>
                           <div className="flex flex-col gap-2 items-end">
                             <Badge>{pro.role}</Badge>
@@ -783,17 +812,6 @@ const AdminDashboard = () => {
                                 </Button>
                               </>
                             )}
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedProId(pro.id);
-                                setIsProfessionalDetailOpen(true);
-                              }}
-                            >
-                              <Info className="h-4 w-4 mr-2" />
-                              Pro Detail
-                            </Button>
                           </div>
                         </div>
                       </CardContent>
@@ -1102,12 +1120,6 @@ const AdminDashboard = () => {
             onOpenChange={setIsCustomerDetailOpen}
           />
         )}
-
-        <ProfessionalDetailModal 
-          proId={selectedProId}
-          open={isProfessionalDetailOpen}
-          onOpenChange={setIsProfessionalDetailOpen}
-        />
       </div>
     </div>
   );
