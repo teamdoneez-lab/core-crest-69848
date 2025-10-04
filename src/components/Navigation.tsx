@@ -42,10 +42,10 @@ export function Navigation() {
               {isCustomer && (
                 <>
               <Link 
-                to="/service-request-flow" 
+                to="/request-service-flow" 
                 className={cn(
                   "text-sm lg:text-base font-medium transition-colors hover:text-primary",
-                  isActive('/service-request-flow') ? 'text-primary' : 'text-muted-foreground'
+                  isActive('/request-service-flow') ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
                 Request Service
