@@ -9,7 +9,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Car, MapPin, Calendar, Package, Home, Building2, Edit, Trash2, Eye, RotateCcw, Download, X } from 'lucide-react';
+import { Car, MapPin, Calendar, Package, Home, Building2, Edit, Trash2, Eye, RotateCcw, Download, X, CheckCircle } from 'lucide-react';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle,
+  AlertDialogTrigger 
+} from '@/components/ui/alert-dialog';
 import { QuotesList } from '@/components/customer/QuotesList';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -76,7 +87,7 @@ const MyRequests = () => {
           )
         `)
         .eq('customer_id', user.id)
-        .eq('status', 'pending')
+        .in('status', ['pending', 'completed'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -132,6 +143,32 @@ const MyRequests = () => {
       toast({
         title: "Error",
         description: "Failed to cancel request",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteRequest = async (requestId: string) => {
+    try {
+      const { error } = await supabase
+        .from('service_requests')
+        .update({ status: 'archived' })
+        .eq('id', requestId)
+        .eq('customer_id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Request Deleted",
+        description: "The completed request has been removed from your history.",
+      });
+
+      fetchRequests();
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete request",
         variant: "destructive",
       });
     }
@@ -427,7 +464,45 @@ const MyRequests = () => {
                       </Button>
                     )}
 
-                    {(request.status === 'completed' || request.status === 'cancelled') && (
+                    {request.status === 'completed' && (
+                      <>
+                        <div className="flex items-center gap-2 text-green-600">
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="text-sm font-medium">Completed</span>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => handleRebook(request)}>
+                          <RotateCcw className="h-4 w-4 mr-2" />
+                          Rebook
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete this request?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently remove this completed request from your history. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteRequest(request.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    )}
+
+                    {request.status === 'cancelled' && (
                       <Button variant="outline" size="sm" onClick={() => handleRebook(request)}>
                         <RotateCcw className="h-4 w-4 mr-2" />
                         Rebook
