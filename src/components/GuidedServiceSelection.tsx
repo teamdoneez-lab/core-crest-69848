@@ -217,27 +217,23 @@ export function GuidedServiceSelection({
   onComplete,
 }: GuidedServiceSelectionProps) {
   const [navigationPath, setNavigationPath] = useState<string[]>(["root"]);
-  const [selectedInCurrentLevel, setSelectedInCurrentLevel] = useState<string | null>(null);
 
   const currentLevel = navigationPath[navigationPath.length - 1];
   const currentData = serviceFlow[currentLevel];
 
   const handleOptionSelect = (optionId: string) => {
-    setSelectedInCurrentLevel(optionId);
-
     // Check if this is a final service (has numeric ID pattern like "1-1-1")
     const isFinalService = /^\d+-\d+-\d+$/.test(optionId) || optionId === "not-sure" || optionId === "other";
 
     if (isFinalService) {
-      // Add to selected services
-      if (!selectedServices.includes(optionId)) {
-        onServicesChange([...selectedServices, optionId]);
-      }
+      // Single selection - replace any existing selection
+      onServicesChange([optionId]);
+      // Auto-proceed to next step
+      setTimeout(() => onComplete(), 300);
     } else {
       // Navigate to next level
       if (serviceFlow[optionId]) {
         setNavigationPath([...navigationPath, optionId]);
-        setSelectedInCurrentLevel(null);
       }
     }
   };
@@ -245,20 +241,8 @@ export function GuidedServiceSelection({
   const handleBack = () => {
     if (navigationPath.length > 1) {
       setNavigationPath(navigationPath.slice(0, -1));
-      setSelectedInCurrentLevel(null);
     }
   };
-
-  const handleRemoveService = (serviceId: string) => {
-    onServicesChange(selectedServices.filter((id) => id !== serviceId));
-  };
-
-  const handleReset = () => {
-    setNavigationPath(["root"]);
-    setSelectedInCurrentLevel(null);
-  };
-
-  const canProceed = selectedServices.length > 0;
 
   return (
     <div className="space-y-6">
@@ -273,36 +257,6 @@ export function GuidedServiceSelection({
           </div>
         ))}
       </div>
-
-      {/* Selected services display */}
-      {selectedServices.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-start justify-between mb-3">
-              <h3 className="font-semibold">Selected Services ({selectedServices.length})</h3>
-              <Button variant="ghost" size="sm" onClick={handleReset}>
-                Add More
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {selectedServices.map((serviceId) => (
-                <div
-                  key={serviceId}
-                  className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm"
-                >
-                  <span>{serviceId === "not-sure" ? "Not Sure" : serviceId === "other" ? "Other" : serviceId}</span>
-                  <button
-                    onClick={() => handleRemoveService(serviceId)}
-                    className="hover:bg-primary/20 rounded-full p-0.5"
-                  >
-                    <ChevronRight className="h-3 w-3 rotate-45" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Main question and options */}
       <div className="space-y-4">
@@ -319,10 +273,7 @@ export function GuidedServiceSelection({
           {currentData.options.map((option) => (
             <Card
               key={option.id}
-              className={cn(
-                "cursor-pointer transition-all hover:shadow-md hover:border-primary/50",
-                selectedInCurrentLevel === option.id && "border-primary shadow-md"
-              )}
+              className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
               onClick={() => handleOptionSelect(option.id)}
             >
               <CardContent className="p-6">
@@ -332,17 +283,6 @@ export function GuidedServiceSelection({
             </Card>
           ))}
         </div>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex justify-between pt-4">
-        <Button variant="outline" onClick={handleReset}>
-          Start Over
-        </Button>
-        <Button onClick={onComplete} disabled={!canProceed}>
-          Continue
-          <ChevronRight className="ml-2 h-4 w-4" />
-        </Button>
       </div>
     </div>
   );

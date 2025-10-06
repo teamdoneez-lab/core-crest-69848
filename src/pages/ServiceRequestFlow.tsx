@@ -390,65 +390,35 @@ export default function ServiceRequestFlow() {
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="year">Year *</Label>
-                  <Select
-                    value={formData.year?.toString() || ""}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, year: parseInt(value), vehicle_make: "", vehicle_model: "" }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 26 }, (_, i) => 2025 - i).map((year) => (
-                        <SelectItem key={year} value={year.toString()}>
-                          {year}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    id="year"
+                    type="number"
+                    min="1900"
+                    max={new Date().getFullYear() + 1}
+                    value={formData.year || ""}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, year: parseInt(e.target.value) || null }))}
+                    placeholder="e.g., 2020"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="make">Make *</Label>
-                  <Select
+                  <Input
+                    id="make"
                     value={formData.vehicle_make}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, vehicle_make: value, vehicle_model: "" }))
-                    }
-                    disabled={!formData.year}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select make" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {makes.map((make) => (
-                        <SelectItem key={make} value={make}>
-                          {make}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => setFormData((prev) => ({ ...prev, vehicle_make: e.target.value }))}
+                    placeholder="e.g., Toyota, Honda, Ford"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="model">Model *</Label>
-                  <Select
+                  <Input
+                    id="model"
                     value={formData.vehicle_model}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, vehicle_model: value }))}
-                    disabled={!formData.vehicle_make}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {models.map((model) => (
-                        <SelectItem key={model} value={model}>
-                          {model}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => setFormData((prev) => ({ ...prev, vehicle_model: e.target.value }))}
+                    placeholder="e.g., Camry, Accord, F-150"
+                  />
                 </div>
 
                 <div className="space-y-2">
