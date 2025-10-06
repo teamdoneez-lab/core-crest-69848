@@ -1,8 +1,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface ServiceOption {
   id: string;
@@ -217,23 +225,27 @@ export function GuidedServiceSelection({
   onComplete,
 }: GuidedServiceSelectionProps) {
   const [navigationPath, setNavigationPath] = useState<string[]>(["root"]);
+  const [breadcrumbNames, setBreadcrumbNames] = useState<Record<string, string>>({ root: "Service Type" });
 
   const currentLevel = navigationPath[navigationPath.length - 1];
   const currentData = serviceFlow[currentLevel];
 
-  const handleOptionSelect = (optionId: string) => {
+  const handleOptionSelect = (optionId: string, optionName: string) => {
     // Check if this is a final service (has numeric ID pattern like "1-1-1")
     const isFinalService = /^\d+-\d+-\d+$/.test(optionId) || optionId === "not-sure" || optionId === "other";
 
     if (isFinalService) {
       // Single selection - replace any existing selection
       onServicesChange([optionId]);
+      // Store the final selection name
+      setBreadcrumbNames({ ...breadcrumbNames, [optionId]: optionName });
       // Auto-proceed to next step
       setTimeout(() => onComplete(), 300);
     } else {
       // Navigate to next level
       if (serviceFlow[optionId]) {
         setNavigationPath([...navigationPath, optionId]);
+        setBreadcrumbNames({ ...breadcrumbNames, [optionId]: optionName });
       }
     }
   };
@@ -246,17 +258,25 @@ export function GuidedServiceSelection({
 
   return (
     <div className="space-y-6">
-      {/* Progress indicator */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        {navigationPath.map((level, index) => (
-          <div key={level} className="flex items-center gap-2">
-            {index > 0 && <ChevronRight className="h-4 w-4" />}
-            <span className={cn(index === navigationPath.length - 1 && "text-foreground font-medium")}>
-              {level === "root" ? "Service Type" : serviceFlow[level]?.question.split(" ").slice(0, 2).join(" ")}
-            </span>
-          </div>
-        ))}
-      </div>
+      {/* Breadcrumb navigation */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          {navigationPath.map((level, index) => (
+            <div key={level} className="flex items-center">
+              <BreadcrumbItem>
+                {index === navigationPath.length - 1 ? (
+                  <BreadcrumbPage>{breadcrumbNames[level] || "Service Type"}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink className="cursor-default">
+                    {breadcrumbNames[level] || "Service Type"}
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+              {index < navigationPath.length - 1 && <BreadcrumbSeparator />}
+            </div>
+          ))}
+        </BreadcrumbList>
+      </Breadcrumb>
 
       {/* Main question and options */}
       <div className="space-y-4">
@@ -270,18 +290,26 @@ export function GuidedServiceSelection({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {currentData.options.map((option) => (
-            <Card
-              key={option.id}
-              className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
-              onClick={() => handleOptionSelect(option.id)}
-            >
-              <CardContent className="p-6">
-                <h3 className="font-medium mb-1">{option.name}</h3>
-                {option.description && <p className="text-sm text-muted-foreground">{option.description}</p>}
-              </CardContent>
-            </Card>
-          ))}
+          {currentData.options.map((option) => {
+            const isSelected = selectedServices.includes(option.id);
+            const isFinalService = /^\d+-\d+-\d+$/.test(option.id) || option.id === "not-sure" || option.id === "other";
+            
+            return (
+              <Card
+                key={option.id}
+                className={cn(
+                  "cursor-pointer transition-all hover:shadow-md hover:border-primary/50",
+                  isSelected && isFinalService && "bg-primary/10 border-primary"
+                )}
+                onClick={() => handleOptionSelect(option.id, option.name)}
+              >
+                <CardContent className="p-6">
+                  <h3 className="font-medium mb-1">{option.name}</h3>
+                  {option.description && <p className="text-sm text-muted-foreground">{option.description}</p>}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>
