@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon, Upload, MapPin, Home, Building2, ChevronLeft, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { accordionsData } from "@/data/serviceslist";
+import { GuidedServiceSelection } from "@/components/GuidedServiceSelection";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -366,68 +367,14 @@ export default function ServiceRequestFlow() {
           <Card>
             <CardHeader>
               <CardTitle>Select Services</CardTitle>
-              <CardDescription>Choose one or more services you need</CardDescription>
+              <CardDescription>Let us guide you to the right service for your vehicle</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search services..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  Selected: {formData.service_category.length} service(s)
-                </span>
-                {formData.service_category.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={clearServices}>
-                    <X className="h-4 w-4 mr-2" />
-                    Clear All
-                  </Button>
-                )}
-              </div>
-
-              <Accordion type="multiple" className="w-full">
-                {filteredAccordions.map((category, idx) => (
-                  <AccordionItem key={idx} value={`category-${idx}`}>
-                    <AccordionTrigger>{category.title}</AccordionTrigger>
-                    <AccordionContent>
-                      <Accordion type="multiple" className="w-full pl-4">
-                        {category.subItems.map((subItem, subIdx) => (
-                          <AccordionItem key={subIdx} value={`sub-${idx}-${subIdx}`}>
-                            <AccordionTrigger className="text-sm">
-                              {subItem.title}
-                            </AccordionTrigger>
-                            <AccordionContent>
-                              <div className="space-y-2 pl-4">
-                                {subItem.services.map((service) => (
-                                  <div key={service.id} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={service.id}
-                                      checked={formData.service_category.includes(service.id)}
-                                      onCheckedChange={() => toggleService(service.id)}
-                                    />
-                                    <label
-                                      htmlFor={service.id}
-                                      className="text-sm font-normal cursor-pointer"
-                                    >
-                                      {service.name}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+            <CardContent>
+              <GuidedServiceSelection
+                selectedServices={formData.service_category}
+                onServicesChange={(services) => setFormData((prev) => ({ ...prev, service_category: services }))}
+                onComplete={handleNext}
+              />
             </CardContent>
           </Card>
         );
