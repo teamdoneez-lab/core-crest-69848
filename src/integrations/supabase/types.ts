@@ -648,7 +648,7 @@ export type Database = {
         Returns: number
       }
       generate_leads_for_request: {
-        Args: { request_id: string }
+        Args: { p_request_id: string }
         Returns: undefined
       }
       get_confirmation_timer_minutes: {
