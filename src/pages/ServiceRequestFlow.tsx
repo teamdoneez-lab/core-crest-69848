@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { Navigation } from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -773,8 +774,10 @@ export default function ServiceRequestFlow() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <div className="py-12 px-4">
+        <div className="max-w-3xl mx-auto space-y-6">
         {/* Progress indicator */}
         <div className="flex items-center justify-between">
           {[1, 2, 3, 4, 5, 6, 7].map((step) => (
@@ -814,6 +817,7 @@ export default function ServiceRequestFlow() {
             </Button>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
