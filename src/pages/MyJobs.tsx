@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { MessageCircle, MapPin, Car, Phone, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { ChatBox } from '@/components/chat/ChatBox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface Job {
   id: string;
@@ -23,6 +25,7 @@ interface Job {
   contact_phone: string;
   notes?: string;
   created_at: string;
+  customer_id: string;
   service_categories: {
     name: string;
   };
@@ -73,6 +76,7 @@ export default function MyJobs() {
           contact_phone,
           notes,
           created_at,
+          customer_id,
           service_categories (
             name
           ),
@@ -240,10 +244,23 @@ export default function MyJobs() {
                     )}
 
                     <div className="flex gap-2 pt-4 border-t">
-                      <Button variant="outline" className="flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4" />
-                        Contact Customer
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="flex items-center gap-2">
+                            <MessageCircle className="h-4 w-4" />
+                            Chat with Customer
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>Chat with Customer</DialogTitle>
+                          </DialogHeader>
+                          <ChatBox 
+                            requestId={job.id} 
+                            otherUserName="Customer" 
+                          />
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </CardContent>
                 </Card>

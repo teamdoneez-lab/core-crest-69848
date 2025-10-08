@@ -8,8 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, MapPin, Phone, Mail, Car, Clock, User, CheckCircle, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, Phone, Mail, Car, Clock, User, CheckCircle, Trash2, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { ChatBox } from '@/components/chat/ChatBox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -395,30 +397,49 @@ const Appointments = () => {
                           <div className="text-xs text-muted-foreground">
                             Service Request ID: {appointment.service_requests.id}
                           </div>
-                          {appointment.status !== 'completed' && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="sm">
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                  Mark Complete
+                          <div className="flex gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <MessageCircle className="h-4 w-4 mr-2" />
+                                  Chat with Pro
                                 </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Mark job as complete?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will notify the professional that the job has been completed. This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleCompleteJob(appointment.id, appointment.pro_id)}>
-                                    Confirm
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>Chat with {appointment.profiles.name}</DialogTitle>
+                                </DialogHeader>
+                                <ChatBox 
+                                  requestId={appointment.service_requests.id} 
+                                  otherUserName={appointment.profiles.name} 
+                                />
+                              </DialogContent>
+                            </Dialog>
+                            {appointment.status !== 'completed' && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm">
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Mark Complete
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Mark job as complete?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will notify the professional that the job has been completed. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleCompleteJob(appointment.id, appointment.pro_id)}>
+                                      Confirm
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -492,12 +513,30 @@ const Appointments = () => {
                           <div className="text-xs text-muted-foreground">
                             Service Request ID: {appointment.service_requests.id}
                           </div>
-                          {appointment.status !== 'completed' && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="sm">
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                  Mark Complete
+                          <div className="flex gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <MessageCircle className="h-4 w-4 mr-2" />
+                                  Chat with Pro
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>Chat with {appointment.profiles.name}</DialogTitle>
+                                </DialogHeader>
+                                <ChatBox 
+                                  requestId={appointment.service_requests.id} 
+                                  otherUserName={appointment.profiles.name} 
+                                />
+                              </DialogContent>
+                            </Dialog>
+                            {appointment.status !== 'completed' && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm">
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Mark Complete
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
@@ -515,7 +554,8 @@ const Appointments = () => {
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
