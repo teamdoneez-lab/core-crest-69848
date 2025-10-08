@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProgressIndicator } from '@/components/ui/progress-indicator';
 import { toast } from '@/hooks/use-toast';
@@ -23,6 +24,7 @@ const businessDetailsSchema = z.object({
   businessAddress: z.string().trim().min(1, 'Business address is required').max(200, 'Address too long'),
   businessWebsite: z.string().trim().url('Invalid website URL').max(200, 'URL too long').optional().or(z.literal('')),
   businessDescription: z.string().trim().min(10, 'Description must be at least 10 characters').max(500, 'Description too long'),
+  serviceType: z.enum(['mobile', 'in_shop', 'both'], { required_error: 'Service type is required' }),
 });
 
 const servicesSchema = z.object({
@@ -63,6 +65,7 @@ export default function ProOnboarding() {
     businessAddress: '',
     businessWebsite: '',
     businessDescription: '',
+    serviceType: 'both' as 'mobile' | 'in_shop' | 'both',
   });
 
   const [services, setServices] = useState({
@@ -179,6 +182,11 @@ export default function ProOnboarding() {
     setIsLoading(true);
     try {
       // Create or update professional profile with all data
+      const servicesData = {
+        selectedServices: services.selectedServices,
+        serviceType: businessDetails.serviceType
+      };
+
       const { error: proProfileError } = await supabase
         .from('pro_profiles')
         .upsert({
@@ -194,22 +202,10 @@ export default function ProOnboarding() {
           service_radius: location.serviceRadius,
           profile_complete: true,
           is_verified: false, // Will be verified by admin
+          notes: JSON.stringify(servicesData)
         });
 
       if (proProfileError) throw proProfileError;
-
-      // Store selected services in pro_profiles notes field as JSON
-      // This is a simple approach - you could create a separate table for this if needed
-      const servicesData = {
-        selectedServices: services.selectedServices
-      };
-      
-      await supabase
-        .from('pro_profiles')
-        .update({ 
-          notes: JSON.stringify(servicesData)
-        })
-        .eq('pro_id', user?.id);
 
       // Add primary service area (ZIP code)
       await supabase
@@ -300,6 +296,33 @@ export default function ProOnboarding() {
                 placeholder="Describe your business, specialties, and what sets you apart..."
                 rows={4}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Service Type *</Label>
+              <RadioGroup 
+                value={businessDetails.serviceType}
+                onValueChange={(value) => setBusinessDetails({...businessDetails, serviceType: value as 'mobile' | 'in_shop' | 'both'})}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="mobile" id="mobile" />
+                  <Label htmlFor="mobile" className="font-normal cursor-pointer">
+                    Mobile (I come to the customer)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="in_shop" id="in_shop" />
+                  <Label htmlFor="in_shop" className="font-normal cursor-pointer">
+                    In-Shop (Customers come to my location)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="both" id="both" />
+                  <Label htmlFor="both" className="font-normal cursor-pointer">
+                    Both (Mobile and In-Shop)
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
           </div>
         );
