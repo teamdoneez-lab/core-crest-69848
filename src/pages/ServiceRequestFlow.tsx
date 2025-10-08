@@ -110,7 +110,8 @@ export default function ServiceRequestFlow() {
       const modelList = data.results.map((item: any) => item.model).sort();
       setModels(modelList);
     } catch (error) {
-      toast.error("Failed to load vehicle models");
+      // Silently fail - this is expected when typing or invalid combinations
+      setModels([]);
     }
   };
 
