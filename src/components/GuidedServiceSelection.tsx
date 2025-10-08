@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Breadcrumb,
@@ -269,12 +269,16 @@ export function GuidedServiceSelection({
     const isFinalService = /^\d+-\d+-\d+$/.test(optionId) || optionId === "not-sure" || optionId === "other";
 
     if (isFinalService) {
-      // Single selection - replace any existing selection
-      onServicesChange([optionId]);
+      // Multiple selection - toggle service in array
+      if (selectedServices.includes(optionId)) {
+        // Remove from selection
+        onServicesChange(selectedServices.filter(id => id !== optionId));
+      } else {
+        // Add to selection
+        onServicesChange([...selectedServices, optionId]);
+      }
       // Store the final selection name
       setBreadcrumbNames({ ...breadcrumbNames, [optionId]: optionName });
-      // Auto-proceed to next step
-      setTimeout(() => onComplete(), 300);
     } else {
       // Navigate to next level
       if (serviceFlow[optionId]) {
@@ -332,19 +336,37 @@ export function GuidedServiceSelection({
               <Card
                 key={option.id}
                 className={cn(
-                  "cursor-pointer transition-all hover:shadow-md hover:border-primary/50",
+                  "cursor-pointer transition-all hover:shadow-md hover:border-primary/50 relative",
                   isSelected && isFinalService && "bg-primary/10 border-primary"
                 )}
                 onClick={() => handleOptionSelect(option.id, option.name)}
               >
                 <CardContent className="p-6">
-                  <h3 className="font-medium mb-1">{option.name}</h3>
-                  {option.description && <p className="text-sm text-muted-foreground">{option.description}</p>}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <h3 className="font-medium mb-1">{option.name}</h3>
+                      {option.description && <p className="text-sm text-muted-foreground">{option.description}</p>}
+                    </div>
+                    {isSelected && isFinalService && (
+                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             );
           })}
         </div>
+
+        {/* Continue button for multiple selections */}
+        {selectedServices.length > 0 && (
+          <div className="flex justify-end pt-4">
+            <Button onClick={onComplete} size="lg">
+              Continue with {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
