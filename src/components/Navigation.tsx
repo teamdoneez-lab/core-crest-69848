@@ -4,6 +4,7 @@ import { useRole } from '@/hooks/useRole';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { MessageSquare } from 'lucide-react';
 import logo from '@/assets/logo-new.png';
 
 export function Navigation() {
@@ -68,6 +69,16 @@ export function Navigation() {
                   >
                     Appointments
                   </Link>
+                  <Link 
+                    to="/messages" 
+                    className={cn(
+                      "text-sm lg:text-base font-medium transition-colors hover:text-primary flex items-center gap-1",
+                      isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Messages
+                  </Link>
                 </>
               )}
 
@@ -108,6 +119,16 @@ export function Navigation() {
                     )}
                   >
                     Earnings
+                  </Link>
+                  <Link 
+                    to="/messages" 
+                    className={cn(
+                      "text-sm lg:text-base font-medium transition-colors hover:text-primary flex items-center gap-1",
+                      isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Messages
                   </Link>
                 </>
               )}
