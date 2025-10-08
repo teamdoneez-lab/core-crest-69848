@@ -98,7 +98,8 @@ export default function ServiceRequestFlow() {
       const makeList = data.results.map((item: any) => item.make).sort();
       setMakes(makeList);
     } catch (error) {
-      toast.error("Failed to load vehicle makes");
+      // Silently fail - user can still type manually
+      setMakes([]);
     }
   };
 
