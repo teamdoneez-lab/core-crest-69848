@@ -82,6 +82,13 @@ export default function Messages() {
       .eq('request_id', requestId)
       .neq('sender_id', user.id)
       .is('read_at', null);
+    
+    // Update local state to hide badge immediately
+    setConversations(prev => prev.map(conv => 
+      conv.request_id === requestId 
+        ? { ...conv, unread_count: 0 }
+        : conv
+    ));
   };
 
   const loadConversations = async () => {
