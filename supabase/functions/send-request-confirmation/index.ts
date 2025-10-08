@@ -108,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
           to: [{ email: customerEmail }],
           subject: `Service Request Confirmed - ${serviceName} for ${vehicleInfo}`,
         }],
-        from: { email: "onboarding@resend.dev", name: "DoneEZ" },
+        from: { email: "andyredlands@gmail.com", name: "DoneEZ" },
         content: [{
           type: "text/html",
           value: emailHtml,
