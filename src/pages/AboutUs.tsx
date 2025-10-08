@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Navigation } from '@/components/Navigation';
+import { PublicNavigation } from '@/components/PublicNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Target, Users, Shield, Heart } from 'lucide-react';
@@ -7,7 +7,7 @@ import { Target, Users, Shield, Heart } from 'lucide-react';
 export default function AboutUs() {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <PublicNavigation />
       <div className="mx-auto max-w-6xl p-6 py-16">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">

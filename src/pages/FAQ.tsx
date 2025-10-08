@@ -1,4 +1,4 @@
-import { Navigation } from '@/components/Navigation';
+import { PublicNavigation } from '@/components/PublicNavigation';
 import {
   Accordion,
   AccordionContent,
@@ -9,7 +9,7 @@ import {
 export default function FAQ() {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <PublicNavigation />
       <div className="mx-auto max-w-4xl p-6 py-16">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
