@@ -339,7 +339,7 @@ const Index = () => {
             
             {/* Professional Service Image */}
             <div className="relative">
-              <div className="rounded-2xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500 transform hover:scale-105">
+              <div className="rounded-2xl overflow-hidden shadow-2xl transition-shadow duration-500">
                 <img 
                   src={mechanicWorking} 
                   alt="Professional automotive technician working on car engine" 
@@ -576,20 +576,17 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-muted-foreground">
-                <li>About Us</li>
-                <li>How It Works</li>
-                <li>Careers</li>
-                <li>Contact</li>
+                <li><Link to="/about-us" className="hover:text-primary transition-colors">About Us</Link></li>
+                <li><Link to="/how-it-works" className="hover:text-primary transition-colors">How It Works</Link></li>
+                <li><Link to="/faq" className="hover:text-primary transition-colors">FAQ</Link></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Support</h4>
+              <h4 className="font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-muted-foreground">
-                <li>Help Center</li>
-                <li>Safety</li>
-                <li>Terms of Service</li>
-                <li>Privacy Policy</li>
+                <li><Link to="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+                <li><Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
               </ul>
             </div>
           </div>

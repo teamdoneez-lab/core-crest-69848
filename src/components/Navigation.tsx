@@ -49,15 +49,15 @@ export function Navigation() {
 
               {isCustomer && (
                 <>
-              <Link 
-                to="/request-service-flow" 
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
-                  isActive('/request-service-flow') ? 'text-primary' : 'text-muted-foreground'
-                )}
-              >
-                Request
-              </Link>
+                  <Link 
+                    to="/request-service-flow" 
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+                      isActive('/request-service-flow') ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    Request
+                  </Link>
                   <Link 
                     to="/my-requests" 
                     className={cn(
@@ -93,6 +93,15 @@ export function Navigation() {
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </Badge>
                     )}
+                  </Link>
+                  <Link 
+                    to="/customer-profile" 
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+                      isActive('/customer-profile') ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    Profile
                   </Link>
                 </>
               )}
