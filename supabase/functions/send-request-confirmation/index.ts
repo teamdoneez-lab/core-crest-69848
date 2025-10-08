@@ -1,8 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -98,14 +97,32 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    const emailResponse = await resend.emails.send({
-      from: "DoneEZ <noreply@doneez.com>",
-      to: [customerEmail],
-      subject: `Service Request Confirmed - ${serviceName} for ${vehicleInfo}`,
-      html: emailHtml,
+    const emailResponse = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${SENDGRID_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        personalizations: [{
+          to: [{ email: customerEmail }],
+          subject: `Service Request Confirmed - ${serviceName} for ${vehicleInfo}`,
+        }],
+        from: { email: "noreply@doneez.com", name: "DoneEZ" },
+        content: [{
+          type: "text/html",
+          value: emailHtml,
+        }],
+      }),
     });
 
-    console.log("Request confirmation email sent successfully:", emailResponse);
+    if (!emailResponse.ok) {
+      const errorText = await emailResponse.text();
+      console.error("SendGrid error:", errorText);
+      throw new Error(`SendGrid API error: ${errorText}`);
+    }
+
+    console.log("Request confirmation email sent successfully");
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
