@@ -6,6 +6,7 @@ import { Navigation } from "@/components/Navigation";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Search } from "lucide-react";
@@ -134,13 +135,21 @@ export default function Messages() {
         otherUserName = profile?.name || 'Customer';
       }
 
+      // Get unread count for this conversation
+      const { count: unreadCount } = await supabase
+        .from('chat_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('request_id', request.id)
+        .neq('sender_id', user.id)
+        .is('read_at', null);
+
       return {
         request_id: request.id,
         other_user_id: otherUserId,
         other_user_name: otherUserName,
         last_message: lastMsg?.message || 'No messages yet',
         last_message_time: lastMsg?.created_at || request.created_at,
-        unread_count: 0 // Will be calculated by the badge component
+        unread_count: unreadCount || 0
       };
     });
 
@@ -244,7 +253,17 @@ export default function Messages() {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <h3 className="font-medium truncate">{conv.other_user_name}</h3>
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <h3 className="font-medium truncate">{conv.other_user_name}</h3>
+                              {conv.unread_count > 0 && (
+                                <Badge 
+                                  variant="destructive" 
+                                  className="h-5 min-w-5 flex items-center justify-center rounded-full p-0 px-1.5 text-xs"
+                                >
+                                  {conv.unread_count > 99 ? '99+' : conv.unread_count}
+                                </Badge>
+                              )}
+                            </div>
                             <span className="text-xs text-muted-foreground whitespace-nowrap">
                               {format(new Date(conv.last_message_time), 'MMM d')}
                             </span>
