@@ -99,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "AutoFix <onboarding@resend.dev>",
+      from: "DoneEZ <noreply@doneez.com>",
       to: [customerEmail],
       subject: `Service Request Confirmed - ${serviceName} for ${vehicleInfo}`,
       html: emailHtml,

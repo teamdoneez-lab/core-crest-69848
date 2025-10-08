@@ -40,7 +40,7 @@ const handler = async (req: Request): Promise<Response> => {
     const servicesHtml = services.map((s) => `<li style="margin: 5px 0;">${s}</li>`).join("");
 
     const emailResponse = await resend.emails.send({
-      from: "DoneEZ <onboarding@resend.dev>",
+      from: "DoneEZ <noreply@doneez.com>",
       to: [email],
       subject: "Service Request Confirmed - DoneEZ",
       html: `
