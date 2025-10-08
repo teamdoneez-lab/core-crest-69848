@@ -84,7 +84,7 @@ export default function RequestService() {
       });
 
       // Insert service request
-      const { error } = await supabase
+      const { data: newRequest, error } = await supabase
         .from('service_requests')
         .insert({
           customer_id: user?.id!,
@@ -100,7 +100,9 @@ export default function RequestService() {
           contact_email: validatedData.contact_email,
           contact_phone: validatedData.contact_phone,
           notes: validatedData.notes
-        });
+        })
+        .select()
+        .single();
 
       if (error) {
         toast({
@@ -109,6 +111,19 @@ export default function RequestService() {
           variant: 'destructive'
         });
         return;
+      }
+
+      // Send confirmation email
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-request-confirmation', {
+          body: { requestId: newRequest.id }
+        });
+
+        if (emailError) {
+          console.error('Failed to send confirmation email:', emailError);
+        }
+      } catch (emailError) {
+        console.error('Email notification failed:', emailError);
       }
 
       toast({
