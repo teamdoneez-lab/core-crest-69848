@@ -2,17 +2,22 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Menu } from 'lucide-react';
 import logo from '@/assets/logo-new.png';
+import { useState } from 'react';
 
 export function Navigation() {
   const { user, signOut } = useAuth();
   const { profile, isCustomer, isPro, isAdmin } = useRole();
   const unreadCount = useUnreadMessages();
   const location = useLocation();
+  const isMobile = useIsMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (!user) return null;
 
@@ -27,170 +32,213 @@ export function Navigation() {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const navLinks = (
+    <>
+      <Link
+        to="/" 
+        onClick={() => setMobileMenuOpen(false)}
+        className={cn(
+          "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+          isActive('/') ? 'text-primary' : 'text-muted-foreground'
+        )}
+      >
+        Dashboard
+      </Link>
+
+      {isCustomer && (
+        <>
+          <Link 
+            to="/request-service-flow" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              isActive('/request-service-flow') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            Request
+          </Link>
+          <Link 
+            to="/my-requests" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              isActive('/my-requests') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            Requests
+          </Link>
+          <Link 
+            to="/appointments" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              isActive('/appointments') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            Appointments
+          </Link>
+          <Link 
+            to="/messages" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap relative",
+              isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span>Messages</span>
+            {unreadCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="ml-1 h-5 min-w-5 flex items-center justify-center rounded-full p-0 px-1.5 text-xs"
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Badge>
+            )}
+          </Link>
+          <Link 
+            to="/customer-profile" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              isActive('/customer-profile') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            Profile
+          </Link>
+        </>
+      )}
+
+      {isPro && (
+        <>
+          <Link 
+            to="/pro-profile" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              isActive('/pro-profile') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            Profile
+          </Link>
+          <Link 
+            to="/service-requests" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              isActive('/service-requests') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            Requests
+          </Link>
+          <Link 
+            to="/my-jobs" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              isActive('/my-jobs') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            Jobs
+          </Link>
+          <Link 
+            to="/earnings" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              isActive('/earnings') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            Earnings
+          </Link>
+          <Link 
+            to="/messages" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap relative",
+              isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span>Messages</span>
+            {unreadCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="ml-1 h-5 min-w-5 flex items-center justify-center rounded-full p-0 px-1.5 text-xs"
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Badge>
+            )}
+          </Link>
+        </>
+      )}
+
+      {isAdmin && (
+        <Link 
+          to="/admin" 
+          onClick={() => setMobileMenuOpen(false)}
+          className={cn(
+            "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+            isActive('/admin') ? 'text-primary' : 'text-muted-foreground'
+          )}
+        >
+          Admin
+        </Link>
+      )}
+    </>
+  );
+
   return (
     <nav className="border-b bg-background">
-      <div className="mx-auto max-w-7xl px-2 sm:px-4">
-        <div className="flex items-center justify-between h-16 sm:h-20">
-          <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 flex-1 min-w-0">
-            <Link to="/" className="flex items-center flex-shrink-0">
-              <img src={logo} alt="DoneEZ" className="h-8 sm:h-10 md:h-12 w-auto drop-shadow-lg" />
-            </Link>
+      <div className="mx-auto max-w-7xl px-4">
+        <div className="flex items-center justify-between h-16">
+          <Link to="/" className="flex items-center flex-shrink-0">
+            <img src={logo} alt="DoneEZ" className="h-10 w-auto drop-shadow-lg" />
+          </Link>
             
-            <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 overflow-x-auto scrollbar-hide flex-1">
-              <Link
-                to="/" 
-                className={cn(
-                  "text-xs sm:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap px-1 sm:px-0",
-                  isActive('/') ? 'text-primary' : 'text-muted-foreground'
-                )}
-              >
-                Dashboard
-              </Link>
-
-              {isCustomer && (
-                <>
-                  <Link 
-                    to="/request-service-flow" 
-                    className={cn(
-                      "text-xs sm:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap px-1 sm:px-0",
-                      isActive('/request-service-flow') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    Request
-                  </Link>
-                  <Link 
-                    to="/my-requests" 
-                    className={cn(
-                      "text-xs sm:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap px-1 sm:px-0",
-                      isActive('/my-requests') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    Requests
-                  </Link>
-                  <Link 
-                    to="/appointments" 
-                    className={cn(
-                      "text-xs sm:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap px-1 sm:px-0",
-                      isActive('/appointments') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    Appointments
-                  </Link>
-                  <Link 
-                    to="/messages" 
-                    className={cn(
-                      "text-xs sm:text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap relative px-1 sm:px-0",
-                      isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="hidden sm:inline">Messages</span>
-                    {unreadCount > 0 && (
-                      <Badge 
-                        variant="destructive" 
-                        className="ml-1 h-4 sm:h-5 min-w-4 sm:min-w-5 flex items-center justify-center rounded-full p-0 px-1 sm:px-1.5 text-[10px] sm:text-xs"
-                      >
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </Badge>
-                    )}
-                  </Link>
-                  <Link 
-                    to="/customer-profile" 
-                    className={cn(
-                      "text-xs sm:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap px-1 sm:px-0",
-                      isActive('/customer-profile') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    Profile
-                  </Link>
-                </>
-              )}
-
-              {isPro && (
-                <>
-                  <Link 
-                    to="/pro-profile" 
-                    className={cn(
-                      "text-xs sm:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap px-1 sm:px-0",
-                      isActive('/pro-profile') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    Profile
-                  </Link>
-                  <Link 
-                    to="/service-requests" 
-                    className={cn(
-                      "text-xs sm:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap px-1 sm:px-0",
-                      isActive('/service-requests') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    Requests
-                  </Link>
-                  <Link 
-                    to="/my-jobs" 
-                    className={cn(
-                      "text-xs sm:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap px-1 sm:px-0",
-                      isActive('/my-jobs') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    Jobs
-                  </Link>
-                  <Link 
-                    to="/earnings" 
-                    className={cn(
-                      "text-xs sm:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap px-1 sm:px-0",
-                      isActive('/earnings') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    Earnings
-                  </Link>
-                  <Link 
-                    to="/messages" 
-                    className={cn(
-                      "text-xs sm:text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap relative px-1 sm:px-0",
-                      isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  >
-                    <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="hidden sm:inline">Messages</span>
-                    {unreadCount > 0 && (
-                      <Badge 
-                        variant="destructive" 
-                        className="ml-1 h-4 sm:h-5 min-w-4 sm:min-w-5 flex items-center justify-center rounded-full p-0 px-1 sm:px-1.5 text-[10px] sm:text-xs"
-                      >
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </Badge>
-                    )}
-                  </Link>
-                </>
-              )}
-
-              {isAdmin && (
-                <Link 
-                  to="/admin" 
-                  className={cn(
-                    "text-xs sm:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap px-1 sm:px-0",
-                    isActive('/admin') ? 'text-primary' : 'text-muted-foreground'
-                  )}
-                >
-                  Admin
-                </Link>
-              )}
+          {!isMobile ? (
+            <div className="flex items-center gap-4 flex-1 ml-6">
+              {navLinks}
             </div>
-          </div>
+          ) : null}
 
-          <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0 ml-2">
-            <Badge variant="secondary" className="text-[10px] sm:text-xs lg:text-sm whitespace-nowrap px-1.5 sm:px-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Badge variant="secondary" className="text-xs whitespace-nowrap">
               {profile?.role || 'customer'}
             </Badge>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleSignOut} 
-              className="text-[10px] sm:text-xs lg:text-sm whitespace-nowrap h-7 sm:h-9 px-2 sm:px-3"
-            >
-              Sign Out
-            </Button>
+            {!isMobile && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSignOut}
+              >
+                Sign Out
+              </Button>
+            )}
+            {isMobile && (
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-64">
+                  <div className="flex flex-col gap-4 mt-8">
+                    {navLinks}
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleSignOut();
+                      }}
+                      className="w-full"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            )}
           </div>
         </div>
       </div>
