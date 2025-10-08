@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronLeft, ChevronRight, Filter, X, FileText, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Filter, X, FileText, Download, Search } from 'lucide-react';
 import { QuoteForm } from '@/components/pro/QuoteForm';
 import { QuoteConfirmation } from '@/components/pro/QuoteConfirmation';
 
@@ -90,15 +90,26 @@ export default function ServiceRequests() {
 
   useEffect(() => {
     if (user) {
-      fetchServiceRequests();
       fetchPendingQuotes();
     }
-  }, [user, currentPage, filters]);
+  }, [user]);
 
   const fetchServiceRequests = async () => {
     try {
       setLoading(true);
       
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      // Get pro's profile to find their location
+      const { data: proProfile } = await supabase
+        .from('pro_profiles')
+        .select('latitude, longitude')
+        .eq('pro_id', user.id)
+        .single();
+
       // Build query with filters - only show pending requests
       let query = supabase
         .from('service_requests')
@@ -115,11 +126,7 @@ export default function ServiceRequests() {
         `, { count: 'exact' })
         .eq('status', 'pending'); // Always filter for pending requests
 
-      // Apply additional filters
-      if (filters.location) {
-        query = query.or(`zip.ilike.%${filters.location}%,address.ilike.%${filters.location}%`);
-      }
-      
+      // Apply date filters
       if (filters.dateFrom) {
         query = query.gte('created_at', new Date(filters.dateFrom).toISOString());
       }
@@ -130,28 +137,59 @@ export default function ServiceRequests() {
         query = query.lte('created_at', endDate.toISOString());
       }
 
-      // Apply pagination
-      const from = (currentPage - 1) * itemsPerPage;
-      const to = from + itemsPerPage - 1;
-      
-      const { data, error, count } = await query
-        .range(from, to)
+      // Fetch all results
+      const { data: allData, error, count } = await query
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching service requests:', error);
+        setLoading(false);
         return;
       }
 
-      if (data) {
-        setRequests(data);
-        setTotalCount(count || 0);
+      let filteredData = allData || [];
+
+      // Apply radius filtering if pro has location and location filter is provided
+      if (filters.location && proProfile?.latitude && proProfile?.longitude) {
+        const radiusMiles = 100;
+        
+        filteredData = filteredData.filter(request => {
+          if (!request.latitude || !request.longitude) return false;
+          
+          // Calculate distance using Haversine formula
+          const R = 3959; // Earth's radius in miles
+          const dLat = (request.latitude - proProfile.latitude) * Math.PI / 180;
+          const dLon = (request.longitude - proProfile.longitude) * Math.PI / 180;
+          const a = 
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(proProfile.latitude * Math.PI / 180) * 
+            Math.cos(request.latitude * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const distance = R * c;
+          
+          return distance <= radiusMiles;
+        });
       }
+
+      // Apply pagination to filtered results
+      const totalFiltered = filteredData.length;
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage;
+      const paginatedData = filteredData.slice(from, to);
+
+      setRequests(paginatedData);
+      setTotalCount(totalFiltered);
     } catch (error) {
       console.error('Error fetching service requests:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchServiceRequests();
   };
 
   const clearFilters = () => {
@@ -324,14 +362,13 @@ export default function ServiceRequests() {
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="location">Location (ZIP/Address)</Label>
+                      <Label htmlFor="location">Location Search (100 mile radius)</Label>
                       <Input
                         id="location"
-                        placeholder="Search location..."
+                        placeholder="Enter any text to search..."
                         value={filters.location}
                         onChange={(e) => {
                           setFilters({ ...filters, location: e.target.value });
-                          setCurrentPage(1);
                         }}
                       />
                     </div>
@@ -386,8 +423,15 @@ export default function ServiceRequests() {
                     </div>
                   </div>
 
-                  {(filters.location || filters.status !== 'all' || filters.dateFrom || filters.dateTo) && (
-                    <div className="mt-4">
+                  <div className="mt-4 flex items-center gap-2">
+                    <Button
+                      onClick={handleSearch}
+                      className="flex items-center gap-2"
+                    >
+                      <Search className="h-4 w-4" />
+                      Search
+                    </Button>
+                    {(filters.location || filters.status !== 'all' || filters.dateFrom || filters.dateTo) && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -397,8 +441,8 @@ export default function ServiceRequests() {
                         <X className="h-4 w-4" />
                         Clear Filters
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )}
