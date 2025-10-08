@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -10,6 +11,7 @@ import logo from '@/assets/logo-new.png';
 export function Navigation() {
   const { user, signOut } = useAuth();
   const { profile, isCustomer, isPro, isAdmin } = useRole();
+  const unreadCount = useUnreadMessages();
   const location = useLocation();
 
   if (!user) return null;
@@ -77,12 +79,20 @@ export function Navigation() {
                   <Link 
                     to="/messages" 
                     className={cn(
-                      "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap",
+                      "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap relative",
                       isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
                     <MessageSquare className="h-4 w-4" />
                     Messages
+                    {unreadCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="ml-1 h-5 min-w-5 flex items-center justify-center rounded-full p-0 px-1.5 text-xs"
+                      >
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </Badge>
+                    )}
                   </Link>
                 </>
               )}
@@ -128,12 +138,20 @@ export function Navigation() {
                   <Link 
                     to="/messages" 
                     className={cn(
-                      "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap",
+                      "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap relative",
                       isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
                     <MessageSquare className="h-4 w-4" />
                     Messages
+                    {unreadCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="ml-1 h-5 min-w-5 flex items-center justify-center rounded-full p-0 px-1.5 text-xs"
+                      >
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </Badge>
+                    )}
                   </Link>
                 </>
               )}

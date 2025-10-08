@@ -47,6 +47,7 @@ export default function Messages() {
   useEffect(() => {
     if (!selectedConversation) return;
     loadMessages(selectedConversation.request_id);
+    markMessagesAsRead(selectedConversation.request_id);
     
     // Subscribe to new messages
     const channel = supabase
@@ -69,6 +70,18 @@ export default function Messages() {
       supabase.removeChannel(channel);
     };
   }, [selectedConversation]);
+
+  const markMessagesAsRead = async (requestId: string) => {
+    if (!user) return;
+    
+    // Mark all messages in this conversation as read (except user's own messages)
+    await supabase
+      .from('chat_messages')
+      .update({ read_at: new Date().toISOString() })
+      .eq('request_id', requestId)
+      .neq('sender_id', user.id)
+      .is('read_at', null);
+  };
 
   const loadConversations = async () => {
     if (!user) return;
@@ -127,7 +140,7 @@ export default function Messages() {
         other_user_name: otherUserName,
         last_message: lastMsg?.message || 'No messages yet',
         last_message_time: lastMsg?.created_at || request.created_at,
-        unread_count: 0
+        unread_count: 0 // Will be calculated by the badge component
       };
     });
 
@@ -219,7 +232,7 @@ export default function Messages() {
                       key={conv.request_id}
                       onClick={() => setSelectedConversation(conv)}
                       className={cn(
-                        "w-full p-4 text-left hover:bg-muted/50 transition-colors",
+                        "w-full p-4 text-left hover:bg-muted/50 transition-colors relative",
                         selectedConversation?.request_id === conv.request_id && "bg-muted"
                       )}
                     >
