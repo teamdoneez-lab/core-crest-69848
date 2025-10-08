@@ -80,8 +80,7 @@ export default function Messages() {
         id,
         customer_id,
         accepted_pro_id,
-        profiles!service_requests_customer_id_fkey(name),
-        pro_profiles!service_requests_accepted_pro_id_fkey(business_name)
+        created_at
       `)
       .or(`customer_id.eq.${user.id},accepted_pro_id.eq.${user.id}`)
       .not('accepted_pro_id', 'is', null);
@@ -103,9 +102,24 @@ export default function Messages() {
 
       const isCustomer = request.customer_id === user.id;
       const otherUserId = isCustomer ? request.accepted_pro_id : request.customer_id;
-      const otherUserName = isCustomer 
-        ? request.pro_profiles?.business_name || 'Professional'
-        : request.profiles?.name || 'Customer';
+      
+      // Fetch other user's name separately
+      let otherUserName = 'User';
+      if (isCustomer) {
+        const { data: proProfile } = await supabase
+          .from('pro_profiles')
+          .select('business_name')
+          .eq('pro_id', otherUserId)
+          .single();
+        otherUserName = proProfile?.business_name || 'Professional';
+      } else {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', otherUserId)
+          .single();
+        otherUserName = profile?.name || 'Customer';
+      }
 
       return {
         request_id: request.id,

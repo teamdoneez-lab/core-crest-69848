@@ -15,25 +15,30 @@ export function Navigation() {
   if (!user) return null;
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <nav className="border-b bg-background">
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-7xl px-4">
         <div className="flex items-center justify-between h-20">
-          <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center">
+          <div className="flex items-center gap-4 lg:gap-6 flex-1 min-w-0">
+            <Link to="/" className="flex items-center flex-shrink-0">
               <img src={logo} alt="DoneEZ" className="h-10 md:h-12 w-auto drop-shadow-lg" />
             </Link>
             
-            <div className="flex space-x-4">
-              <Link 
+            <div className="flex items-center gap-2 lg:gap-4 overflow-x-auto scrollbar-hide flex-1">
+              <Link
                 to="/" 
                 className={cn(
-                  "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                  "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
                   isActive('/') ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
@@ -45,25 +50,25 @@ export function Navigation() {
               <Link 
                 to="/request-service-flow" 
                 className={cn(
-                  "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                  "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
                   isActive('/request-service-flow') ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
-                Request Service
+                Request
               </Link>
                   <Link 
                     to="/my-requests" 
                     className={cn(
-                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                      "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
                       isActive('/my-requests') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
-                    My Requests
+                    Requests
                   </Link>
                   <Link 
                     to="/appointments" 
                     className={cn(
-                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                      "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
                       isActive('/appointments') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
@@ -72,7 +77,7 @@ export function Navigation() {
                   <Link 
                     to="/messages" 
                     className={cn(
-                      "text-sm lg:text-base font-medium transition-colors hover:text-primary flex items-center gap-1",
+                      "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap",
                       isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
@@ -87,34 +92,34 @@ export function Navigation() {
                   <Link 
                     to="/pro-profile" 
                     className={cn(
-                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                      "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
                       isActive('/pro-profile') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
-                    My Profile
+                    Profile
                   </Link>
                   <Link 
                     to="/service-requests" 
                     className={cn(
-                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                      "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
                       isActive('/service-requests') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
-                    New Requests
+                    Requests
                   </Link>
                   <Link 
                     to="/my-jobs" 
                     className={cn(
-                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                      "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
                       isActive('/my-jobs') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
-                    My Jobs
+                    Jobs
                   </Link>
                   <Link 
                     to="/earnings" 
                     className={cn(
-                      "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                      "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
                       isActive('/earnings') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
@@ -123,7 +128,7 @@ export function Navigation() {
                   <Link 
                     to="/messages" 
                     className={cn(
-                      "text-sm lg:text-base font-medium transition-colors hover:text-primary flex items-center gap-1",
+                      "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap",
                       isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
@@ -137,7 +142,7 @@ export function Navigation() {
                 <Link 
                   to="/admin" 
                   className={cn(
-                    "text-sm lg:text-base font-medium transition-colors hover:text-primary",
+                    "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
                     isActive('/admin') ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >
@@ -147,14 +152,14 @@ export function Navigation() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <span className="text-sm lg:text-base text-muted-foreground">
-              Welcome, {profile?.name || user?.email}
+          <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
+            <span className="text-xs lg:text-sm text-muted-foreground hidden md:block truncate max-w-[120px] lg:max-w-none">
+              {profile?.name || user?.email}
             </span>
-            <Badge variant="secondary" className="text-sm lg:text-base">
+            <Badge variant="secondary" className="text-xs lg:text-sm whitespace-nowrap">
               {profile?.role || 'customer'}
             </Badge>
-            <Button variant="outline" size="sm" onClick={handleSignOut} className="text-sm lg:text-base">
+            <Button variant="outline" size="sm" onClick={handleSignOut} className="text-xs lg:text-sm whitespace-nowrap">
               Sign Out
             </Button>
           </div>
