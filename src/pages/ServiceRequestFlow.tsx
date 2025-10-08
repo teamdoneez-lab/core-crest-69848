@@ -498,25 +498,31 @@ export default function ServiceRequestFlow() {
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="immediate" id="immediate" />
                     <Label htmlFor="immediate" className="font-normal cursor-pointer">
-                      Immediate (1-2 days)
+                      Immediate, within an hour
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="couple_days" id="couple_days" />
+                    <Label htmlFor="couple_days" className="font-normal cursor-pointer">
+                      Within a couple of days
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="week" id="week" />
                     <Label htmlFor="week" className="font-normal cursor-pointer">
-                      Within 1 week
+                      Within a week
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="month" id="month" />
                     <Label htmlFor="month" className="font-normal cursor-pointer">
-                      Within 1 month
+                      Within a month
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="other" id="other" />
-                    <Label htmlFor="other" className="font-normal cursor-pointer">
-                      Other
+                    <RadioGroupItem value="quotes" id="quotes" />
+                    <Label htmlFor="quotes" className="font-normal cursor-pointer">
+                      Just getting quotes
                     </Label>
                   </div>
                 </RadioGroup>
@@ -533,7 +539,7 @@ export default function ServiceRequestFlow() {
               <CardDescription>Where would you like the service performed?</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card
                   className={cn(
                     "cursor-pointer transition-all hover:shadow-md",
@@ -562,6 +568,22 @@ export default function ServiceRequestFlow() {
                     <h3 className="font-semibold mb-2">In-Shop Service</h3>
                     <p className="text-sm text-muted-foreground">
                       Visit a professional shop
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card
+                  className={cn(
+                    "cursor-pointer transition-all hover:shadow-md",
+                    formData.appointment_type === "either" && "ring-2 ring-primary"
+                  )}
+                  onClick={() => setFormData((prev) => ({ ...prev, appointment_type: "either" }))}
+                >
+                  <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                    <MapPin className="h-12 w-12 mb-4 text-primary" />
+                    <h3 className="font-semibold mb-2">Either</h3>
+                    <p className="text-sm text-muted-foreground">
+                      No preference - fastest response
                     </p>
                   </CardContent>
                 </Card>

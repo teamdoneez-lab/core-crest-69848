@@ -227,16 +227,7 @@ export default function FAQ() {
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
                 <p className="mb-3">No. Membership is performance-based. To remain active, you must maintain strong ratings and deliver reliable service.</p>
-                <p className="font-semibold mb-2">DoneEZ Rating Standards:</p>
-                <ul className="list-disc pl-6 space-y-1 mb-3">
-                  <li>4.5★ – 5.0★ → Top Rated: Priority access to jobs</li>
-                  <li>4.0★ – 4.49★ → Good Standing: Fully active</li>
-                  <li>3.5★ – 3.99★ → Probation Zone: Limited job access</li>
-                  <li>Below 3.5★ (with 10+ DoneEZ reviews) → Account Paused: You'll enter our Controlled Jobs Recovery Program (only small jobs offered)</li>
-                </ul>
-                <p className="font-semibold mb-2">Failure Case:</p>
-                <p className="mb-3">If your probation rating stays below 3.0★, your account will be permanently deactivated.</p>
-                <p className="italic">Note: Your DoneEZ rating takes precedence over Yelp or Google once you're active on the platform. This ensures only shops delivering great customer experiences remain active.</p>
+                <p>For detailed performance standards, see our DoneEZ Rating Policy.</p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

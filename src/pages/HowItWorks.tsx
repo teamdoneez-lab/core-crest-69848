@@ -51,9 +51,9 @@ export default function HowItWorks() {
                 <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-6">
                   <CheckCircle className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-4">3. Book & Done</h3>
+                <h3 className="text-xl font-bold mb-4">3. Get Service & Pay</h3>
                 <p className="text-muted-foreground">
-                  Accept the quote you like best, schedule your appointment, and get your vehicle serviced by a trusted pro.
+                  Accept the quote you like best, schedule your appointment, and pay your service provider directly after the work is completed to your satisfaction.
                 </p>
               </CardContent>
             </Card>
