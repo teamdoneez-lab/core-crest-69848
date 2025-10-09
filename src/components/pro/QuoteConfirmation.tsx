@@ -108,14 +108,14 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
   const handleDecline = async () => {
     setIsProcessing(true);
     
-    // Hide component immediately
-    setIsDeclined(true);
-    
     try {
-      // Update quote status first
+      // Update quote status to declined - MUST complete before hiding
       const { error: quoteError } = await supabase
         .from("quotes")
-        .update({ status: "declined" })
+        .update({ 
+          status: "declined",
+          updated_at: new Date().toISOString()
+        })
         .eq("id", quote.id);
 
       if (quoteError) {
@@ -123,34 +123,47 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
         throw quoteError;
       }
 
-      // Update referral fee
+      // Update referral fee status
       const { error: feeError } = await supabase
         .from("referral_fees")
-        .update({ status: "declined" })
+        .update({ 
+          status: "declined",
+          updated_at: new Date().toISOString()
+        })
         .eq("quote_id", quote.id);
 
       if (feeError) {
         console.error("Error updating referral fee:", feeError);
       }
 
+      // Verify the update completed successfully
+      const { data: verifyData } = await supabase
+        .from("quotes")
+        .select("status")
+        .eq("id", quote.id)
+        .single();
+
+      if (verifyData?.status !== "declined") {
+        throw new Error("Quote status update verification failed");
+      }
+
+      // Only hide and refresh after successful database update
+      setIsDeclined(true);
+
       toast({
         title: "Quote Declined",
         description: "Customer has been notified to select another quote.",
       });
 
-      // Wait to ensure database transaction completes
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // Now refresh the list
+      // Refresh the list
       onConfirmed();
     } catch (error) {
       console.error("Error declining quote:", error);
       toast({
         title: "Error",
-        description: "Failed to decline quote",
+        description: "Failed to decline quote. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsProcessing(false);
     }
   };
