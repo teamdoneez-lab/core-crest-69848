@@ -666,7 +666,7 @@ export default function ServiceRequestFlow() {
                       </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[95vw] sm:w-auto p-0 max-w-[95vw] sm:max-w-md max-h-[80vh] overflow-y-auto" align="start">
+                  <PopoverContent className="w-[95vw] sm:w-auto p-0 max-w-[95vw] sm:max-w-md" align="start">
                     <div className="flex flex-col w-full">
                       <Calendar
                         mode="single"
@@ -690,7 +690,7 @@ export default function ServiceRequestFlow() {
                           <SelectTrigger className="w-full text-sm">
                             <SelectValue placeholder="Select time" />
                           </SelectTrigger>
-                          <SelectContent className="max-h-[200px] overflow-y-auto">
+                          <SelectContent className="z-[100] max-h-[300px]" position="popper" sideOffset={5}>
                             {Array.from({ length: 9 }, (_, i) => i + 9).map((hour) => (
                               <SelectItem key={hour} value={`${hour}:00`} className="text-sm">
                                 {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
