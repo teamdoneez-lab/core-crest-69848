@@ -25,14 +25,20 @@ serve(async (req) => {
   );
 
   try {
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("No authorization header");
+    }
+    
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
 
-    if (!user?.email) {
+    if (userError || !user?.email) {
+      console.error("[REFERRAL-CHECKOUT] Auth error:", userError);
       throw new Error("Not authenticated");
     }
+    
+    console.log("[REFERRAL-CHECKOUT] Authenticated user:", user.id, user.email);
 
     const { quote_id } = await req.json();
 
