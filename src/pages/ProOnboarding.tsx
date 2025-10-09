@@ -229,10 +229,15 @@ export default function ProOnboarding() {
         .delete()
         .eq('pro_id', user?.id);
 
-      const { data: allCategories } = await supabase
+      const { data: allCategories, error: fetchCategoriesError } = await supabase
         .from('service_categories')
         .select('id')
         .eq('active', true);
+
+      if (fetchCategoriesError) {
+        console.error('Error fetching categories:', fetchCategoriesError);
+        throw fetchCategoriesError;
+      }
 
       if (allCategories && allCategories.length > 0) {
         const categoryInserts = allCategories.map(cat => ({
@@ -240,11 +245,20 @@ export default function ProOnboarding() {
           category_id: cat.id
         }));
 
+        console.log('Inserting categories:', categoryInserts);
+
         const { error: categoryError } = await supabase
           .from('pro_service_categories')
           .insert(categoryInserts);
 
-        if (categoryError) throw categoryError;
+        if (categoryError) {
+          console.error('Error inserting categories:', categoryError);
+          throw categoryError;
+        }
+
+        console.log('Successfully inserted', allCategories.length, 'service categories');
+      } else {
+        console.warn('No active service categories found to insert');
       }
 
       toast({
