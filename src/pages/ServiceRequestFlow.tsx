@@ -664,37 +664,39 @@ export default function ServiceRequestFlow() {
                       {formData.preferred_time ? format(formData.preferred_time, "PPP p") : "Pick a date and time"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={formData.preferred_time || undefined}
-                      onSelect={(date) => setFormData((prev) => ({ ...prev, preferred_time: date || null }))}
-                      disabled={(date) => date < new Date()}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                    <div className="p-3 border-t">
-                      <Label>Time</Label>
-                      <Select
-                        value={formData.preferred_time ? format(formData.preferred_time, "HH:mm") : ""}
-                        onValueChange={(time) => {
-                          const [hours, minutes] = time.split(":");
-                          const newDate = formData.preferred_time ? new Date(formData.preferred_time) : new Date();
-                          newDate.setHours(parseInt(hours), parseInt(minutes));
-                          setFormData((prev) => ({ ...prev, preferred_time: newDate }));
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select time" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 9 }, (_, i) => i + 9).map((hour) => (
-                            <SelectItem key={hour} value={`${hour}:00`}>
-                              {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  <PopoverContent className="w-auto p-0 max-w-[95vw]" align="start">
+                    <div className="flex flex-col">
+                      <Calendar
+                        mode="single"
+                        selected={formData.preferred_time || undefined}
+                        onSelect={(date) => setFormData((prev) => ({ ...prev, preferred_time: date || null }))}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                      <div className="p-3 border-t space-y-2">
+                        <Label className="text-sm font-medium">Time</Label>
+                        <Select
+                          value={formData.preferred_time ? format(formData.preferred_time, "HH:mm") : ""}
+                          onValueChange={(time) => {
+                            const [hours, minutes] = time.split(":");
+                            const newDate = formData.preferred_time ? new Date(formData.preferred_time) : new Date();
+                            newDate.setHours(parseInt(hours), parseInt(minutes));
+                            setFormData((prev) => ({ ...prev, preferred_time: newDate }));
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select time" />
+                          </SelectTrigger>
+                          <SelectContent position="popper" className="z-50 max-h-[300px] overflow-y-auto" sideOffset={5}>
+                            {Array.from({ length: 9 }, (_, i) => i + 9).map((hour) => (
+                              <SelectItem key={hour} value={`${hour}:00`}>
+                                {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
