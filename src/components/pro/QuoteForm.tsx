@@ -27,7 +27,7 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
       if (!user) throw new Error("Not authenticated");
 
       // Insert quote directly
-      const { error: quoteError } = await supabase
+      const { data: newQuote, error: quoteError } = await supabase
         .from("quotes")
         .insert({
           request_id: requestId,
@@ -37,9 +37,25 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
           notes,
           status: "pending",
           payment_status: "pending",
-        });
+        })
+        .select()
+        .single();
 
       if (quoteError) throw quoteError;
+
+      // Send email notification to customer
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-quote-email', {
+          body: { quoteId: newQuote.id }
+        });
+        
+        if (emailError) {
+          console.error('Email notification error:', emailError);
+          // Don't fail the quote submission if email fails
+        }
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+      }
 
       toast({
         title: "Success",
