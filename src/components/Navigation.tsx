@@ -25,13 +25,20 @@ export function Navigation() {
   const handleSignOut = async () => {
     setMobileMenuOpen(false);
     
-    // Sign out and force navigation immediately
-    signOut();
-    
-    // Force immediate redirect
-    setTimeout(() => {
+    try {
+      // Clear session first
+      await signOut();
+      
+      // Wait a bit for state to update
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Force full page reload to /auth to clear all state
       window.location.href = '/auth';
-    }, 100);
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Force redirect anyway
+      window.location.href = '/auth';
+    }
   };
 
   const isActive = (path: string) => location.pathname === path;
