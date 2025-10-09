@@ -274,6 +274,11 @@ export default function ServiceRequests() {
     const expiredQuotes = [];
 
     for (const quote of data || []) {
+      // Double-check status isn't declined (extra safety)
+      if (quote.status === 'declined') {
+        continue;
+      }
+      
       if (quote.confirmation_timer_expires_at) {
         const expiresAt = new Date(quote.confirmation_timer_expires_at);
         if (expiresAt <= now) {
