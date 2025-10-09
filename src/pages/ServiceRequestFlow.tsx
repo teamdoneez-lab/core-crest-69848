@@ -645,26 +645,28 @@ export default function ServiceRequestFlow() {
         return (
           <Card>
             <CardHeader>
-              <CardTitle>Appointment Details</CardTitle>
-              <CardDescription>When would you like the service?</CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Appointment Details</CardTitle>
+              <CardDescription className="text-sm">When would you like the service?</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Preferred Date & Time *</Label>
+                <Label className="text-sm sm:text-base">Preferred Date & Time *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "w-full justify-start text-left font-normal text-xs sm:text-sm",
                         !formData.preferred_time && "text-muted-foreground"
                       )}
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.preferred_time ? format(formData.preferred_time, "PPP p") : "Pick a date and time"}
+                      <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">
+                        {formData.preferred_time ? format(formData.preferred_time, "PPP p") : "Pick a date and time"}
+                      </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 max-w-[95vw]" align="start">
+                  <PopoverContent className="w-auto p-0 max-w-[95vw] sm:max-w-md" align="start">
                     <div className="flex flex-col">
                       <Calendar
                         mode="single"
@@ -672,7 +674,7 @@ export default function ServiceRequestFlow() {
                         onSelect={(date) => setFormData((prev) => ({ ...prev, preferred_time: date || null }))}
                         disabled={(date) => date < new Date()}
                         initialFocus
-                        className="pointer-events-auto"
+                        className="pointer-events-auto p-2 sm:p-3"
                       />
                       <div className="p-3 border-t space-y-2">
                         <Label className="text-sm font-medium">Time</Label>
@@ -685,12 +687,12 @@ export default function ServiceRequestFlow() {
                             setFormData((prev) => ({ ...prev, preferred_time: newDate }));
                           }}
                         >
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className="w-full text-sm">
                             <SelectValue placeholder="Select time" />
                           </SelectTrigger>
-                          <SelectContent position="popper" className="z-50 max-h-[300px] overflow-y-auto" sideOffset={5}>
+                          <SelectContent position="popper" className="z-50 max-h-[200px] sm:max-h-[300px] overflow-y-auto" sideOffset={5}>
                             {Array.from({ length: 9 }, (_, i) => i + 9).map((hour) => (
-                              <SelectItem key={hour} value={`${hour}:00`}>
+                              <SelectItem key={hour} value={`${hour}:00`} className="text-sm">
                                 {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
                               </SelectItem>
                             ))}
