@@ -650,7 +650,7 @@ export default function ServiceRequestFlow() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-sm sm:text-base">Preferred Date & Time *</Label>
+                <Label className="text-sm sm:text-base">Preferred Date *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -662,46 +662,53 @@ export default function ServiceRequestFlow() {
                     >
                       <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
                       <span className="truncate">
-                        {formData.preferred_time ? format(formData.preferred_time, "PPP p") : "Pick a date and time"}
+                        {formData.preferred_time ? format(formData.preferred_time, "PPP") : "Pick a date"}
                       </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[95vw] sm:w-auto p-0 max-w-[95vw] sm:max-w-md" align="start">
-                    <div className="flex flex-col w-full">
-                      <Calendar
-                        mode="single"
-                        selected={formData.preferred_time || undefined}
-                        onSelect={(date) => setFormData((prev) => ({ ...prev, preferred_time: date || null }))}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                        className="pointer-events-auto p-2 sm:p-3 w-full"
-                      />
-                      <div className="p-3 border-t space-y-2 bg-background">
-                        <Label className="text-sm font-medium">Time</Label>
-                        <Select
-                          value={formData.preferred_time ? format(formData.preferred_time, "HH:mm") : ""}
-                          onValueChange={(time) => {
-                            const [hours, minutes] = time.split(":");
-                            const newDate = formData.preferred_time ? new Date(formData.preferred_time) : new Date();
-                            newDate.setHours(parseInt(hours), parseInt(minutes));
-                            setFormData((prev) => ({ ...prev, preferred_time: newDate }));
-                          }}
-                        >
-                          <SelectTrigger className="w-full text-sm">
-                            <SelectValue placeholder="Select time" />
-                          </SelectTrigger>
-                          <SelectContent className="z-[100] max-h-[300px]" position="popper" sideOffset={5}>
-                            {Array.from({ length: 9 }, (_, i) => i + 9).map((hour) => (
-                              <SelectItem key={hour} value={`${hour}:00`} className="text-sm">
-                                {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.preferred_time || undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          const newDate = new Date(date);
+                          if (formData.preferred_time) {
+                            newDate.setHours(formData.preferred_time.getHours(), formData.preferred_time.getMinutes());
+                          }
+                          setFormData((prev) => ({ ...prev, preferred_time: newDate }));
+                        }
+                      }}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                      className="pointer-events-auto p-3"
+                    />
                   </PopoverContent>
                 </Popover>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm sm:text-base">Preferred Time *</Label>
+                <Select
+                  value={formData.preferred_time ? format(formData.preferred_time, "HH:mm") : ""}
+                  onValueChange={(time) => {
+                    const [hours, minutes] = time.split(":");
+                    const newDate = formData.preferred_time ? new Date(formData.preferred_time) : new Date();
+                    newDate.setHours(parseInt(hours), parseInt(minutes));
+                    setFormData((prev) => ({ ...prev, preferred_time: newDate }));
+                  }}
+                >
+                  <SelectTrigger className="w-full text-sm">
+                    <SelectValue placeholder="Select time" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="max-h-[300px]">
+                    {Array.from({ length: 9 }, (_, i) => i + 9).map((hour) => (
+                      <SelectItem key={hour} value={`${hour}:00`} className="text-sm">
+                        {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
