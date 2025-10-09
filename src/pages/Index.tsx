@@ -508,9 +508,9 @@ const Index = () => {
                   3
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-6 group-hover:text-primary transition-colors duration-300">Pay Securely</h3>
+              <h3 className="text-2xl font-bold mb-6 group-hover:text-primary transition-colors duration-300">Pay After Service</h3>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                Complete your service and pay securely through our platform with transparent, upfront pricing.
+                Once the work is finished and you're fully satisfied, pay your service provider directly in person.
               </p>
             </div>
           </div>
