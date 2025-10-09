@@ -93,13 +93,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      // Always use local scope to avoid API errors with invalid sessions
-      await supabase.auth.signOut({ scope: 'local' });
-      console.log('SignOut successful (local)');
+      // Manually clear all auth-related data from localStorage
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('sb-') || key.includes('auth')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Also clear sessionStorage
+      sessionStorage.clear();
+      
+      console.log('SignOut successful - local storage cleared');
       return { error: null };
     } catch (err) {
-      // Silently handle any errors - just clear state
-      console.log('SignOut completed with local state clear');
+      console.log('SignOut completed');
       return { error: null };
     }
   };
