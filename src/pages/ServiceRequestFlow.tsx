@@ -666,15 +666,15 @@ export default function ServiceRequestFlow() {
                       </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 max-w-[95vw] sm:max-w-md" align="start">
-                    <div className="flex flex-col">
+                  <PopoverContent className="w-[95vw] sm:w-auto p-0 max-w-[95vw] sm:max-w-md" align="start">
+                    <div className="flex flex-col w-full">
                       <Calendar
                         mode="single"
                         selected={formData.preferred_time || undefined}
                         onSelect={(date) => setFormData((prev) => ({ ...prev, preferred_time: date || null }))}
                         disabled={(date) => date < new Date()}
                         initialFocus
-                        className="pointer-events-auto p-2 sm:p-3"
+                        className="pointer-events-auto p-2 sm:p-3 w-full"
                       />
                       <div className="p-3 border-t space-y-2">
                         <Label className="text-sm font-medium">Time</Label>
