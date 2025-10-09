@@ -93,21 +93,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      // Check if there's an active session first
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // Ignore session errors - this is expected when session is already invalid or missing
-      if (error && 
-          error.message !== 'Session from session_id claim in JWT does not exist' &&
-          error.name !== 'AuthSessionMissingError') {
-        console.error('SignOut error:', error);
-        return { error };
+      if (!session) {
+        // No session to sign out from, just clear local state
+        console.log('No active session, clearing local state only');
+        return { error: null };
       }
       
-      console.log('SignOut successful or session already cleared');
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('SignOut error:', error);
+        // Even if API call fails, clear local session
+        await supabase.auth.signOut({ scope: 'local' });
+        return { error: null };
+      }
+      
+      console.log('SignOut successful');
       return { error: null };
     } catch (err) {
       console.error('Unexpected signOut error:', err);
-      // Still clear local state even if API call fails
+      // Clear local state even if API call fails
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+      } catch (localErr) {
+        console.error('Local signOut also failed:', localErr);
+      }
       return { error: null };
     }
   };
