@@ -222,6 +222,31 @@ export default function ProOnboarding() {
 
       if (areaError) throw areaError;
 
+      // Add selected service categories
+      await supabase
+        .from('pro_service_categories')
+        .delete()
+        .eq('pro_id', user?.id);
+
+      // Map selected service IDs to category IDs from the service_categories table
+      const { data: serviceCategories } = await supabase
+        .from('service_categories')
+        .select('id')
+        .in('id', services.selectedServices);
+
+      if (serviceCategories && serviceCategories.length > 0) {
+        const categoryInserts = serviceCategories.map(cat => ({
+          pro_id: user?.id,
+          category_id: cat.id
+        }));
+
+        const { error: categoryError } = await supabase
+          .from('pro_service_categories')
+          .insert(categoryInserts);
+
+        if (categoryError) throw categoryError;
+      }
+
       toast({
         title: 'Registration Complete!',
         description: 'Your professional profile has been created. Pending admin verification.'
