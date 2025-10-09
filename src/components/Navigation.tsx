@@ -23,14 +23,15 @@ export function Navigation() {
   if (!user) return null;
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/auth', { replace: true });
-    } catch (error) {
-      console.error('Sign out error:', error);
-      // Still navigate even if there's an error
-      navigate('/auth', { replace: true });
-    }
+    setMobileMenuOpen(false);
+    
+    // Sign out and force navigation immediately
+    signOut();
+    
+    // Force immediate redirect
+    setTimeout(() => {
+      window.location.href = '/auth';
+    }, 100);
   };
 
   const isActive = (path: string) => location.pathname === path;
