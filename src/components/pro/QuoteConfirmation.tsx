@@ -62,16 +62,26 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
   const handleConfirm = async () => {
     setIsProcessing(true);
     try {
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Not authenticated");
+      }
+
       // Store checkout info for callback
       sessionStorage.setItem('pending_checkout', JSON.stringify({
         request_id: quote.request_id,
         quote_id: quote.id
       }));
 
-      // Create referral fee checkout
+      // Create referral fee checkout with auth header
       const { data, error } = await supabase.functions.invoke("create-referral-checkout", {
         body: { 
           quote_id: quote.id 
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
