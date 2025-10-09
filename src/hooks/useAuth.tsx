@@ -95,8 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut();
       
-      // Ignore session_not_found errors - this is expected when session is already invalid
-      if (error && error.message !== 'Session from session_id claim in JWT does not exist') {
+      // Ignore session errors - this is expected when session is already invalid or missing
+      if (error && 
+          error.message !== 'Session from session_id claim in JWT does not exist' &&
+          error.name !== 'AuthSessionMissingError') {
         console.error('SignOut error:', error);
         return { error };
       }
