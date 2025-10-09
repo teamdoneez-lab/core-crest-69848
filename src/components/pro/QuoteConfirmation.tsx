@@ -131,6 +131,9 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
         description: "Customer has been notified to select another quote.",
       });
 
+      // Wait for database to complete update before refetching
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       // Notify parent to refetch and remove from list
       onConfirmed();
     } catch (error) {
