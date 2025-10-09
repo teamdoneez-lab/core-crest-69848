@@ -108,24 +108,36 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
   const handleDecline = async () => {
     setIsProcessing(true);
     try {
-      // Update both quote and referral fee atomically
-      await Promise.all([
-        supabase
-          .from("quotes")
-          .update({ status: "declined" })
-          .eq("id", quote.id),
-        supabase
-          .from("referral_fees")
-          .update({ status: "declined" })
-          .eq("quote_id", quote.id)
-      ]);
+      // Update quote status first
+      const { error: quoteError } = await supabase
+        .from("quotes")
+        .update({ status: "declined" })
+        .eq("id", quote.id);
+
+      if (quoteError) {
+        console.error("Error updating quote:", quoteError);
+        throw quoteError;
+      }
+
+      // Update referral fee
+      const { error: feeError } = await supabase
+        .from("referral_fees")
+        .update({ status: "declined" })
+        .eq("quote_id", quote.id);
+
+      if (feeError) {
+        console.error("Error updating referral fee:", feeError);
+      }
+
+      // Wait a bit to ensure database transaction completes
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       toast({
         title: "Quote Declined",
         description: "Customer has been notified to select another quote.",
       });
 
-      // Immediately refresh to remove from list
+      // Now refresh the list
       onConfirmed();
     } catch (error) {
       console.error("Error declining quote:", error);
