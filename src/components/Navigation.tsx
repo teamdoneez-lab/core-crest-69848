@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
@@ -16,6 +16,7 @@ export function Navigation() {
   const { profile, isCustomer, isPro, isAdmin } = useRole();
   const unreadCount = useUnreadMessages();
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -24,9 +25,11 @@ export function Navigation() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      window.location.href = '/auth';
+      navigate('/auth', { replace: true });
     } catch (error) {
       console.error('Sign out error:', error);
+      // Still navigate even if there's an error
+      navigate('/auth', { replace: true });
     }
   };
 
