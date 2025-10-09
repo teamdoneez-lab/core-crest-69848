@@ -131,10 +131,10 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
         description: "Customer has been notified to select another quote.",
       });
 
-      // Refresh parent component data after a brief delay
+      // Wait for database update to complete, then refresh parent data
       setTimeout(() => {
         onConfirmed();
-      }, 100);
+      }, 500);
     } catch (error) {
       console.error("Error declining quote:", error);
       toast({
