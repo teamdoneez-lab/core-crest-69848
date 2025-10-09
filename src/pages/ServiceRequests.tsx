@@ -91,6 +91,7 @@ export default function ServiceRequests() {
   useEffect(() => {
     if (user) {
       fetchPendingQuotes();
+      fetchServiceRequests();
     }
   }, [user]);
 
