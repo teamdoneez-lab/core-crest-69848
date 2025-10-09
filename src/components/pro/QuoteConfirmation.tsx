@@ -109,13 +109,10 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
     setIsProcessing(true);
     
     try {
-      // Update quote status to declined - MUST complete before hiding
+      // Update quote status to declined
       const { error: quoteError } = await supabase
         .from("quotes")
-        .update({ 
-          status: "declined",
-          updated_at: new Date().toISOString()
-        })
+        .update({ status: "declined" })
         .eq("id", quote.id);
 
       if (quoteError) {
@@ -126,28 +123,14 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
       // Update referral fee status
       const { error: feeError } = await supabase
         .from("referral_fees")
-        .update({ 
-          status: "declined",
-          updated_at: new Date().toISOString()
-        })
+        .update({ status: "declined" })
         .eq("quote_id", quote.id);
 
       if (feeError) {
         console.error("Error updating referral fee:", feeError);
       }
 
-      // Verify the update completed successfully
-      const { data: verifyData } = await supabase
-        .from("quotes")
-        .select("status")
-        .eq("id", quote.id)
-        .single();
-
-      if (verifyData?.status !== "declined") {
-        throw new Error("Quote status update verification failed");
-      }
-
-      // Only hide and refresh after successful database update
+      // Hide component immediately
       setIsDeclined(true);
 
       toast({
@@ -155,7 +138,7 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
         description: "Customer has been notified to select another quote.",
       });
 
-      // Refresh the list
+      // Refresh the list to remove this quote
       onConfirmed();
     } catch (error) {
       console.error("Error declining quote:", error);
