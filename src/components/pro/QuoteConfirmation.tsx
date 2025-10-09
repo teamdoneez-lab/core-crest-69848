@@ -122,18 +122,14 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
         .eq("quote_id", quote.id);
 
       if (feeError) console.error("Error updating referral fee:", feeError);
-
-      setIsDeclined(true);
       
       toast({
         title: "Quote Declined",
         description: "Customer has been notified to select another quote.",
       });
 
-      // Wait a moment before refreshing to ensure state updates
-      setTimeout(() => {
-        onConfirmed();
-      }, 500);
+      // Immediately notify parent to refetch and remove from list
+      onConfirmed();
     } catch (error) {
       console.error("Error declining quote:", error);
       toast({
@@ -189,19 +185,9 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
     updateExpiredQuote();
   }, [isExpired, hasExpired, quote.id, onConfirmed]);
 
+  // Don't render if declined - let parent component remove from list
   if (isDeclined) {
-    return (
-      <Card className="border-gray-200 bg-gray-50">
-        <CardContent className="pt-6 pb-6">
-          <div className="text-center space-y-2">
-            <p className="text-lg font-semibold text-gray-700">❌ Quote Declined</p>
-            <p className="text-sm text-gray-600">
-              Customer has been notified to select another quote.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   if (isExpired) {
