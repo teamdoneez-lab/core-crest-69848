@@ -123,13 +123,18 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
 
       if (feeError) console.error("Error updating referral fee:", feeError);
 
-      // Hide component immediately without reloading page
+      // Hide component immediately
       setIsDeclined(true);
       
       toast({
         title: "Quote Declined",
         description: "Customer has been notified to select another quote.",
       });
+
+      // Refresh parent component data after a brief delay
+      setTimeout(() => {
+        onConfirmed();
+      }, 100);
     } catch (error) {
       console.error("Error declining quote:", error);
       toast({
