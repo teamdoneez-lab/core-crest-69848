@@ -478,24 +478,24 @@ const Index = () => {
                   1
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-6 group-hover:text-primary transition-colors duration-300">Book Online</h3>
+              <h3 className="text-2xl font-bold mb-6 group-hover:text-primary transition-colors duration-300">1. Book Online</h3>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                Choose your service, select a convenient time, and provide your vehicle details through our intuitive booking system.
+                Choose your service, select a convenient time, and provide your vehicle details through our easy booking system.
               </p>
             </div>
             
             <div className="text-center group">
               <div className="relative mb-8">
                 <div className="w-24 h-24 bg-gradient-to-r from-accent to-primary rounded-full flex items-center justify-center mx-auto shadow-2xl group-hover:scale-110 transition-transform duration-500">
-                  <MapPin className="h-12 w-12 text-white" />
+                  <Wrench className="h-12 w-12 text-white" />
                 </div>
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
                   2
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-6 group-hover:text-primary transition-colors duration-300">We Come to You</h3>
+              <h3 className="text-2xl font-bold mb-6 group-hover:text-primary transition-colors duration-300">2. Get the Job Done</h3>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                Our certified professionals arrive at your location fully equipped with all necessary tools and premium parts.
+                Your selected service professional will complete the service using the right tools and quality parts.
               </p>
             </div>
             
@@ -508,9 +508,9 @@ const Index = () => {
                   3
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-6 group-hover:text-primary transition-colors duration-300">Pay After Service</h3>
+              <h3 className="text-2xl font-bold mb-6 group-hover:text-primary transition-colors duration-300">3. Pay After Service</h3>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                Once the work is finished and you're fully satisfied, pay your service provider directly in person.
+                Once the work is finished and you're fully satisfied, you pay your service provider directly.
               </p>
             </div>
           </div>
