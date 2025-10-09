@@ -116,6 +116,20 @@ export function QuotesList({ requestId }: QuotesListProps) {
         throw new Error(result.error || "Failed to accept quote");
       }
 
+      // Send email notification to professional
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-quote-selected-email', {
+          body: { quoteId }
+        });
+        
+        if (emailError) {
+          console.error('Email notification error:', emailError);
+          // Don't fail the quote acceptance if email fails
+        }
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+      }
+
       toast({
         title: "Quote Selected",
         description: `The professional has ${result.timer_minutes} minutes to confirm. You'll be notified once they accept.`,
