@@ -108,33 +108,25 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
   const handleDecline = async () => {
     setIsProcessing(true);
     try {
-      const { error } = await supabase
-        .from("quotes")
-        .update({ status: "declined" })
-        .eq("id", quote.id);
+      // Update both quote and referral fee atomically
+      await Promise.all([
+        supabase
+          .from("quotes")
+          .update({ status: "declined" })
+          .eq("id", quote.id),
+        supabase
+          .from("referral_fees")
+          .update({ status: "declined" })
+          .eq("quote_id", quote.id)
+      ]);
 
-      if (error) throw error;
-
-      // Update referral fee if exists
-      const { error: feeError } = await supabase
-        .from("referral_fees")
-        .update({ status: "declined" })
-        .eq("quote_id", quote.id);
-
-      if (feeError) console.error("Error updating referral fee:", feeError);
-
-      // Hide component immediately
-      setIsDeclined(true);
-      
       toast({
         title: "Quote Declined",
         description: "Customer has been notified to select another quote.",
       });
 
-      // Wait for database update to complete, then refresh parent data
-      setTimeout(() => {
-        onConfirmed();
-      }, 500);
+      // Immediately refresh to remove from list
+      onConfirmed();
     } catch (error) {
       console.error("Error declining quote:", error);
       toast({
@@ -190,11 +182,7 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
     updateExpiredQuote();
   }, [isExpired, hasExpired, quote.id, onConfirmed]);
 
-  // Don't render if declined - let parent component remove from list
-  if (isDeclined) {
-    return null;
-  }
-
+  // Don't show anything if already expired
   if (isExpired) {
     return (
       <Card className="border-red-200 bg-red-50">
