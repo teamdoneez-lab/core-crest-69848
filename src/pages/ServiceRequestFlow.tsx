@@ -690,7 +690,7 @@ export default function ServiceRequestFlow() {
                           <SelectTrigger className="w-full text-sm">
                             <SelectValue placeholder="Select time" />
                           </SelectTrigger>
-                          <SelectContent position="popper" className="z-[60] max-h-[200px] sm:max-h-[300px] overflow-y-auto bg-background" sideOffset={5}>
+                          <SelectContent className="max-h-[200px] overflow-y-auto">
                             {Array.from({ length: 9 }, (_, i) => i + 9).map((hour) => (
                               <SelectItem key={hour} value={`${hour}:00`} className="text-sm">
                                 {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
