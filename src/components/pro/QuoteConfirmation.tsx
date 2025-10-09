@@ -123,19 +123,13 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
 
       if (feeError) console.error("Error updating referral fee:", feeError);
 
-      // Hide component immediately
+      // Hide component immediately without reloading page
       setIsDeclined(true);
       
       toast({
         title: "Quote Declined",
         description: "Customer has been notified to select another quote.",
       });
-
-      // Wait for database to complete update before refetching
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Notify parent to refetch and remove from list
-      onConfirmed();
     } catch (error) {
       console.error("Error declining quote:", error);
       toast({
