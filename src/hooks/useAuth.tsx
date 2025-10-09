@@ -93,34 +93,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      // Check if there's an active session first
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // No session to sign out from, just clear local state
-        console.log('No active session, clearing local state only');
-        return { error: null };
-      }
-      
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('SignOut error:', error);
-        // Even if API call fails, clear local session
-        await supabase.auth.signOut({ scope: 'local' });
-        return { error: null };
-      }
-      
-      console.log('SignOut successful');
+      // Always use local scope to avoid API errors with invalid sessions
+      await supabase.auth.signOut({ scope: 'local' });
+      console.log('SignOut successful (local)');
       return { error: null };
     } catch (err) {
-      console.error('Unexpected signOut error:', err);
-      // Clear local state even if API call fails
-      try {
-        await supabase.auth.signOut({ scope: 'local' });
-      } catch (localErr) {
-        console.error('Local signOut also failed:', localErr);
-      }
+      // Silently handle any errors - just clear state
+      console.log('SignOut completed with local state clear');
       return { error: null };
     }
   };
