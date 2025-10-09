@@ -107,6 +107,10 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
 
   const handleDecline = async () => {
     setIsProcessing(true);
+    
+    // Hide component immediately
+    setIsDeclined(true);
+    
     try {
       // Update quote status first
       const { error: quoteError } = await supabase
@@ -129,13 +133,13 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
         console.error("Error updating referral fee:", feeError);
       }
 
-      // Wait a bit to ensure database transaction completes
-      await new Promise(resolve => setTimeout(resolve, 500));
-
       toast({
         title: "Quote Declined",
         description: "Customer has been notified to select another quote.",
       });
+
+      // Wait to ensure database transaction completes
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       // Now refresh the list
       onConfirmed();
@@ -193,6 +197,11 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
 
     updateExpiredQuote();
   }, [isExpired, hasExpired, quote.id, onConfirmed]);
+
+  // Hide immediately if declined
+  if (isDeclined) {
+    return null;
+  }
 
   // Don't show anything if already expired
   if (isExpired) {
