@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -84,21 +85,56 @@ const Auth = () => {
     const formData = new FormData(e.currentTarget);
     const email = formData.get('reset-email') as string;
 
-    const { error } = await resetPassword(email);
-    
-    if (error) {
+    // Check if email exists in the platform
+    try {
+      const { data, error: checkError } = await supabase.functions.invoke('check-email-exists', {
+        body: { email }
+      });
+
+      if (checkError) {
+        toast({
+          title: 'Error',
+          description: 'Failed to verify email. Please try again.',
+          variant: 'destructive'
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      if (!data.exists) {
+        toast({
+          title: 'Email not found',
+          description: 'This email is not registered in our platform. Please sign up first.',
+          variant: 'destructive'
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Email exists, proceed with password reset
+      const { error } = await resetPassword(email);
+      
+      if (error) {
+        toast({
+          title: 'Reset failed',
+          description: error.message,
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Check your email',
+          description: 'We sent you a password reset link to your registered email.'
+        });
+        setShowForgotPassword(false);
+      }
+    } catch (err) {
       toast({
-        title: 'Reset failed',
-        description: error.message,
+        title: 'Error',
+        description: 'Something went wrong. Please try again.',
         variant: 'destructive'
       });
-    } else {
-      toast({
-        title: 'Check your email',
-        description: 'We sent you a password reset link.'
-      });
-      setShowForgotPassword(false);
     }
+    
     setIsLoading(false);
   };
 
