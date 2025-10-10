@@ -77,6 +77,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error };
       }
 
+      // Check if user already exists but is unconfirmed
+      if (data?.user && data.user.identities && data.user.identities.length === 0) {
+        console.log('User already exists but not confirmed');
+        return { 
+          error: { 
+            message: 'An account with this email already exists. Please check your email (including spam folder) for the confirmation link. If you did not receive it, please contact support.' 
+          } 
+        };
+      }
+
       console.log('Signup successful:', data);
       return { error: null };
     } catch (err) {
