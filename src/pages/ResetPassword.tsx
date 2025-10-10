@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +15,25 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isValidSession, setIsValidSession] = useState(false);
+
+  useEffect(() => {
+    // Check if user has a valid recovery session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsValidSession(true);
+      } else {
+        toast({
+          title: 'Invalid or expired link',
+          description: 'Please request a new password reset link.',
+          variant: 'destructive'
+        });
+        setTimeout(() => navigate('/auth'), 2000);
+      }
+    };
+    checkSession();
+  }, [navigate]);
 
   const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -60,6 +80,19 @@ const ResetPassword = () => {
     }
     setIsLoading(false);
   };
+
+  if (!isValidSession) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Verifying...</CardTitle>
+            <CardDescription>Please wait while we verify your reset link</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
