@@ -21,7 +21,9 @@ export default function HowItWorks() {
           </p>
         </div>
 
+        {/* For Customers */}
         <section className="mb-16">
+          <h2 className="text-3xl font-bold text-center mb-10">For Customers</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="border-2 hover:border-primary/50 transition-all">
               <CardContent className="p-8 text-center">
@@ -58,6 +60,94 @@ export default function HowItWorks() {
                 </p>
               </CardContent>
             </Card>
+          </div>
+        </section>
+
+        {/* For Professionals */}
+        <section className="mb-16">
+          <h2 className="text-3xl font-bold text-center mb-10">For Professionals</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-2 hover:border-primary/50 transition-all">
+              <CardContent className="p-6 text-center">
+                <div className="w-14 h-14 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-white">1</span>
+                </div>
+                <h3 className="text-lg font-bold mb-3">Receive Leads</h3>
+                <p className="text-sm text-muted-foreground">
+                  Get notified of service requests in your area that match your expertise and service categories.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 hover:border-primary/50 transition-all">
+              <CardContent className="p-6 text-center">
+                <div className="w-14 h-14 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-white">2</span>
+                </div>
+                <h3 className="text-lg font-bold mb-3">Submit Quote</h3>
+                <p className="text-sm text-muted-foreground">
+                  Review the service request details and submit your competitive quote to the customer.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 hover:border-primary/50 transition-all">
+              <CardContent className="p-6 text-center">
+                <div className="w-14 h-14 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-white">3</span>
+                </div>
+                <h3 className="text-lg font-bold mb-3">Get Selected</h3>
+                <p className="text-sm text-muted-foreground">
+                  When a customer accepts your quote, pay a 10% referral fee to lock in the job for 60 minutes.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 hover:border-primary/50 transition-all">
+              <CardContent className="p-6 text-center">
+                <div className="w-14 h-14 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-white">4</span>
+                </div>
+                <h3 className="text-lg font-bold mb-3">Complete & Earn</h3>
+                <p className="text-sm text-muted-foreground">
+                  Schedule the service, complete the work professionally, and receive payment directly from the customer.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-10 bg-gradient-to-r from-accent/10 to-primary/10 rounded-xl p-8">
+            <h3 className="text-xl font-bold mb-4 text-center">Why Join DoneEZ as a Professional?</h3>
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              <div className="flex gap-3">
+                <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-semibold mb-1">Only Pay When You Win</h4>
+                  <p className="text-sm text-muted-foreground">No subscription fees - only a 10% referral fee on jobs you secure</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-semibold mb-1">Qualified Leads</h4>
+                  <p className="text-sm text-muted-foreground">Receive pre-screened service requests matching your skills and location</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-semibold mb-1">Set Your Own Prices</h4>
+                  <p className="text-sm text-muted-foreground">You control your quotes and maintain your profit margins</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-semibold mb-1">Build Your Business</h4>
+                  <p className="text-sm text-muted-foreground">Grow your customer base and establish your reputation</p>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
