@@ -12,8 +12,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Car, DollarSign, FileText, Download, CheckCircle, Calendar, Phone, Mail, MapPin, Search, Filter, RefreshCw, UserCheck, UserX, ShieldCheck, ShieldOff, UserCog, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Car, DollarSign, FileText, Download, CheckCircle, Calendar, Phone, Mail, MapPin, Search, Filter, RefreshCw, UserCheck, UserX, ShieldCheck, ShieldOff, UserCog, Info, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ReferralFeesTab } from '@/components/admin/ReferralFeesTab';
 import { ProDetailModal } from '@/components/admin/ProDetailModal';
@@ -132,6 +133,11 @@ const AdminDashboard = () => {
   const [isProDetailOpen, setIsProDetailOpen] = useState(false);
   const [isCustomerDetailOpen, setIsCustomerDetailOpen] = useState(false);
   const [isAddProDialogOpen, setIsAddProDialogOpen] = useState(false);
+  const [isEditCustomerOpen, setIsEditCustomerOpen] = useState(false);
+  const [isDeleteCustomerOpen, setIsDeleteCustomerOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [editCustomerName, setEditCustomerName] = useState('');
+  const [editCustomerPhone, setEditCustomerPhone] = useState('');
   const customersPerPage = 10;
   const prosPerPage = 10;
   const requestsPerPage = 10;
@@ -404,6 +410,94 @@ const AdminDashboard = () => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to add professional',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleEditCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setEditCustomerName(customer.name || '');
+    setEditCustomerPhone(customer.phone || '');
+    setIsEditCustomerOpen(true);
+  };
+
+  const handleUpdateCustomer = async () => {
+    if (!selectedCustomer) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: editCustomerName.trim(),
+          phone: editCustomerPhone.trim() || null,
+        })
+        .eq('id', selectedCustomer.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Customer updated successfully'
+      });
+
+      setIsEditCustomerOpen(false);
+      setSelectedCustomer(null);
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update customer',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDeleteCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setIsDeleteCustomerOpen(true);
+  };
+
+  const handleConfirmDeleteCustomer = async () => {
+    if (!selectedCustomer) return;
+
+    try {
+      // Check if customer has any service requests
+      const { data: requests } = await supabase
+        .from('service_requests')
+        .select('id')
+        .eq('customer_id', selectedCustomer.id)
+        .limit(1);
+
+      if (requests && requests.length > 0) {
+        toast({
+          title: 'Cannot Delete',
+          description: 'Customer has service requests. Cannot delete account with existing requests.',
+          variant: 'destructive'
+        });
+        setIsDeleteCustomerOpen(false);
+        return;
+      }
+
+      // Delete customer profile
+      const { error } = await supabase.auth.admin.deleteUser(selectedCustomer.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Customer deleted successfully'
+      });
+
+      setIsDeleteCustomerOpen(false);
+      setSelectedCustomer(null);
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete customer',
         variant: 'destructive'
       });
     }
@@ -730,17 +824,34 @@ const AdminDashboard = () => {
                           </div>
                           <div className="flex flex-col gap-2 items-end">
                             <Badge>{customer.role}</Badge>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedCustomerId(customer.id);
-                                setIsCustomerDetailOpen(true);
-                              }}
-                            >
-                              <Info className="h-4 w-4 mr-2" />
-                              Customer Detail
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedCustomerId(customer.id);
+                                  setIsCustomerDetailOpen(true);
+                                }}
+                              >
+                                <Info className="h-4 w-4 mr-2" />
+                                Detail
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleEditCustomer(customer)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleDeleteCustomer(customer)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -1288,6 +1399,69 @@ const AdminDashboard = () => {
             onOpenChange={setIsCustomerDetailOpen}
           />
         )}
+
+        {/* Edit Customer Dialog */}
+        <Dialog open={isEditCustomerOpen} onOpenChange={setIsEditCustomerOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Customer</DialogTitle>
+              <DialogDescription>
+                Update customer information
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Name</Label>
+                <Input
+                  id="edit-name"
+                  value={editCustomerName}
+                  onChange={(e) => setEditCustomerName(e.target.value)}
+                  placeholder="Customer name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  type="tel"
+                  value={editCustomerPhone}
+                  onChange={(e) => setEditCustomerPhone(e.target.value)}
+                  placeholder="Phone number"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditCustomerOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateCustomer}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Customer Dialog */}
+        <AlertDialog open={isDeleteCustomerOpen} onOpenChange={setIsDeleteCustomerOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete <strong>{selectedCustomer?.name}</strong>?
+                This action cannot be undone and will permanently delete the customer account.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDeleteCustomer}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
