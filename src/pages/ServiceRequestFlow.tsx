@@ -224,24 +224,57 @@ export default function ServiceRequestFlow() {
     setIsSubmitting(true);
 
     try {
+      // Validate required fields
+      if (!formData.service_category || formData.service_category.length === 0) {
+        toast.error("Please select at least one service");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.year || !formData.vehicle_make || !formData.vehicle_model) {
+        toast.error("Please complete vehicle information");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.zip) {
+        toast.error("Please provide your zip code");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.contact_email || !formData.contact_phone) {
+        toast.error("Please provide your contact information");
+        setIsSubmitting(false);
+        return;
+      }
+
       // Upload file if exists
       let imageUrl = "";
       if (uploadedFile) {
-        const fileExt = uploadedFile.name.split(".").pop();
-        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-        
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from('service-images')
-          .upload(fileName, uploadedFile);
-        
-        if (fileError) throw fileError;
-        
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('service-images')
-          .getPublicUrl(fileName);
-        
-        imageUrl = publicUrl;
+        try {
+          const fileExt = uploadedFile.name.split(".").pop();
+          const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+          
+          const { data: fileData, error: fileError } = await supabase.storage
+            .from('service-images')
+            .upload(fileName, uploadedFile);
+          
+          if (fileError) {
+            console.error("File upload error:", fileError);
+            toast.error("Failed to upload image. Continuing without image.");
+          } else {
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+              .from('service-images')
+              .getPublicUrl(fileName);
+            
+            imageUrl = publicUrl;
+          }
+        } catch (fileUploadError) {
+          console.error("File upload exception:", fileUploadError);
+          // Continue without image
+        }
       }
 
       // Fetch service categories to map the selected services
@@ -250,7 +283,14 @@ export default function ServiceRequestFlow() {
         .select("id, name")
         .eq("active", true);
 
-      if (categoriesError) throw categoriesError;
+      if (categoriesError) {
+        console.error("Categories fetch error:", categoriesError);
+        throw new Error("Failed to load service categories. Please try again.");
+      }
+
+      if (!categories || categories.length === 0) {
+        throw new Error("No service categories available. Please contact support.");
+      }
 
       // Map service ID prefixes to category names
       // "1-x-x" services are under "Auto Repair", etc.
@@ -277,7 +317,11 @@ export default function ServiceRequestFlow() {
 
       const categoryId = getCategoryId(formData.service_category);
 
-      const { error } = await supabase.from("service_requests").insert({
+      if (!categoryId) {
+        console.warn("Category ID not found for services:", formData.service_category);
+      }
+
+      const { error, data: insertedData } = await supabase.from("service_requests").insert({
         customer_id: user.id,
         service_category: formData.service_category,
         category_id: categoryId,
@@ -285,16 +329,16 @@ export default function ServiceRequestFlow() {
         vehicle_make: formData.vehicle_make,
         model: formData.vehicle_model,
         trim: formData.trim || null,
-        mileage: formData.mileage,
+        mileage: formData.mileage || null,
         description: formData.description || null,
         urgency: formData.urgency,
         appointment_type: formData.appointment_type,
         zip: formData.zip,
         address: formData.address || null,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
+        latitude: formData.latitude || null,
+        longitude: formData.longitude || null,
         formatted_address: formData.formatted_address || null,
-        preferred_time: formData.preferred_time?.toISOString(),
+        preferred_time: formData.preferred_time?.toISOString() || null,
         contact_phone: formData.contact_phone,
         contact_email: formData.contact_email,
         appointment_pref: "scheduled",
@@ -302,7 +346,10 @@ export default function ServiceRequestFlow() {
         image_url: imageUrl || null,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Insert error:", error);
+        throw new Error(error.message || "Failed to submit service request. Please try again.");
+      }
 
       // Send confirmation email
       try {
@@ -329,7 +376,8 @@ export default function ServiceRequestFlow() {
       navigate("/request-confirmation");
     } catch (error: any) {
       console.error("Submission error:", error);
-      toast.error(error.message || "Failed to submit request");
+      const errorMessage = error?.message || error?.error_description || error?.error || "Failed to submit request. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
