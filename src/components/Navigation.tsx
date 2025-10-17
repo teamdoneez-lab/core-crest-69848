@@ -32,12 +32,12 @@ export function Navigation() {
       // Wait a bit for state to update
       await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Force full page reload to /auth to clear all state
-      window.location.href = '/auth';
+      // Redirect to home page instead of auth
+      window.location.href = '/';
     } catch (error) {
       console.error('Sign out error:', error);
-      // Force redirect anyway
-      window.location.href = '/auth';
+      // Force redirect to home anyway
+      window.location.href = '/';
     }
   };
 
