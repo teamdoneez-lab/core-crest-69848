@@ -463,41 +463,81 @@ const AdminDashboard = () => {
     if (!selectedCustomer) return;
 
     try {
-      // Check if customer has any service requests
-      const { data: requests } = await supabase
+      // Get all service requests for this customer
+      const { data: requests, error: requestsError } = await supabase
         .from('service_requests')
         .select('id')
-        .eq('customer_id', selectedCustomer.id)
-        .limit(1);
+        .eq('customer_id', selectedCustomer.id);
+
+      if (requestsError) throw requestsError;
 
       if (requests && requests.length > 0) {
-        toast({
-          title: 'Cannot Delete',
-          description: 'Customer has service requests. Cannot delete account with existing requests.',
-          variant: 'destructive'
-        });
-        setIsDeleteCustomerOpen(false);
-        return;
+        const requestIds = requests.map(r => r.id);
+
+        // Delete all related data in correct order to avoid foreign key issues
+        
+        // 1. Delete chat messages
+        await supabase
+          .from('chat_messages')
+          .delete()
+          .in('request_id', requestIds);
+
+        // 2. Delete leads
+        await supabase
+          .from('leads')
+          .delete()
+          .in('request_id', requestIds);
+
+        // 3. Delete quotes
+        await supabase
+          .from('quotes')
+          .delete()
+          .in('request_id', requestIds);
+
+        // 4. Delete appointments
+        await supabase
+          .from('appointments')
+          .delete()
+          .in('request_id', requestIds);
+
+        // 5. Delete referral fees
+        await supabase
+          .from('referral_fees')
+          .delete()
+          .in('request_id', requestIds);
+
+        // 6. Delete service fees
+        await supabase
+          .from('fees')
+          .delete()
+          .in('request_id', requestIds);
+
+        // 7. Delete service requests
+        await supabase
+          .from('service_requests')
+          .delete()
+          .in('id', requestIds);
       }
 
-      // Delete customer profile
-      const { error } = await supabase.auth.admin.deleteUser(selectedCustomer.id);
+      // Finally, delete customer auth user (this will cascade delete the profile)
+      const { error: deleteError } = await supabase.auth.admin.deleteUser(selectedCustomer.id);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
 
       toast({
         title: 'Success',
-        description: 'Customer deleted successfully'
+        description: `Customer and ${requests?.length || 0} related service request(s) deleted successfully`
       });
 
       setIsDeleteCustomerOpen(false);
       setSelectedCustomer(null);
       fetchCustomers();
+      fetchRequests(); // Refresh requests list too
     } catch (error) {
       console.error('Error deleting customer:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete customer',
+        description: 'Failed to delete customer and related data',
         variant: 'destructive'
       });
     }
