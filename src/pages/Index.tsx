@@ -92,7 +92,7 @@ const Index = () => {
                       <Card className="group cursor-pointer transition-all duration-500 hover:shadow-xl hover:scale-105 hover:bg-gradient-subtle border-2 hover:border-primary/20">
                         <CardContent className="p-8 text-center">
                           <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-elegant">
-                            <Wrench className="h-8 w-8 text-white drop-shadow-lg" />
+                            <Car className="h-8 w-8 text-white drop-shadow-lg" />
                           </div>
                           <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">Request Service</h3>
                           <p className="text-muted-foreground group-hover:text-primary/80 transition-colors">
@@ -322,9 +322,9 @@ const Index = () => {
                 Request service, connect with trusted pros ready to help, and get back on the road with confidence.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center lg:justify-start">
-              <Link to="/auth" className="w-full sm:w-auto">
+                <Link to="/auth" className="w-full sm:w-auto">
                   <Button size="lg" className="w-full text-base sm:text-lg px-6 py-4 sm:px-10 sm:py-7 bg-gradient-primary hover:opacity-90 shadow-elegant hover:shadow-glow transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
-                    <Wrench className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
+                    <Car className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
                     Request Service Now
                   </Button>
                 </Link>
