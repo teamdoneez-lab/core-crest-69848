@@ -546,13 +546,13 @@ export default function ServiceRequestFlow() {
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="immediate" id="immediate" />
                     <Label htmlFor="immediate" className="font-normal cursor-pointer">
-                      Immediate, within an hour
+                      Immediate - ASAP (same day if available)
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="couple_days" id="couple_days" />
                     <Label htmlFor="couple_days" className="font-normal cursor-pointer">
-                      Within a couple of days
+                      Within 1-2 days
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -564,16 +564,21 @@ export default function ServiceRequestFlow() {
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="month" id="month" />
                     <Label htmlFor="month" className="font-normal cursor-pointer">
-                      Within a month
+                      Flexible - within a month
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="quotes" id="quotes" />
                     <Label htmlFor="quotes" className="font-normal cursor-pointer">
-                      Just getting quotes
+                      Just getting quotes (no rush)
                     </Label>
                   </div>
                 </RadioGroup>
+                {formData.urgency === 'immediate' && (
+                  <p className="text-sm text-muted-foreground mt-2 p-3 bg-accent/50 rounded-md">
+                    ℹ️ For immediate service, professionals will contact you directly with their earliest availability, which may include same-day or emergency hours.
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -690,13 +695,78 @@ export default function ServiceRequestFlow() {
         );
 
       case 6:
+        const getMinimumDate = () => {
+          const now = new Date();
+          
+          // For immediate urgency, allow same-day booking
+          if (formData.urgency === 'immediate') {
+            return now;
+          }
+          
+          // For couple_days, allow starting from tomorrow
+          if (formData.urgency === 'couple_days') {
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            return tomorrow;
+          }
+          
+          // For all others, allow next day
+          const tomorrow = new Date(now);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          tomorrow.setHours(0, 0, 0, 0);
+          return tomorrow;
+        };
+
+        const getAvailableTimeSlots = () => {
+          const now = new Date();
+          const selectedDate = formData.preferred_time || new Date();
+          const isToday = selectedDate.toDateString() === now.toDateString();
+          
+          // For immediate urgency on same day, start from current hour + 2 hours
+          if (formData.urgency === 'immediate' && isToday) {
+            const minHour = Math.max(9, Math.min(17, now.getHours() + 2));
+            // Extended hours for urgent requests: 7 AM to 9 PM
+            const slots = [];
+            for (let hour = minHour; hour <= 21; hour++) {
+              slots.push(hour);
+            }
+            return slots.length > 0 ? slots : [9]; // Fallback to 9 AM if no slots today
+          }
+          
+          // For immediate urgency on future days, offer extended hours
+          if (formData.urgency === 'immediate') {
+            // 7 AM to 9 PM for urgent requests
+            return Array.from({ length: 15 }, (_, i) => i + 7);
+          }
+          
+          // Standard business hours: 9 AM to 5 PM
+          return Array.from({ length: 9 }, (_, i) => i + 9);
+        };
+
+        const availableSlots = getAvailableTimeSlots();
+        const minDate = getMinimumDate();
+
         return (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl">Appointment Details</CardTitle>
-              <CardDescription className="text-sm">When would you like the service?</CardDescription>
+              <CardDescription className="text-sm">
+                {formData.urgency === 'immediate' 
+                  ? "Select your preferred time - professionals will respond with their earliest availability"
+                  : "When would you like the service?"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {formData.urgency === 'immediate' && (
+                <div className="p-3 bg-primary/10 border border-primary/20 rounded-md text-sm">
+                  <p className="font-semibold text-primary mb-1">Urgent Request</p>
+                  <p className="text-muted-foreground">
+                    Extended hours (7 AM - 9 PM) are available. Professionals will contact you directly with their earliest availability.
+                  </p>
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <Label className="text-sm sm:text-base">Preferred Date *</Label>
                 <Popover>
@@ -727,7 +797,13 @@ export default function ServiceRequestFlow() {
                           setFormData((prev) => ({ ...prev, preferred_time: newDate }));
                         }
                       }}
-                      disabled={(date) => date < new Date()}
+                      disabled={(date) => {
+                        const compareDate = new Date(date);
+                        compareDate.setHours(0, 0, 0, 0);
+                        const minDateCompare = new Date(minDate);
+                        minDateCompare.setHours(0, 0, 0, 0);
+                        return compareDate < minDateCompare;
+                      }}
                       initialFocus
                       className="pointer-events-auto p-3"
                     />
@@ -750,14 +826,20 @@ export default function ServiceRequestFlow() {
                     <SelectValue placeholder="Select time" />
                   </SelectTrigger>
                   <SelectContent position="popper" className="max-h-[300px]">
-                    {Array.from({ length: 9 }, (_, i) => i + 9).map((hour) => (
+                    {availableSlots.map((hour) => (
                       <SelectItem key={hour} value={`${hour}:00`} className="text-sm">
-                        {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
+                        {hour > 12 ? hour - 12 : hour === 0 ? 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+              
+              {formData.urgency !== 'immediate' && (
+                <p className="text-xs text-muted-foreground">
+                  Standard business hours: 9:00 AM - 5:00 PM
+                </p>
+              )}
             </CardContent>
           </Card>
         );
