@@ -463,81 +463,31 @@ const AdminDashboard = () => {
     if (!selectedCustomer) return;
 
     try {
-      // Get all service requests for this customer
-      const { data: requests, error: requestsError } = await supabase
-        .from('service_requests')
-        .select('id')
-        .eq('customer_id', selectedCustomer.id);
+      // Call edge function to delete customer with admin privileges
+      const { data, error } = await supabase.functions.invoke('delete-customer', {
+        body: { customerId: selectedCustomer.id }
+      });
 
-      if (requestsError) throw requestsError;
+      if (error) throw error;
 
-      if (requests && requests.length > 0) {
-        const requestIds = requests.map(r => r.id);
-
-        // Delete all related data in correct order to avoid foreign key issues
-        
-        // 1. Delete chat messages
-        await supabase
-          .from('chat_messages')
-          .delete()
-          .in('request_id', requestIds);
-
-        // 2. Delete leads
-        await supabase
-          .from('leads')
-          .delete()
-          .in('request_id', requestIds);
-
-        // 3. Delete quotes
-        await supabase
-          .from('quotes')
-          .delete()
-          .in('request_id', requestIds);
-
-        // 4. Delete appointments
-        await supabase
-          .from('appointments')
-          .delete()
-          .in('request_id', requestIds);
-
-        // 5. Delete referral fees
-        await supabase
-          .from('referral_fees')
-          .delete()
-          .in('request_id', requestIds);
-
-        // 6. Delete service fees
-        await supabase
-          .from('fees')
-          .delete()
-          .in('request_id', requestIds);
-
-        // 7. Delete service requests
-        await supabase
-          .from('service_requests')
-          .delete()
-          .in('id', requestIds);
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete customer');
       }
-
-      // Finally, delete customer auth user (this will cascade delete the profile)
-      const { error: deleteError } = await supabase.auth.admin.deleteUser(selectedCustomer.id);
-
-      if (deleteError) throw deleteError;
 
       toast({
         title: 'Success',
-        description: `Customer and ${requests?.length || 0} related service request(s) deleted successfully`
+        description: `Customer and ${data.deletedRequestsCount || 0} related service request(s) deleted successfully`
       });
 
       setIsDeleteCustomerOpen(false);
       setSelectedCustomer(null);
       fetchCustomers();
       fetchRequests(); // Refresh requests list too
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting customer:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete customer and related data',
+        description: error.message || 'Failed to delete customer and related data',
         variant: 'destructive'
       });
     }
