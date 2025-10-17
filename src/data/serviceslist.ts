@@ -159,6 +159,8 @@ export const accordionsData: AccordionData[] = [
                         name: 'Serpentine Belt/Drive Belt Replacement',
                     },
                     { id: '1-7-20', name: 'Transfer Case Fluid Change' },
+                    { id: '1-7-21', name: 'Tire Replacement' },
+                    { id: '1-7-22', name: 'Flat Tire Repair' },
                 ],
             },
             // Steering & Suspension (Full List)
