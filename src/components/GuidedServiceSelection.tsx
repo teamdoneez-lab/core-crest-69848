@@ -65,6 +65,8 @@ const serviceFlow: Record<string, CategoryLevel> = {
       { id: "1-7-13", name: "Wiper Blade Replacement" },
       { id: "1-7-14", name: "Spark Plug Replacement" },
       { id: "1-7-15", name: "Timing Belt/Chain Replacement" },
+      { id: "1-7-21", name: "Tire Replacement" },
+      { id: "1-7-22", name: "Flat Tire Repair" },
     ],
   },
   repairs: {
