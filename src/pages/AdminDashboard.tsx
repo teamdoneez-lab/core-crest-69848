@@ -138,6 +138,12 @@ const AdminDashboard = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [editCustomerName, setEditCustomerName] = useState('');
   const [editCustomerPhone, setEditCustomerPhone] = useState('');
+  const [isEditProOpen, setIsEditProOpen] = useState(false);
+  const [isDeleteProOpen, setIsDeleteProOpen] = useState(false);
+  const [selectedPro, setSelectedPro] = useState<Pro | null>(null);
+  const [editProName, setEditProName] = useState('');
+  const [editProPhone, setEditProPhone] = useState('');
+  const [editProBusinessName, setEditProBusinessName] = useState('');
   const customersPerPage = 10;
   const prosPerPage = 10;
   const requestsPerPage = 10;
@@ -488,6 +494,98 @@ const AdminDashboard = () => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete customer and related data',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleEditPro = (pro: Pro) => {
+    setSelectedPro(pro);
+    setEditProName(pro.name || '');
+    setEditProPhone(pro.phone || '');
+    setEditProBusinessName(pro.pro_profiles?.[0]?.business_name || '');
+    setIsEditProOpen(true);
+  };
+
+  const handleUpdatePro = async () => {
+    if (!selectedPro) return;
+
+    try {
+      // Update profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          name: editProName.trim(),
+          phone: editProPhone.trim() || null,
+        })
+        .eq('id', selectedPro.id);
+
+      if (profileError) throw profileError;
+
+      // Update pro_profile if business name changed
+      if (selectedPro.pro_profiles && selectedPro.pro_profiles.length > 0) {
+        const { error: proProfileError } = await supabase
+          .from('pro_profiles')
+          .update({
+            business_name: editProBusinessName.trim(),
+          })
+          .eq('pro_id', selectedPro.id);
+
+        if (proProfileError) throw proProfileError;
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Professional updated successfully'
+      });
+
+      setIsEditProOpen(false);
+      setSelectedPro(null);
+      fetchPros();
+    } catch (error) {
+      console.error('Error updating pro:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update professional',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDeletePro = (pro: Pro) => {
+    setSelectedPro(pro);
+    setIsDeleteProOpen(true);
+  };
+
+  const handleConfirmDeletePro = async () => {
+    if (!selectedPro) return;
+
+    try {
+      // Call edge function to delete pro with admin privileges
+      const { data, error } = await supabase.functions.invoke('delete-pro', {
+        body: { proId: selectedPro.id }
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete professional');
+      }
+
+      toast({
+        title: 'Success',
+        description: `Professional and ${data.deletedJobsCount || 0} job assignment(s) cleared successfully`
+      });
+
+      setIsDeleteProOpen(false);
+      setSelectedPro(null);
+      fetchPros();
+      fetchRequests(); // Refresh requests list too
+    } catch (error: any) {
+      console.error('Error deleting pro:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete professional and related data',
         variant: 'destructive'
       });
     }
@@ -1160,23 +1258,40 @@ const AdminDashboard = () => {
                                 <Badge className={pro.pro_profiles[0].is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
                                   {pro.pro_profiles[0].is_verified ? 'Verified' : 'Unverified'}
                                 </Badge>
-                                <Button
-                                  size="sm"
-                                  variant={pro.pro_profiles[0].is_verified ? 'outline' : 'default'}
-                                  onClick={() => handleToggleProVerification(pro.id, pro.pro_profiles[0].is_verified)}
-                                >
-                                  {pro.pro_profiles[0].is_verified ? (
-                                    <>
-                                      <ShieldOff className="h-4 w-4 mr-2" />
-                                      Unverify
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ShieldCheck className="h-4 w-4 mr-2" />
-                                      Verify
-                                    </>
-                                  )}
-                                </Button>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant={pro.pro_profiles[0].is_verified ? 'outline' : 'default'}
+                                    onClick={() => handleToggleProVerification(pro.id, pro.pro_profiles[0].is_verified)}
+                                  >
+                                    {pro.pro_profiles[0].is_verified ? (
+                                      <>
+                                        <ShieldOff className="h-4 w-4 mr-2" />
+                                        Unverify
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ShieldCheck className="h-4 w-4 mr-2" />
+                                        Verify
+                                      </>
+                                    )}
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleEditPro(pro)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleDeletePro(pro)}
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </>
                             )}
                           </div>
@@ -1445,6 +1560,79 @@ const AdminDashboard = () => {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmDeleteCustomer}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Edit Pro Dialog */}
+        <Dialog open={isEditProOpen} onOpenChange={setIsEditProOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Professional</DialogTitle>
+              <DialogDescription>
+                Update professional information
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-pro-name">Name</Label>
+                <Input
+                  id="edit-pro-name"
+                  value={editProName}
+                  onChange={(e) => setEditProName(e.target.value)}
+                  placeholder="Professional name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-pro-phone">Phone</Label>
+                <Input
+                  id="edit-pro-phone"
+                  type="tel"
+                  value={editProPhone}
+                  onChange={(e) => setEditProPhone(e.target.value)}
+                  placeholder="Phone number"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-pro-business">Business Name</Label>
+                <Input
+                  id="edit-pro-business"
+                  value={editProBusinessName}
+                  onChange={(e) => setEditProBusinessName(e.target.value)}
+                  placeholder="Business name"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditProOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdatePro}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Pro Dialog */}
+        <AlertDialog open={isDeleteProOpen} onOpenChange={setIsDeleteProOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Professional</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete <strong>{selectedPro?.name}</strong>?
+                This action cannot be undone and will permanently delete the professional account, 
+                clear all their job assignments, and remove all related data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDeletePro}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Delete
