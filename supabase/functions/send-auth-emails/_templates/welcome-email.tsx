@@ -8,6 +8,7 @@ import {
   Text,
   Section,
   Hr,
+  Img,
 } from 'https://esm.sh/@react-email/components@0.0.22';
 import * as React from 'https://esm.sh/react@18.3.1';
 
@@ -24,6 +25,15 @@ export const WelcomeEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>Hi {userName},</Heading>
+        <Section style={imageSection}>
+          <Img
+            src="https://cxraykdmlshcntqjumpc.supabase.co/storage/v1/object/public/service-images/hi-five.png"
+            width="200"
+            height="200"
+            alt="High Five"
+            style={image}
+          />
+        </Section>
         <Text style={highlight}>
           You're all set. High five! 🎉
         </Text>
@@ -88,6 +98,17 @@ const text = {
 const hr = {
   borderColor: '#e6ebf1',
   margin: '20px 48px',
+};
+
+const imageSection = {
+  padding: '0 48px',
+  margin: '20px 0',
+  textAlign: 'center' as const,
+};
+
+const image = {
+  margin: '0 auto',
+  borderRadius: '8px',
 };
 
 const footer = {
