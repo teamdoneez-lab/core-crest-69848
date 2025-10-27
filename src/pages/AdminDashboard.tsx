@@ -1253,47 +1253,51 @@ const AdminDashboard = () => {
                           </div>
                           <div className="flex flex-col gap-2 items-end">
                             <Badge>{pro.role}</Badge>
-                            {pro.pro_profiles && pro.pro_profiles.length > 0 && (
-                              <>
-                                <Badge className={pro.pro_profiles[0].is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                                  {pro.pro_profiles[0].is_verified ? 'Verified' : 'Unverified'}
-                                </Badge>
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant={pro.pro_profiles[0].is_verified ? 'outline' : 'default'}
-                                    onClick={() => handleToggleProVerification(pro.id, pro.pro_profiles[0].is_verified)}
-                                  >
-                                    {pro.pro_profiles[0].is_verified ? (
-                                      <>
-                                        <ShieldOff className="h-4 w-4 mr-2" />
-                                        Unverify
-                                      </>
-                                    ) : (
-                                      <>
-                                        <ShieldCheck className="h-4 w-4 mr-2" />
-                                        Verify
-                                      </>
-                                    )}
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => handleEditPro(pro)}
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => handleDeletePro(pro)}
-                                    className="text-destructive hover:text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </>
+                            {pro.pro_profiles && pro.pro_profiles.length > 0 ? (
+                              <Badge className={pro.pro_profiles[0].is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                                {pro.pro_profiles[0].is_verified ? 'Verified' : 'Unverified'}
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-gray-100 text-gray-800">
+                                No Profile
+                              </Badge>
                             )}
+                            <div className="flex gap-2">
+                              {pro.pro_profiles && pro.pro_profiles.length > 0 && (
+                                <Button
+                                  size="sm"
+                                  variant={pro.pro_profiles[0].is_verified ? 'outline' : 'default'}
+                                  onClick={() => handleToggleProVerification(pro.id, pro.pro_profiles[0].is_verified)}
+                                >
+                                  {pro.pro_profiles[0].is_verified ? (
+                                    <>
+                                      <ShieldOff className="h-4 w-4 mr-2" />
+                                      Unverify
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ShieldCheck className="h-4 w-4 mr-2" />
+                                      Verify
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleEditPro(pro)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleDeletePro(pro)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
