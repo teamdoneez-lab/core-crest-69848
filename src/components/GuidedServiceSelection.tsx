@@ -28,223 +28,378 @@ const serviceFlow: Record<string, CategoryLevel> = {
   root: {
     question: "What type of auto service do you need?",
     options: [
-      { id: "diagnosis", name: "Diagnosis and Inspection", description: "Identify issues with your vehicle" },
-      { id: "maintenance", name: "Maintenance", description: "Regular upkeep and preventive care" },
-      { id: "repairs", name: "Repairs", description: "Fix specific problems" },
-      { id: "body", name: "Auto Body", description: "Cosmetic and structural repairs" },
-      { id: "customization", name: "Auto Customization", description: "Personalize and enhance your vehicle" },
-      { id: "detail", name: "Auto Detail", description: "Professional cleaning and restoration" },
+      { id: "diagnosis", name: "Diagnosis & Inspections", description: "Identify issues, test systems, or get certified inspections" },
+      { id: "maintenance", name: "Maintenance", description: "Routine services to keep your vehicle running smoothly" },
+      { id: "repairs", name: "Repairs", description: "Fix mechanical or electrical issues and restore vehicle performance" },
+      { id: "body", name: "Auto Body", description: "Cosmetic, collision, and structural body repairs" },
+      { id: "customization", name: "Customization", description: "Style, performance, and interior personalization" },
+      { id: "detail", name: "Detailing", description: "Deep cleaning and protection for interior and exterior" },
     ],
   },
+  
+  // ===== DIAGNOSIS & INSPECTIONS =====
   diagnosis: {
-    question: "What type of diagnosis do you need?",
+    question: "What type of diagnosis or inspection do you need?",
     options: [
-      { id: "1-6-1", name: "Pre-Purchase Vehicle Inspection" },
-      { id: "1-6-2", name: "Check Engine Light Diagnosis" },
-      { id: "1-6-3", name: "Vehicle Starting Issues Diagnosis" },
-      { id: "1-6-4", name: "No Start Diagnosis" },
-      { id: "1-6-5", name: "Emissions Testing (Smog Check)" },
-      { id: "1-6-6", name: "Towing and Roadside Assistance" },
+      { id: "diagnosis-general", name: "General Diagnostics", description: "Identify and troubleshoot vehicle issues" },
+      { id: "diagnosis-inspections", name: "Inspections & Testing", description: "Pre-purchase, rideshare, emissions, and safety inspections" },
+      { id: "diagnosis-specialized", name: "Specialized Diagnostics", description: "Advanced system testing and diagnostics" },
+      { id: "diagnosis-roadside", name: "Roadside & Emergency", description: "Towing and emergency assistance" },
+      { id: "diagnosis-other", name: "Other / Not Sure", description: "Help me identify the issue" },
     ],
   },
+  "diagnosis-general": {
+    question: "What general diagnostic service do you need?",
+    options: [
+      { id: "diag-001", name: "Identify and troubleshoot vehicle issues" },
+      { id: "diag-002", name: "Check Engine Light Diagnosis" },
+      { id: "diag-003", name: "Vehicle Starting Issues Diagnosis" },
+      { id: "diag-004", name: "No Start / Stalling Diagnosis" },
+      { id: "diag-005", name: "Electrical System Diagnostics" },
+      { id: "diag-006", name: "Battery & Charging System Testing" },
+    ],
+  },
+  "diagnosis-inspections": {
+    question: "What inspection or test do you need?",
+    options: [
+      { id: "diag-101", name: "Pre-Purchase Vehicle Inspection" },
+      { id: "diag-102", name: "Rideshare Inspection (Uber, Lyft, Turo)" },
+      { id: "diag-103", name: "Emissions Testing / Smog Check" },
+      { id: "diag-104", name: "State Safety Inspection / Vehicle Checkup" },
+      { id: "diag-105", name: "Brake System Inspection" },
+      { id: "diag-106", name: "Tire & Suspension Inspection" },
+    ],
+  },
+  "diagnosis-specialized": {
+    question: "What specialized diagnostic do you need?",
+    options: [
+      { id: "diag-201", name: "Transmission & Drivetrain Diagnostics" },
+      { id: "diag-202", name: "Engine Performance Testing" },
+      { id: "diag-203", name: "AC / Climate System Diagnosis" },
+      { id: "diag-204", name: "Steering & Suspension Diagnostics" },
+      { id: "diag-205", name: "Exhaust & Emissions Diagnostics" },
+    ],
+  },
+  "diagnosis-roadside": {
+    question: "What roadside service do you need?",
+    options: [
+      { id: "diag-301", name: "Towing & Roadside Assistance" },
+      { id: "diag-302", name: "Jump Start / Battery Boost" },
+      { id: "diag-303", name: "Flat Tire Assistance" },
+      { id: "diag-304", name: "Lockout Service" },
+    ],
+  },
+  "diagnosis-other": {
+    question: "Tell us what you need help with",
+    options: [
+      { id: "not-sure", name: "Not Sure — Help me identify the issue" },
+      { id: "other", name: "Other — Describe your problem" },
+    ],
+  },
+
+  // ===== MAINTENANCE =====
   maintenance: {
     question: "What maintenance service do you need?",
     options: [
-      { id: "1-7-1", name: "Oil Change (Engine Oil and Filter Change)" },
-      { id: "1-7-2", name: "Coolant System Service" },
-      { id: "1-7-3", name: "Brake Fluid Service" },
-      { id: "1-7-4", name: "Power Steering Fluid Service" },
-      { id: "1-7-5", name: "Transmission Fluid Change" },
-      { id: "1-7-6", name: "Fuel System Service" },
-      { id: "1-7-7", name: "Air Filter Replacement" },
-      { id: "1-7-8", name: "Cabin Air Filter Replacement" },
-      { id: "1-7-9", name: "Tire Rotation" },
-      { id: "1-7-10", name: "Tire Balance and Alignment" },
-      { id: "1-7-11", name: "Brake Pad Replacement" },
-      { id: "1-7-12", name: "Battery Service (Check and Clean Terminals)" },
-      { id: "1-7-13", name: "Wiper Blade Replacement" },
-      { id: "1-7-14", name: "Spark Plug Replacement" },
-      { id: "1-7-15", name: "Timing Belt/Chain Replacement" },
-      { id: "1-7-21", name: "Tire Replacement" },
-      { id: "1-7-22", name: "Flat Tire Repair" },
+      { id: "maint-engine", name: "Engine & Fluids", description: "Oil changes and fluid services" },
+      { id: "maint-filters", name: "Filters", description: "Air and cabin filter replacement" },
+      { id: "maint-brakes", name: "Brakes", description: "Brake fluid and pad services" },
+      { id: "maint-tires", name: "Tires & Wheels", description: "Rotation, balance, alignment, and replacement" },
+      { id: "maint-electrical", name: "Electrical & Battery", description: "Battery and spark plug services" },
+      { id: "maint-general", name: "General Maintenance", description: "Wipers, timing belt, and more" },
     ],
   },
+  "maint-engine": {
+    question: "What engine or fluid service do you need?",
+    options: [
+      { id: "maint-001", name: "Oil Change" },
+      { id: "maint-002", name: "Coolant System Service" },
+      { id: "maint-003", name: "Power Steering Fluid Service" },
+      { id: "maint-004", name: "Transmission Fluid Change" },
+      { id: "maint-005", name: "Fuel System Service" },
+    ],
+  },
+  "maint-filters": {
+    question: "What filter needs replacement?",
+    options: [
+      { id: "maint-101", name: "Air Filter Replacement" },
+      { id: "maint-102", name: "Cabin Air Filter Replacement" },
+    ],
+  },
+  "maint-brakes": {
+    question: "What brake maintenance do you need?",
+    options: [
+      { id: "maint-201", name: "Brake Fluid Service" },
+      { id: "maint-202", name: "Brake Pad Replacement" },
+    ],
+  },
+  "maint-tires": {
+    question: "What tire or wheel service do you need?",
+    options: [
+      { id: "maint-301", name: "Tire Rotation" },
+      { id: "maint-302", name: "Tire Balance & Alignment" },
+      { id: "maint-303", name: "Tire Replacement" },
+      { id: "maint-304", name: "Flat Tire Repair" },
+    ],
+  },
+  "maint-electrical": {
+    question: "What electrical maintenance do you need?",
+    options: [
+      { id: "maint-401", name: "Battery Service" },
+      { id: "maint-402", name: "Spark Plug Replacement" },
+    ],
+  },
+  "maint-general": {
+    question: "What general maintenance do you need?",
+    options: [
+      { id: "maint-501", name: "Wiper Blade Replacement" },
+      { id: "maint-502", name: "Timing Belt/Chain Replacement" },
+    ],
+  },
+
+  // ===== REPAIRS =====
   repairs: {
-    question: "What repair do you need?",
+    question: "What type of repair do you need?",
     options: [
-      { id: "engine", name: "Engine", description: "Engine-related issues" },
-      { id: "brakes", name: "Brakes", description: "Brake system repairs" },
-      { id: "electrical", name: "Battery & Electrical System", description: "Electrical components" },
-      { id: "hvac", name: "Heating & Air Conditioning", description: "Climate control systems" },
-      { id: "steering", name: "Steering & Suspension", description: "Steering and ride quality" },
-      { id: "transmission", name: "Transmission", description: "Transmission and drivetrain" },
-      { id: "exhaust", name: "Exhaust System", description: "Exhaust and emissions" },
-      { id: "hybrid", name: "EV & Hybrid", description: "Electric and hybrid vehicles" },
+      { id: "repair-engine", name: "Engine Repairs", description: "Engine diagnostics, tune-ups, and component repairs" },
+      { id: "repair-brakes", name: "Brakes", description: "Brake system repairs and replacements" },
+      { id: "repair-electrical", name: "Battery & Electrical", description: "Electrical components and wiring" },
+      { id: "repair-hvac", name: "Heating & Air Conditioning", description: "Climate control repairs" },
+      { id: "repair-steering", name: "Steering & Suspension", description: "Steering and ride quality repairs" },
+      { id: "repair-transmission", name: "Transmission & Drivetrain", description: "Transmission and drivetrain repairs" },
+      { id: "repair-exhaust", name: "Exhaust & Emissions", description: "Exhaust system and emissions repairs" },
+      { id: "repair-ev", name: "EV & Hybrid Vehicles", description: "Electric and hybrid system repairs" },
+      { id: "repair-other", name: "Other / Not Sure", description: "Help me diagnose the issue" },
     ],
   },
-  brakes: {
-    question: "What part of your brakes needs repair?",
+  "repair-engine": {
+    question: "What engine repair do you need?",
     options: [
-      { id: "1-1-1", name: "Brake Safety Inspection" },
-      { id: "1-1-2", name: "Brake Pad Replacement" },
-      { id: "1-1-3", name: "Brake Rotor Replacement" },
-      { id: "1-1-4", name: "Brake Fluid Flush" },
-      { id: "1-1-5", name: "Brake Caliper Repair" },
-      { id: "1-1-6", name: "Brake Master Cylinder Replacement" },
-      { id: "1-1-7", name: "Brake Adjustment" },
-      { id: "not-sure", name: "Not Sure" },
-      { id: "other", name: "Other" },
+      { id: "rep-001", name: "Engine Diagnostics" },
+      { id: "rep-002", name: "Engine Tune-Up / Repair" },
+      { id: "rep-003", name: "Timing Belt / Chain Replacement" },
+      { id: "rep-004", name: "Oil Leaks / Gasket Repair" },
+      { id: "rep-005", name: "Cooling System Repair (Radiator, Water Pump, Hoses)" },
+      { id: "rep-006", name: "Fuel System Repairs (Injectors, Fuel Pump, Filters)" },
     ],
   },
-  engine: {
-    question: "What engine service do you need?",
+  "repair-brakes": {
+    question: "What brake repair do you need?",
     options: [
-      { id: "1-3-1", name: "Engine Oil and Filter Change" },
-      { id: "1-3-2", name: "Timing Belt Replacement" },
-      { id: "1-3-3", name: "Cylinder Head Gasket Replacement" },
-      { id: "1-3-4", name: "Spark Plug Replacement" },
-      { id: "1-3-5", name: "Fuel Injector Replacement" },
-      { id: "1-3-6", name: "Crankshaft Position Sensor Replacement" },
-      { id: "1-3-7", name: "Valve Cover Gasket Replacement" },
-      { id: "1-3-8", name: "Fuel Pump Replacement" },
-      { id: "1-3-9", name: "Engine Overhaul/Rebuild" },
-      { id: "1-3-22", name: "Engine Diagnostics and Code Reading" },
-      { id: "not-sure", name: "Not Sure" },
-      { id: "other", name: "Other" },
+      { id: "rep-101", name: "Brake Pad / Shoe Replacement" },
+      { id: "rep-102", name: "Brake Rotor / Drum Replacement" },
+      { id: "rep-103", name: "Brake Fluid Flush" },
+      { id: "rep-104", name: "Brake Lines & Hoses Repair" },
+      { id: "rep-105", name: "ABS System Repair" },
     ],
   },
-  electrical: {
-    question: "What electrical service do you need?",
+  "repair-electrical": {
+    question: "What electrical repair do you need?",
     options: [
-      { id: "1-2-1", name: "Wiring and Electrical System Diagnosis" },
-      { id: "1-2-2", name: "Ignition Switch Replacement" },
-      { id: "1-2-3", name: "Ignition Lock Cylinder Replacement" },
-      { id: "1-2-4", name: "Battery Replacement" },
-      { id: "1-2-5", name: "Battery Cable Replacement" },
-      { id: "1-2-6", name: "Battery Terminal End Service" },
-      { id: "1-2-7", name: "Alternator Belt Replacement" },
-      { id: "1-2-8", name: "Alternator Replacement" },
-      { id: "1-2-9", name: "Starter Replacement" },
-      { id: "not-sure", name: "Not Sure" },
-      { id: "other", name: "Other" },
+      { id: "rep-201", name: "Battery Replacement & Testing" },
+      { id: "rep-202", name: "Starter / Alternator Repair" },
+      { id: "rep-203", name: "Wiring & Fuses Repair" },
+      { id: "rep-204", name: "Lighting Repair (Headlights, Taillights, Interior)" },
+      { id: "rep-205", name: "Sensor Diagnostics" },
     ],
   },
-  hvac: {
-    question: "What heating or AC service do you need?",
+  "repair-hvac": {
+    question: "What heating or AC repair do you need?",
     options: [
-      { id: "1-5-1", name: "AC Compressor Replacement" },
-      { id: "1-5-4", name: "Cooling System Drain and Fill" },
-      { id: "1-5-6", name: "Cooling Fan Replacement" },
-      { id: "1-5-7", name: "Radiator Replacement" },
-      { id: "1-5-10", name: "Radiator Hose Replacement" },
-      { id: "1-5-11", name: "Thermostat Replacement" },
-      { id: "1-5-12", name: "Water Pump Replacement" },
-      { id: "1-5-13", name: "Coolant Drain and Fill" },
-      { id: "not-sure", name: "Not Sure" },
-      { id: "other", name: "Other" },
+      { id: "rep-301", name: "AC Recharge / Repair" },
+      { id: "rep-302", name: "Heater Core Replacement" },
+      { id: "rep-303", name: "Climate Control Diagnostics" },
+      { id: "rep-304", name: "Cabin Airflow / Blower Motor Repair" },
     ],
   },
-  steering: {
-    question: "What steering or suspension service do you need?",
+  "repair-steering": {
+    question: "What steering or suspension repair do you need?",
     options: [
-      { id: "1-8-1", name: "Power Steering Fluid Service" },
-      { id: "1-8-2", name: "Power Steering Pump Replacement" },
-      { id: "1-8-3", name: "Steering Rack Replacement" },
-      { id: "1-8-5", name: "Tie Rod Replacement" },
-      { id: "1-8-7", name: "Steering Wheel Alignment" },
-      { id: "1-8-8", name: "Shock Absorber Replacement" },
-      { id: "1-8-9", name: "Strut Replacement" },
-      { id: "1-8-13", name: "Ball Joint Replacement" },
-      { id: "not-sure", name: "Not Sure" },
-      { id: "other", name: "Other" },
+      { id: "rep-401", name: "Shock & Strut Replacement" },
+      { id: "rep-402", name: "Steering Rack / Power Steering Repair" },
+      { id: "rep-403", name: "Ball Joints / Tie Rods Replacement" },
+      { id: "rep-404", name: "Wheel Alignment & Suspension Diagnostics" },
     ],
   },
-  transmission: {
-    question: "What transmission service do you need?",
+  "repair-transmission": {
+    question: "What transmission or drivetrain repair do you need?",
     options: [
-      { id: "1-9-1", name: "Transmission Fluid Change" },
-      { id: "1-9-2", name: "Transmission Filter Replacement" },
-      { id: "1-9-3", name: "Transmission Repair" },
-      { id: "1-9-4", name: "Transmission Rebuild" },
-      { id: "1-9-6", name: "Clutch Replacement (Manual Transmission)" },
-      { id: "1-9-13", name: "CV Joint Replacement" },
-      { id: "1-9-15", name: "Driveshaft Replacement" },
-      { id: "not-sure", name: "Not Sure" },
-      { id: "other", name: "Other" },
+      { id: "rep-501", name: "Transmission Repair / Replacement" },
+      { id: "rep-502", name: "Clutch Replacement (Manual)" },
+      { id: "rep-503", name: "Drive Shaft / Axle Repair" },
+      { id: "rep-504", name: "Differential / Transfer Case Service" },
     ],
   },
-  exhaust: {
-    question: "What exhaust service do you need?",
+  "repair-exhaust": {
+    question: "What exhaust or emissions repair do you need?",
     options: [
-      { id: "1-4-1", name: "Front Pipe Replacement" },
-      { id: "1-4-2", name: "EGR Valve Replacement" },
-      { id: "1-4-3", name: "Exhaust Manifold Gasket Replacement" },
-      { id: "1-4-5", name: "Exhaust System Replacement" },
-      { id: "1-4-6", name: "Emissions Failure Repair" },
-      { id: "1-4-7", name: "Catalytic Converter Replacement" },
-      { id: "1-4-8", name: "Muffler Replacement" },
-      { id: "not-sure", name: "Not Sure" },
-      { id: "other", name: "Other" },
+      { id: "rep-601", name: "Muffler / Exhaust Pipe Repair" },
+      { id: "rep-602", name: "Catalytic Converter Replacement" },
+      { id: "rep-603", name: "Oxygen Sensor Replacement" },
+      { id: "rep-604", name: "Emissions Diagnostics / Repairs" },
     ],
   },
-  hybrid: {
-    question: "What EV or Hybrid service do you need?",
+  "repair-ev": {
+    question: "What EV or hybrid repair do you need?",
     options: [
-      { id: "1-10-1", name: "Tire Rotation and Balance" },
-      { id: "1-10-2", name: "Brake Fluid Service" },
-      { id: "1-10-4", name: "Air Conditioning Service" },
-      { id: "1-10-5", name: "Coolant System Service" },
-      { id: "1-10-7", name: "Brake Pad Replacement (Regenerative Brakes)" },
-      { id: "1-12-1", name: "Battery Charging and Maintenance" },
-      { id: "1-12-3", name: "Battery Replacement (EV and Hybrid)" },
-      { id: "1-13-1", name: "Hybrid System Diagnostics" },
-      { id: "not-sure", name: "Not Sure" },
-      { id: "other", name: "Other" },
+      { id: "rep-701", name: "Battery Pack Diagnostics & Repair" },
+      { id: "rep-702", name: "Electric Motor Service" },
+      { id: "rep-703", name: "Regenerative Braking System Repair" },
+      { id: "rep-704", name: "Charging System Repair" },
     ],
   },
+  "repair-other": {
+    question: "Tell us what repair you need",
+    options: [
+      { id: "not-sure", name: "Not Sure — Help me diagnose the issue" },
+      { id: "other", name: "Other — Describe your issue" },
+    ],
+  },
+
+  // ===== AUTO BODY =====
   body: {
     question: "What auto body service do you need?",
     options: [
-      { id: "2-1-1", name: "Dent Repair" },
-      { id: "2-1-2", name: "Paintless Dent Repair (PDR)" },
-      { id: "2-2-1", name: "Full Collision Repair" },
-      { id: "2-3-1", name: "Full Vehicle Repaint" },
-      { id: "2-4-1", name: "Bumper Replacement" },
-      { id: "2-5-1", name: "Windshield Replacement" },
-      { id: "not-sure", name: "Not Sure" },
-      { id: "other", name: "Other" },
+      { id: "body-cosmetic", name: "Minor Cosmetic Repairs", description: "Dents, scratches, and touch-ups" },
+      { id: "body-collision", name: "Collision & Structural Repairs", description: "Major collision and frame repairs" },
+      { id: "body-paint", name: "Paint & Finish", description: "Repainting and refinishing" },
+      { id: "body-glass", name: "Glass & Exterior Components", description: "Windows, mirrors, and bumpers" },
+      { id: "body-adas", name: "ADAS Calibration", description: "Advanced driver assistance system calibration" },
     ],
   },
+  "body-cosmetic": {
+    question: "What cosmetic repair do you need?",
+    options: [
+      { id: "body-001", name: "Dent Repair" },
+      { id: "body-002", name: "Paintless Dent Repair (PDR)" },
+      { id: "body-003", name: "Scratch or Scuff Repair" },
+      { id: "body-004", name: "Paint Touch-Up" },
+      { id: "body-005", name: "Bumper Scratch Repair" },
+    ],
+  },
+  "body-collision": {
+    question: "What collision or structural repair do you need?",
+    options: [
+      { id: "body-101", name: "Full Collision Repair" },
+      { id: "body-102", name: "Panel Replacement (Door, Fender, Hood, etc.)" },
+      { id: "body-103", name: "Frame Straightening / Structural Repair" },
+      { id: "body-104", name: "Paint & Blend Panel Refinishing" },
+    ],
+  },
+  "body-paint": {
+    question: "What paint service do you need?",
+    options: [
+      { id: "body-201", name: "Full Vehicle Repaint" },
+      { id: "body-202", name: "Partial Panel Repaint" },
+      { id: "body-203", name: "Clear Coat Restoration / Buffing" },
+    ],
+  },
+  "body-glass": {
+    question: "What glass or exterior service do you need?",
+    options: [
+      { id: "body-301", name: "Windshield Replacement" },
+      { id: "body-302", name: "Windshield Repair" },
+      { id: "body-303", name: "Side or Rear Window Replacement" },
+      { id: "body-304", name: "Mirror Replacement" },
+      { id: "body-305", name: "Bumper Replacement" },
+    ],
+  },
+  "body-adas": {
+    question: "ADAS calibration service",
+    options: [
+      { id: "body-401", name: "ADAS Calibration" },
+    ],
+  },
+
+  // ===== CUSTOMIZATION =====
   customization: {
     question: "What customization service do you need?",
     options: [
-      { id: "3-1-1", name: "Window Tinting" },
-      { id: "3-1-2", name: "Custom Paint Job" },
-      { id: "3-1-3", name: "Vinyl Wrap Installation" },
-      { id: "3-1-4", name: "Performance Upgrades" },
-      { id: "3-1-5", name: "Suspension Lowering/Lifting" },
-      { id: "3-1-6", name: "Wheel and Tire Upgrades" },
-      { id: "3-1-7", name: "Audio System Installation" },
-      { id: "3-1-8", name: "Custom Interior Work" },
-      { id: "3-1-9", name: "Body Kit Installation" },
-      { id: "not-sure", name: "Not Sure" },
-      { id: "other", name: "Other" },
+      { id: "custom-exterior", name: "Exterior Styling & Appearance", description: "Wraps, tinting, body kits, and more" },
+      { id: "custom-performance", name: "Performance & Handling", description: "Upgrades for power and handling" },
+      { id: "custom-audio", name: "Audio, Tech & Electronics", description: "Sound systems and tech upgrades" },
+      { id: "custom-interior", name: "Interior Customization", description: "Custom interior work and trim" },
     ],
   },
+  "custom-exterior": {
+    question: "What exterior customization do you need?",
+    options: [
+      { id: "cust-001", name: "Custom Paint Job" },
+      { id: "cust-002", name: "Vinyl Wrap Installation" },
+      { id: "cust-003", name: "Decals & Graphics" },
+      { id: "cust-004", name: "Chrome Delete / Blackout Trim" },
+      { id: "cust-005", name: "Window Tinting" },
+      { id: "cust-006", name: "Headlight & Taillight Tint" },
+      { id: "cust-007", name: "Body Kit Installation" },
+      { id: "cust-008", name: "Custom Badging & Emblems" },
+    ],
+  },
+  "custom-performance": {
+    question: "What performance upgrade do you need?",
+    options: [
+      { id: "cust-101", name: "Performance Upgrades" },
+      { id: "cust-102", name: "Suspension Lowering / Lifting" },
+      { id: "cust-103", name: "Brake Upgrades" },
+      { id: "cust-104", name: "Wheel & Tire Upgrades" },
+      { id: "cust-105", name: "Aerodynamic Enhancements" },
+    ],
+  },
+  "custom-audio": {
+    question: "What audio or tech upgrade do you need?",
+    options: [
+      { id: "cust-201", name: "Audio System Installation" },
+      { id: "cust-202", name: "Custom Lighting" },
+      { id: "cust-203", name: "Remote Start / Security System" },
+      { id: "cust-204", name: "Backup Camera / Parking Sensors" },
+      { id: "cust-205", name: "Infotainment Upgrade" },
+    ],
+  },
+  "custom-interior": {
+    question: "What interior customization do you need?",
+    options: [
+      { id: "cust-301", name: "Custom Interior Work" },
+      { id: "cust-302", name: "Custom Steering Wheel / Shift Knob" },
+      { id: "cust-303", name: "Dashboard Trim Upgrade" },
+      { id: "cust-304", name: "Custom Floor Mats / Headliner" },
+    ],
+  },
+
+  // ===== DETAILING =====
   detail: {
     question: "What detailing service do you need?",
     options: [
-      { id: "4-1-1", name: "Exterior Wash and Wax" },
-      { id: "4-1-2", name: "Interior Deep Clean" },
-      { id: "4-1-3", name: "Full Detail (Interior + Exterior)" },
-      { id: "4-1-4", name: "Paint Correction and Polishing" },
-      { id: "4-1-5", name: "Ceramic Coating Application" },
-      { id: "4-1-6", name: "Headlight Restoration" },
-      { id: "4-1-7", name: "Engine Bay Cleaning" },
-      { id: "4-1-8", name: "Odor Removal Treatment" },
-      { id: "4-1-9", name: "Leather Conditioning" },
-      { id: "not-sure", name: "Not Sure" },
-      { id: "other", name: "Other" },
+      { id: "detail-exterior", name: "Exterior Detailing", description: "Wash, wax, protection, and restoration" },
+      { id: "detail-interior", name: "Interior Detailing", description: "Deep cleaning and conditioning" },
+      { id: "detail-packages", name: "Full Detailing Packages", description: "Complete interior and exterior services" },
+    ],
+  },
+  "detail-exterior": {
+    question: "What exterior detailing service do you need?",
+    options: [
+      { id: "det-001", name: "Exterior Wash & Wax" },
+      { id: "det-002", name: "Paint Correction & Polishing" },
+      { id: "det-003", name: "Ceramic Coating Application" },
+      { id: "det-004", name: "Headlight Restoration" },
+      { id: "det-005", name: "Tire & Wheel Cleaning" },
+      { id: "det-006", name: "Paint Protection Film (PPF) Installation" },
+    ],
+  },
+  "detail-interior": {
+    question: "What interior detailing service do you need?",
+    options: [
+      { id: "det-101", name: "Interior Deep Clean" },
+      { id: "det-102", name: "Leather Conditioning" },
+      { id: "det-103", name: "Carpet & Upholstery Shampoo" },
+      { id: "det-104", name: "Odor Removal Treatment / Deodorizing" },
+      { id: "det-105", name: "Dashboard & Trim Conditioning" },
+    ],
+  },
+  "detail-packages": {
+    question: "What detailing package do you need?",
+    options: [
+      { id: "det-201", name: "Full Detail (Interior + Exterior)" },
+      { id: "det-202", name: "Deluxe Detailing Package (Interior + Exterior + Engine Bay)" },
+      { id: "det-203", name: "Engine Bay Cleaning" },
     ],
   },
 };
@@ -267,8 +422,8 @@ export function GuidedServiceSelection({
   const currentData = serviceFlow[currentLevel];
 
   const handleOptionSelect = (optionId: string, optionName: string) => {
-    // Check if this is a final service (has numeric ID pattern like "1-1-1")
-    const isFinalService = /^\d+-\d+-\d+$/.test(optionId) || optionId === "not-sure" || optionId === "other";
+    // Check if this is a final service (has patterns like "diag-001", "maint-001", etc.)
+    const isFinalService = /^(diag|maint|rep|body|cust|det)-\d+$/.test(optionId) || optionId === "not-sure" || optionId === "other";
 
     if (isFinalService) {
       // Multiple selection - toggle service in array
@@ -332,7 +487,7 @@ export function GuidedServiceSelection({
         <div className="grid gap-3 sm:grid-cols-2">
           {currentData.options.map((option) => {
             const isSelected = selectedServices.includes(option.id);
-            const isFinalService = /^\d+-\d+-\d+$/.test(option.id) || option.id === "not-sure" || option.id === "other";
+            const isFinalService = /^(diag|maint|rep|body|cust|det)-\d+$/.test(option.id) || option.id === "not-sure" || option.id === "other";
             
             return (
               <Card
