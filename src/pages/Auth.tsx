@@ -9,6 +9,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/components/ui/use-toast';
 import { Eye, EyeOff, Home } from 'lucide-react';
+import { z } from 'zod';
+
+const signUpSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name is too long"),
+  email: z.string().email("Invalid email address").max(255, "Email is too long"),
+  password: z.string().min(6, "Password must be at least 6 characters").max(100, "Password is too long"),
+  role: z.enum(["customer", "pro"], { required_error: "Please select an account type" })
+});
+
+const signInSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required")
+});
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address")
+});
 
 const Auth = () => {
   const { user, loading, signUp, signIn, resetPassword } = useAuth();
@@ -40,7 +57,20 @@ const Auth = () => {
     const name = formData.get('name') as string;
     const role = formData.get('role') as string;
 
-    const { error } = await signUp(email, password, name, role);
+    // Validate input
+    const validation = signUpSchema.safeParse({ name, email, password, role });
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast({
+        title: 'Validation Error',
+        description: firstError.message,
+        variant: 'destructive'
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await signUp(validation.data.email, validation.data.password, validation.data.name, validation.data.role);
     
     if (error) {
       toast({
@@ -65,7 +95,20 @@ const Auth = () => {
     const email = formData.get('signin-email') as string;
     const password = formData.get('signin-password') as string;
 
-    const { error } = await signIn(email, password);
+    // Validate input
+    const validation = signInSchema.safeParse({ email, password });
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast({
+        title: 'Validation Error',
+        description: firstError.message,
+        variant: 'destructive'
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await signIn(validation.data.email, validation.data.password);
     
     if (error) {
       toast({
@@ -84,7 +127,20 @@ const Auth = () => {
     const formData = new FormData(e.currentTarget);
     const email = formData.get('reset-email') as string;
 
-    const { error } = await resetPassword(email);
+    // Validate input
+    const validation = forgotPasswordSchema.safeParse({ email });
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast({
+        title: 'Validation Error',
+        description: firstError.message,
+        variant: 'destructive'
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await resetPassword(validation.data.email);
     
     if (error) {
       toast({

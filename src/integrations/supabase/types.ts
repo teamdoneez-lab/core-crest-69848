@@ -650,15 +650,36 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      accept_lead_and_lock_job: {
-        Args: { lead_id: string }
-        Returns: Json
-      }
+      accept_lead_and_lock_job: { Args: { lead_id: string }; Returns: Json }
       accept_quote_with_timer: {
         Args: { quote_id_input: string }
         Returns: Json
@@ -674,14 +695,12 @@ export type Database = {
         Args: { admin_email: string; admin_password?: string }
         Returns: Json
       }
-      ensure_admin_user: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      current_user_has_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
       }
-      expire_timed_out_quotes: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      ensure_admin_user: { Args: never; Returns: undefined }
+      expire_timed_out_quotes: { Args: never; Returns: number }
       generate_leads_for_request: {
         Args: { p_request_id: string }
         Returns: undefined
@@ -722,14 +741,18 @@ export type Database = {
           zip: string
         }[]
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_accepted_pro_for_request: {
         Args: { request_id: string }
         Returns: boolean
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
       mark_fee_paid: {
         Args: {
           fee_id: string
@@ -738,14 +761,8 @@ export type Database = {
         }
         Returns: Json
       }
-      promote_user_to_admin: {
-        Args: { user_email: string }
-        Returns: Json
-      }
-      release_expired_job_locks: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      promote_user_to_admin: { Args: { user_email: string }; Returns: Json }
+      release_expired_job_locks: { Args: never; Returns: number }
       schedule_appointment: {
         Args: {
           appointment_notes?: string
@@ -760,6 +777,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "customer" | "pro" | "admin"
       lead_status: "new" | "accepted" | "declined"
       user_role: "customer" | "pro" | "admin"
     }
@@ -889,6 +907,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["customer", "pro", "admin"],
       lead_status: ["new", "accepted", "declined"],
       user_role: ["customer", "pro", "admin"],
     },

@@ -6,6 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { DollarSign } from "lucide-react";
+import { z } from "zod";
+
+const quoteSchema = z.object({
+  estimated_price: z.number().min(1, "Price must be at least $1").max(999999, "Price cannot exceed $999,999"),
+  description: z.string().trim().min(10, "Description must be at least 10 characters").max(1000, "Description cannot exceed 1000 characters"),
+  notes: z.string().max(500, "Notes cannot exceed 500 characters").optional()
+});
 
 interface QuoteFormProps {
   requestId: string;
@@ -23,6 +30,25 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
     setIsSubmitting(true);
 
     try {
+      // Validate input
+      const priceNum = parseFloat(estimatedPrice);
+      const validation = quoteSchema.safeParse({
+        estimated_price: priceNum,
+        description,
+        notes: notes || undefined
+      });
+
+      if (!validation.success) {
+        const firstError = validation.error.errors[0];
+        toast({
+          title: "Validation Error",
+          description: firstError.message,
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
@@ -32,9 +58,9 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
         .insert({
           request_id: requestId,
           pro_id: user.id,
-          estimated_price: parseFloat(estimatedPrice),
-          description,
-          notes,
+          estimated_price: validation.data.estimated_price,
+          description: validation.data.description,
+          notes: validation.data.notes,
           status: "pending",
           payment_status: "pending",
         })
