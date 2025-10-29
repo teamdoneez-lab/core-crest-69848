@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { MOCK_CATEGORIES, PART_TYPES, CategoryFilter } from '@/data/mockCategories';
-import { ChevronRight, Filter, X } from 'lucide-react';
+import { ChevronRight, ChevronDown, Filter, X } from 'lucide-react';
 
 interface ProductFilterSidebarProps {
   selectedCategories: string[];
@@ -43,6 +42,7 @@ export function ProductFilterSidebar({
 }: ProductFilterSidebarProps) {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [brandSearch, setBrandSearch] = useState('');
+  const [isBrandExpanded, setIsBrandExpanded] = useState(false);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev =>
@@ -156,12 +156,21 @@ export function ProductFilterSidebar({
         <Separator className="my-4" />
 
         {/* Brand Filter - Collapsible */}
-        <Accordion type="single" collapsible className="mb-4">
-          <AccordionItem value="brands" className="border-none">
-            <AccordionTrigger className="py-2 hover:no-underline">
-              <h3 className="font-medium text-sm">Brand</h3>
-            </AccordionTrigger>
-            <AccordionContent>
+        <div className="mb-4">
+          <button
+            onClick={() => setIsBrandExpanded(!isBrandExpanded)}
+            className="flex items-center justify-between w-full py-2 hover:bg-accent rounded-md transition-colors"
+            aria-expanded={isBrandExpanded}
+          >
+            <h3 className="font-medium text-sm">Brand</h3>
+            {isBrandExpanded ? (
+              <ChevronDown className="h-4 w-4 transition-transform" />
+            ) : (
+              <ChevronRight className="h-4 w-4 transition-transform" />
+            )}
+          </button>
+          {isBrandExpanded && (
+            <div className="mt-2">
               <input
                 type="search"
                 placeholder="Search brands..."
@@ -188,9 +197,9 @@ export function ProductFilterSidebar({
                   ))}
                 </div>
               </ScrollArea>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+            </div>
+          )}
+        </div>
 
         <Separator className="my-4" />
 
