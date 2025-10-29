@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { MOCK_CATEGORIES, PART_TYPES, CategoryFilter } from '@/data/mockCategories';
 import { ChevronRight, ChevronDown, Filter, X } from 'lucide-react';
 
@@ -40,27 +41,16 @@ export function ProductFilterSidebar({
   onBrandChange,
   onClearFilters,
 }: ProductFilterSidebarProps) {
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [brandSearch, setBrandSearch] = useState('');
-  const [isBrandExpanded, setIsBrandExpanded] = useState(false);
 
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    );
-  };
-
-  const renderCategoryLevel = (category: CategoryFilter, level: number) => {
+  const renderSubcategoryLevel = (category: CategoryFilter) => {
     const hasChildren = category.children && category.children.length > 0;
-    const isExpanded = expandedCategories.includes(category.id);
-    const isSelected = selectedCategories.includes(category.id);
 
-    // Level 3 (leaf nodes) can be selected
-    if (level === 3) {
+    if (!hasChildren) {
+      // Leaf node - selectable checkbox
+      const isSelected = selectedCategories.includes(category.id);
       return (
-        <div key={category.id} className="flex items-center space-x-2 py-2 pl-8">
+        <div key={category.id} className="flex items-center space-x-2 py-2">
           <Checkbox
             id={category.id}
             checked={isSelected}
@@ -76,29 +66,18 @@ export function ProductFilterSidebar({
       );
     }
 
-    // Level 1 & 2 (parent nodes) are expandable but not selectable
+    // Level 2 category with children - nested accordion
     return (
-      <div key={category.id}>
-        <button
-          onClick={() => toggleCategory(category.id)}
-          className="flex items-center justify-between w-full py-2 px-2 hover:bg-accent rounded-md transition-colors"
-          aria-expanded={isExpanded}
-        >
-          <span className={`text-sm font-medium ${level === 1 ? 'font-semibold' : ''}`}>
-            {category.name}
-          </span>
-          {hasChildren && (
-            <ChevronRight
-              className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-            />
-          )}
-        </button>
-        {hasChildren && isExpanded && (
-          <div className="ml-2 border-l-2 border-border pl-2 mt-1">
-            {category.children!.map(child => renderCategoryLevel(child, level + 1))}
+      <AccordionItem key={category.id} value={category.id} className="border-none">
+        <AccordionTrigger className="py-2 hover:no-underline hover:bg-accent rounded-md px-2">
+          <span className="text-sm font-medium">{category.name}</span>
+        </AccordionTrigger>
+        <AccordionContent className="pb-0">
+          <div className="ml-4 space-y-1 pl-2 border-l-2 border-border">
+            {category.children!.map(child => renderSubcategoryLevel(child))}
           </div>
-        )}
-      </div>
+        </AccordionContent>
+      </AccordionItem>
     );
   };
 
@@ -156,59 +135,63 @@ export function ProductFilterSidebar({
         <Separator className="my-4" />
 
         {/* Brand Filter - Collapsible */}
-        <div className="mb-4">
-          <button
-            onClick={() => setIsBrandExpanded(!isBrandExpanded)}
-            className="flex items-center justify-between w-full py-2 hover:bg-accent rounded-md transition-colors"
-            aria-expanded={isBrandExpanded}
-          >
-            <h3 className="font-medium text-sm">Brand</h3>
-            {isBrandExpanded ? (
-              <ChevronDown className="h-4 w-4 transition-transform" />
-            ) : (
-              <ChevronRight className="h-4 w-4 transition-transform" />
-            )}
-          </button>
-          {isBrandExpanded && (
-            <div className="mt-2">
-              <input
-                type="search"
-                placeholder="Search brands..."
-                value={brandSearch}
-                onChange={(e) => setBrandSearch(e.target.value)}
-                className="w-full px-3 py-1.5 text-sm border rounded-md mb-2 bg-background"
-              />
-              <ScrollArea className="h-[150px]">
-                <div className="space-y-2 pr-4">
-                  {filteredBrands.map(brand => (
-                    <div key={brand.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={brand.id}
-                        checked={selectedBrands.includes(brand.id)}
-                        onCheckedChange={() => onBrandChange(brand.id)}
-                      />
-                      <Label
-                        htmlFor={brand.id}
-                        className="text-sm cursor-pointer hover:text-primary"
-                      >
-                        {brand.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          )}
-        </div>
+        <Accordion type="single" collapsible className="mb-4">
+          <AccordionItem value="brand" className="border-none">
+            <AccordionTrigger className="py-2 hover:no-underline hover:bg-accent rounded-md px-2">
+              <h3 className="font-medium text-sm">Brand</h3>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="mt-2">
+                <input
+                  type="search"
+                  placeholder="Search brands..."
+                  value={brandSearch}
+                  onChange={(e) => setBrandSearch(e.target.value)}
+                  className="w-full px-3 py-1.5 text-sm border rounded-md mb-2 bg-background"
+                />
+                <ScrollArea className="h-[150px]">
+                  <div className="space-y-2 pr-4">
+                    {filteredBrands.map(brand => (
+                      <div key={brand.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={brand.id}
+                          checked={selectedBrands.includes(brand.id)}
+                          onCheckedChange={() => onBrandChange(brand.id)}
+                        />
+                        <Label
+                          htmlFor={brand.id}
+                          className="text-sm cursor-pointer hover:text-primary"
+                        >
+                          {brand.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
         <Separator className="my-4" />
 
-        {/* Hierarchical Category Filter */}
+        {/* Hierarchical Category Filter with Accordion */}
         <div>
           <h3 className="font-medium text-sm mb-3">Categories</h3>
-          <div className="space-y-1">
-            {MOCK_CATEGORIES.map(category => renderCategoryLevel(category, 1))}
-          </div>
+          <Accordion type="single" collapsible className="space-y-1">
+            {MOCK_CATEGORIES.map(category => (
+              <AccordionItem key={category.id} value={category.id} className="border-none">
+                <AccordionTrigger className="py-2 hover:no-underline hover:bg-accent rounded-md px-2">
+                  <span className="text-sm font-semibold">{category.name}</span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-0">
+                  <Accordion type="single" collapsible className="ml-2 space-y-1">
+                    {category.children?.map(child => renderSubcategoryLevel(child))}
+                  </Accordion>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </ScrollArea>
     </aside>
