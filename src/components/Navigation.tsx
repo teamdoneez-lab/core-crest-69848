@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { MessageSquare, Menu } from 'lucide-react';
+import { CartPanel } from '@/components/marketplace/CartPanel';
 import logo from '@/assets/logo-new.png';
 import { useState } from 'react';
 
@@ -163,7 +164,17 @@ export function Navigation() {
             Earnings
           </Link>
           <Link 
-            to="/messages" 
+            to="/pro-marketplace" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              isActive('/pro-marketplace') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            Marketplace
+          </Link>
+          <Link 
+            to="/messages"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
               "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap relative",
@@ -214,6 +225,7 @@ export function Navigation() {
           ) : null}
 
           <div className="flex items-center gap-2 flex-shrink-0">
+            {isPro && <CartPanel />}
             <Badge variant="secondary" className="text-xs whitespace-nowrap">
               {profile?.role || 'customer'}
             </Badge>
