@@ -1,11 +1,15 @@
 import { Navigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
 import { Navigation } from '@/components/Navigation';
 import { ProductGrid } from '@/components/marketplace/ProductGrid';
+import { ProductFilterSidebar } from '@/components/marketplace/ProductFilterSidebar';
+import { VehicleSelector } from '@/components/marketplace/VehicleSelector';
 import { useCart } from '@/contexts/CartContext';
 import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { useToast } from '@/hooks/use-toast';
+import { Vehicle } from '@/data/mockVehicles';
 import { Package } from 'lucide-react';
 
 export default function ProMarketplace() {
@@ -13,6 +17,10 @@ export default function ProMarketplace() {
   const { isPro, loading: roleLoading } = useRole();
   const { addToCart } = useCart();
   const { toast } = useToast();
+
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedPartTypes, setSelectedPartTypes] = useState<string[]>([]);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
   // Redirect if not authenticated
   if (!authLoading && !user) {
@@ -31,6 +39,57 @@ export default function ProMarketplace() {
       description: `${product.name} has been added to your cart.`,
     });
   };
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  const handlePartTypeChange = (typeId: string) => {
+    setSelectedPartTypes(prev =>
+      prev.includes(typeId)
+        ? prev.filter(id => id !== typeId)
+        : [...prev, typeId]
+    );
+  };
+
+  const handleClearFilters = () => {
+    setSelectedCategories([]);
+    setSelectedPartTypes([]);
+  };
+
+  const handleVehicleSelect = (vehicle: Vehicle | null) => {
+    setSelectedVehicle(vehicle);
+  };
+
+  // Filter products based on selections
+  const filteredProducts = useMemo(() => {
+    let filtered = MOCK_PRODUCTS;
+
+    // Apply category filter
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter(product =>
+        selectedCategories.includes(product.category.toLowerCase().replace(/\s+/g, '-'))
+      );
+    }
+
+    // Apply part type filter (mock implementation)
+    if (selectedPartTypes.length > 0) {
+      // In a real app, products would have a 'condition' field
+      // For now, we'll just show all products if any type is selected
+    }
+
+    // Apply vehicle filter (mock implementation)
+    if (selectedVehicle) {
+      // In a real app, we'd filter by vehicle compatibility
+      // For now, we'll just show all products
+    }
+
+    return filtered;
+  }, [selectedCategories, selectedPartTypes, selectedVehicle]);
 
   if (authLoading || roleLoading) {
     return (
@@ -67,12 +126,29 @@ export default function ProMarketplace() {
           </div>
         </section>
 
-        {/* Product Grid */}
-        <ProductGrid
-          products={MOCK_PRODUCTS}
-          onAddToCart={handleAddToCart}
-          isLoading={false}
-        />
+        {/* Vehicle Selector */}
+        <VehicleSelector onVehicleSelect={handleVehicleSelect} />
+
+        {/* Main Content with Sidebar */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Filter Sidebar */}
+          <ProductFilterSidebar
+            selectedCategories={selectedCategories}
+            selectedPartTypes={selectedPartTypes}
+            onCategoryChange={handleCategoryChange}
+            onPartTypeChange={handlePartTypeChange}
+            onClearFilters={handleClearFilters}
+          />
+
+          {/* Product Grid */}
+          <div className="flex-1">
+            <ProductGrid
+              products={filteredProducts}
+              onAddToCart={handleAddToCart}
+              isLoading={false}
+            />
+          </div>
+        </div>
       </main>
     </div>
   );
