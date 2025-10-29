@@ -174,6 +174,16 @@ export function Navigation() {
             Marketplace
           </Link>
           <Link 
+            to="/partner-offers" 
+            onClick={() => setMobileMenuOpen(false)}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              isActive('/partner-offers') ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            Partner Offers
+          </Link>
+          <Link 
             to="/messages"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(

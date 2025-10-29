@@ -30,6 +30,7 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ProMarketplace from "./pages/ProMarketplace";
 import ProductDetailPage from "./pages/ProductDetailPage";
+import PartnerOffers from "./pages/PartnerOffers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/earnings" element={<Earnings />} />
             <Route path="/pro-marketplace" element={<ProMarketplace />} />
             <Route path="/pro-marketplace/product/:productHandle" element={<ProductDetailPage />} />
+            <Route path="/partner-offers" element={<PartnerOffers />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/customer-profile" element={<CustomerProfile />} />
