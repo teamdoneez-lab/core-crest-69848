@@ -12,6 +12,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { MOCK_PRODUCT_DETAILS } from '@/data/mockProductDetails';
 import { ShoppingCart, ArrowLeft, Minus, Plus, Check } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProductDetailPage() {
   const { productHandle } = useParams<{ productHandle: string }>();
@@ -52,11 +53,26 @@ export default function ProductDetailPage() {
 
   if (authLoading || roleLoading || !product) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container mx-auto px-4 py-8 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div className="space-y-4">
+              <Skeleton className="w-full aspect-square rounded-lg" />
+              <div className="grid grid-cols-4 gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-square rounded-md" />
+                ))}
+              </div>
+            </div>
+            <div className="space-y-6">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-12 w-1/3" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        </main>
       </div>
     );
   }

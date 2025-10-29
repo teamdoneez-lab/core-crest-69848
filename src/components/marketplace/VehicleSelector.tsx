@@ -228,7 +228,7 @@ export function VehicleSelector({ onVehicleSelect }: VehicleSelectorProps) {
             className="w-full"
           >
             <Save className="h-4 w-4 mr-2" />
-            Save to Garage
+            Set Active Vehicle
           </Button>
         </div>
 
