@@ -11,19 +11,38 @@ import { ChevronRight, Filter, X } from 'lucide-react';
 interface ProductFilterSidebarProps {
   selectedCategories: string[];
   selectedPartTypes: string[];
+  selectedBrands: string[];
   onCategoryChange: (categoryId: string) => void;
   onPartTypeChange: (typeId: string) => void;
+  onBrandChange: (brandId: string) => void;
   onClearFilters: () => void;
 }
+
+// Mock brands data
+const MOCK_BRANDS = [
+  { id: 'acdelco', name: 'ACDelco' },
+  { id: 'bosch', name: 'Bosch' },
+  { id: 'denso', name: 'Denso' },
+  { id: 'gates', name: 'Gates' },
+  { id: 'moog', name: 'Moog' },
+  { id: 'ngk', name: 'NGK' },
+  { id: 'mobil1', name: 'Mobil 1' },
+  { id: 'castrol', name: 'Castrol' },
+  { id: 'pennzoil', name: 'Pennzoil' },
+  { id: 'valvoline', name: 'Valvoline' },
+];
 
 export function ProductFilterSidebar({
   selectedCategories,
   selectedPartTypes,
+  selectedBrands,
   onCategoryChange,
   onPartTypeChange,
+  onBrandChange,
   onClearFilters,
 }: ProductFilterSidebarProps) {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [brandSearch, setBrandSearch] = useState('');
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev =>
@@ -83,7 +102,11 @@ export function ProductFilterSidebar({
     );
   };
 
-  const hasActiveFilters = selectedCategories.length > 0 || selectedPartTypes.length > 0;
+  const hasActiveFilters = selectedCategories.length > 0 || selectedPartTypes.length > 0 || selectedBrands.length > 0;
+  
+  const filteredBrands = MOCK_BRANDS.filter(brand =>
+    brand.name.toLowerCase().includes(brandSearch.toLowerCase())
+  );
 
   return (
     <aside className="w-full lg:w-64 bg-card border border-border rounded-lg p-4 h-fit sticky top-4">
@@ -108,7 +131,7 @@ export function ProductFilterSidebar({
       <Separator className="mb-4" />
 
       <ScrollArea className="h-[calc(100vh-200px)]">
-        {/* Part Type Filter */}
+        {/* Part Condition Filter */}
         <div className="mb-6">
           <h3 className="font-medium text-sm mb-3">Part Condition</h3>
           <div className="space-y-2">
@@ -124,6 +147,37 @@ export function ProductFilterSidebar({
                   className="text-sm cursor-pointer hover:text-primary"
                 >
                   {type.name}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Separator className="my-4" />
+
+        {/* Brand Filter */}
+        <div className="mb-6">
+          <h3 className="font-medium text-sm mb-3">Brand</h3>
+          <input
+            type="search"
+            placeholder="Search brands..."
+            value={brandSearch}
+            onChange={(e) => setBrandSearch(e.target.value)}
+            className="w-full px-3 py-1.5 text-sm border rounded-md mb-2 bg-background"
+          />
+          <div className="space-y-2 max-h-[200px] overflow-y-auto">
+            {filteredBrands.map(brand => (
+              <div key={brand.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={brand.id}
+                  checked={selectedBrands.includes(brand.id)}
+                  onCheckedChange={() => onBrandChange(brand.id)}
+                />
+                <Label
+                  htmlFor={brand.id}
+                  className="text-sm cursor-pointer hover:text-primary"
+                >
+                  {brand.name}
                 </Label>
               </div>
             ))}

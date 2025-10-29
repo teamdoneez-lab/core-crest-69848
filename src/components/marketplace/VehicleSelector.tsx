@@ -132,20 +132,48 @@ export function VehicleSelector({ onVehicleSelect }: VehicleSelectorProps) {
   const availableModels = make ? MOCK_MODELS[make] || [] : [];
   const availableEngines = model ? MOCK_ENGINES[model] || [] : [];
 
+  const canSetActiveVehicle = year && make && model;
+  const isVehicleActive = activeVehicle !== null;
+
   return (
     <Card className="mb-6">
       <CardContent className="pt-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Car className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-lg">Select Your Vehicle</h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Car className="h-5 w-5 text-primary" />
+            {isVehicleActive && activeVehicle ? (
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-lg">
+                  Active Vehicle: {activeVehicle.year} {activeVehicle.make} {activeVehicle.model}
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setActiveVehicle(null);
+                    setYear('');
+                    setMake('');
+                    setModel('');
+                    setEngine('');
+                    onVehicleSelect(null);
+                  }}
+                  className="text-xs"
+                >
+                  [Change]
+                </Button>
+              </div>
+            ) : (
+              <h3 className="font-semibold text-lg">Select Your Vehicle</h3>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
           <Select value={year} onValueChange={handleYearChange}>
-            <SelectTrigger>
+            <SelectTrigger className={!year ? 'bg-muted/50' : ''}>
               <SelectValue placeholder="Year" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover z-50">
               {MOCK_YEARS.map(y => (
                 <SelectItem key={y.id} value={y.id}>
                   {y.year}
@@ -155,10 +183,10 @@ export function VehicleSelector({ onVehicleSelect }: VehicleSelectorProps) {
           </Select>
 
           <Select value={make} onValueChange={handleMakeChange} disabled={!year}>
-            <SelectTrigger>
+            <SelectTrigger className={!make && year ? 'bg-muted/50' : ''}>
               <SelectValue placeholder="Make" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover z-50">
               {availableMakes.map(m => (
                 <SelectItem key={m.id} value={m.id}>
                   {m.name}
@@ -168,10 +196,10 @@ export function VehicleSelector({ onVehicleSelect }: VehicleSelectorProps) {
           </Select>
 
           <Select value={model} onValueChange={handleModelChange} disabled={!make}>
-            <SelectTrigger>
+            <SelectTrigger className={!model && make ? 'bg-muted/50' : ''}>
               <SelectValue placeholder="Model" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover z-50">
               {availableModels.map(m => (
                 <SelectItem key={m.id} value={m.id}>
                   {m.name}
@@ -184,7 +212,7 @@ export function VehicleSelector({ onVehicleSelect }: VehicleSelectorProps) {
             <SelectTrigger>
               <SelectValue placeholder="Engine (Optional)" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover z-50">
               {availableEngines.map(e => (
                 <SelectItem key={e.id} value={e.id}>
                   {e.name}
@@ -195,11 +223,12 @@ export function VehicleSelector({ onVehicleSelect }: VehicleSelectorProps) {
 
           <Button
             onClick={handleSaveVehicle}
-            disabled={!year || !make || !model}
+            disabled={!canSetActiveVehicle}
+            variant="secondary"
             className="w-full"
           >
             <Save className="h-4 w-4 mr-2" />
-            Save Vehicle
+            Save to Garage
           </Button>
         </div>
 

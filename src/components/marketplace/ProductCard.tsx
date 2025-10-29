@@ -21,7 +21,9 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             src={product.image}
             alt={product.name}
             loading="lazy"
-            className="w-full h-full object-cover transition-transform hover:scale-105"
+            className={`w-full h-full object-cover transition-transform hover:scale-105 ${
+              !product.inStock ? 'grayscale opacity-60' : ''
+            }`}
           />
           {!product.inStock && (
             <Badge 
@@ -34,7 +36,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         </div>
       </Link>
       
-      <CardContent className="flex-1 p-4">
+      <CardContent className={`flex-1 p-4 ${!product.inStock ? 'opacity-70' : ''}`}>
         <div className="mb-2">
           <Badge variant="secondary" className="text-xs">
             {product.category}
