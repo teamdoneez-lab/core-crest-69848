@@ -132,7 +132,7 @@ export function ProductFilterSidebar({
 
       <ScrollArea className="h-[calc(100vh-200px)]">
         {/* Part Condition Filter */}
-        <div className="mb-6">
+        <div className="mb-4">
           <h3 className="font-medium text-sm mb-3">Part Condition</h3>
           <div className="space-y-2">
             {PART_TYPES.map(type => (
@@ -155,34 +155,42 @@ export function ProductFilterSidebar({
 
         <Separator className="my-4" />
 
-        {/* Brand Filter */}
-        <div className="mb-6">
-          <h3 className="font-medium text-sm mb-3">Brand</h3>
-          <input
-            type="search"
-            placeholder="Search brands..."
-            value={brandSearch}
-            onChange={(e) => setBrandSearch(e.target.value)}
-            className="w-full px-3 py-1.5 text-sm border rounded-md mb-2 bg-background"
-          />
-          <div className="space-y-2 max-h-[200px] overflow-y-auto">
-            {filteredBrands.map(brand => (
-              <div key={brand.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={brand.id}
-                  checked={selectedBrands.includes(brand.id)}
-                  onCheckedChange={() => onBrandChange(brand.id)}
-                />
-                <Label
-                  htmlFor={brand.id}
-                  className="text-sm cursor-pointer hover:text-primary"
-                >
-                  {brand.name}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Brand Filter - Collapsible */}
+        <Accordion type="single" collapsible className="mb-4">
+          <AccordionItem value="brands" className="border-none">
+            <AccordionTrigger className="py-2 hover:no-underline">
+              <h3 className="font-medium text-sm">Brand</h3>
+            </AccordionTrigger>
+            <AccordionContent>
+              <input
+                type="search"
+                placeholder="Search brands..."
+                value={brandSearch}
+                onChange={(e) => setBrandSearch(e.target.value)}
+                className="w-full px-3 py-1.5 text-sm border rounded-md mb-2 bg-background"
+              />
+              <ScrollArea className="h-[150px]">
+                <div className="space-y-2 pr-4">
+                  {filteredBrands.map(brand => (
+                    <div key={brand.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={brand.id}
+                        checked={selectedBrands.includes(brand.id)}
+                        onCheckedChange={() => onBrandChange(brand.id)}
+                      />
+                      <Label
+                        htmlFor={brand.id}
+                        className="text-sm cursor-pointer hover:text-primary"
+                      >
+                        {brand.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
         <Separator className="my-4" />
 
