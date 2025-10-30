@@ -13,6 +13,14 @@ import { Send, Search } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { z } from "zod";
+
+const messageSchema = z.object({
+  message: z.string()
+    .trim()
+    .min(1, "Message cannot be empty")
+    .max(2000, "Message must be less than 2000 characters")
+});
 
 interface Conversation {
   request_id: string;
@@ -183,7 +191,18 @@ export default function Messages() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user || !selectedConversation) return;
+    if (!user || !selectedConversation) return;
+
+    // Validate message
+    const validation = messageSchema.safeParse({ message: newMessage });
+    if (!validation.success) {
+      toast({
+        title: "Invalid Message",
+        description: validation.error.errors[0].message,
+        variant: "destructive"
+      });
+      return;
+    }
 
     setLoading(true);
     const { error } = await supabase
@@ -191,7 +210,7 @@ export default function Messages() {
       .insert({
         request_id: selectedConversation.request_id,
         sender_id: user.id,
-        message: newMessage.trim()
+        message: validation.data.message
       });
 
     if (error) {
@@ -346,13 +365,20 @@ export default function Messages() {
                 {/* Message Input */}
                 <div className="p-4 border-t">
                   <form onSubmit={sendMessage} className="flex gap-2">
-                    <Input
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type your message..."
-                      disabled={loading}
-                      className="flex-1"
-                    />
+                    <div className="flex-1 space-y-1">
+                      <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type your message..."
+                        disabled={loading}
+                        maxLength={2000}
+                      />
+                      {newMessage.length > 1800 && (
+                        <p className="text-xs text-muted-foreground">
+                          {2000 - newMessage.length} characters remaining
+                        </p>
+                      )}
+                    </div>
                     <Button 
                       type="submit" 
                       size="icon" 
