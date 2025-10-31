@@ -34,6 +34,8 @@ import PartnerOffers from "./pages/PartnerOffers";
 import SupplierOnboarding from "./pages/SupplierOnboarding";
 import SupplierDashboard from "./pages/SupplierDashboard";
 import SupplierProductUpload from "./pages/SupplierProductUpload";
+import SupplierSignup from "./pages/SupplierSignup";
+import SupplierLogin from "./pages/SupplierLogin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +75,8 @@ const App = () => (
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/supplier-signup" element={<SupplierSignup />} />
+            <Route path="/supplier-login" element={<SupplierLogin />} />
             <Route path="/supplier-onboarding" element={<SupplierOnboarding />} />
             <Route path="/supplier-dashboard" element={<SupplierDashboard />} />
             <Route path="/supplier/upload-products" element={<SupplierProductUpload />} />

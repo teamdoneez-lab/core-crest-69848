@@ -231,6 +231,11 @@ const Index = () => {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-3 lg:space-x-4">
+              <Link to="/supplier-signup">
+                <Button variant="ghost" className="text-sm lg:text-base">
+                  Become a Supplier
+                </Button>
+              </Link>
               <Link to="/auth">
                 <Button variant="outline" className="border-primary/20 bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-300 text-sm lg:text-base px-3 lg:px-4">
                   Request Service
@@ -276,6 +281,11 @@ const Index = () => {
           {/* Mobile Menu */}
           <div id="mobile-menu" className="md:hidden hidden border-t border-primary/10 bg-background/95 backdrop-blur-xl">
             <div className="px-2 pt-2 pb-3 space-y-2">
+              <Link to="/supplier-signup" className="block">
+                <Button variant="ghost" className="w-full justify-start">
+                  Become a Supplier
+                </Button>
+              </Link>
               <Link to="/auth" className="block">
                 <Button variant="outline" className="w-full justify-start border-primary/20 bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-300">
                   Request Service

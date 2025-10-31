@@ -80,9 +80,24 @@ export function SuppliersTab() {
 
       if (error) throw error;
 
+      // Send email notification to supplier
+      try {
+        await supabase.functions.invoke('send-supplier-notification', {
+          body: {
+            supplierEmail: selectedSupplier.email,
+            supplierName: selectedSupplier.contact_name,
+            status: actionType === 'approve' ? 'approved' : 'rejected',
+            notes: verificationNotes,
+          }
+        });
+      } catch (emailError) {
+        console.error('Email notification error:', emailError);
+        // Don't fail the entire operation if email fails
+      }
+
       toast({ 
         title: 'Success', 
-        description: `Supplier ${actionType === 'approve' ? 'approved' : 'rejected'} successfully` 
+        description: `Supplier ${actionType === 'approve' ? 'approved' : 'rejected'} successfully. Email notification sent.` 
       });
       
       setShowDialog(false);
