@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Users, Car, DollarSign, FileText, Download, CheckCircle, Calendar, Phone, Mail, MapPin, Search, Filter, RefreshCw, UserCheck, UserX, ShieldCheck, ShieldOff, UserCog, Info, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ReferralFeesTab } from '@/components/admin/ReferralFeesTab';
+import { SuppliersTab } from '@/components/admin/SuppliersTab';
 import { ProDetailModal } from '@/components/admin/ProDetailModal';
 import { CustomerDetailModal } from '@/components/admin/CustomerDetailModal';
 import { useForm } from 'react-hook-form';
@@ -856,9 +857,10 @@ const AdminDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="pros">Professionals</TabsTrigger>
+            <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
             <TabsTrigger value="requests">Requests</TabsTrigger>
             <TabsTrigger value="referral-fees">Referral Fees</TabsTrigger>
           </TabsList>
@@ -1485,6 +1487,10 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
 
+          {/* Suppliers Tab */}
+          <TabsContent value="suppliers" className="space-y-4">
+            <SuppliersTab />
+          </TabsContent>
 
           {/* Referral Fees Tab */}
           <TabsContent value="referral-fees" className="space-y-4">

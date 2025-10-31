@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-type UserRole = 'customer' | 'pro' | 'admin';
+type UserRole = 'customer' | 'pro' | 'admin' | 'supplier';
 
 interface Profile {
   id: string;

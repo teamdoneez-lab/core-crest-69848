@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { useRole } from '@/hooks/useRole';
 import { Navigate } from 'react-router-dom';
 
-type UserRole = 'customer' | 'pro' | 'admin';
+type UserRole = 'customer' | 'pro' | 'admin' | 'supplier';
 
 interface RoleGuardProps {
   allowedRoles: UserRole[];
