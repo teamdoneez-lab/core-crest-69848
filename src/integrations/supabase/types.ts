@@ -650,6 +650,358 @@ export type Database = {
           },
         ]
       }
+      supplier_documents: {
+        Row: {
+          document_type: string
+          file_name: string
+          file_url: string
+          id: string
+          supplier_id: string
+          uploaded_at: string | null
+        }
+        Insert: {
+          document_type: string
+          file_name: string
+          file_url: string
+          id?: string
+          supplier_id: string
+          uploaded_at?: string | null
+        }
+        Update: {
+          document_type?: string
+          file_name?: string
+          file_url?: string
+          id?: string
+          supplier_id?: string
+          uploaded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_documents_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_orders: {
+        Row: {
+          commission_amount: number
+          commission_rate: number | null
+          confirmed_at: string | null
+          created_at: string | null
+          customer_id: string
+          customer_notes: string | null
+          delivery_method: string | null
+          fulfilled_at: string | null
+          id: string
+          order_number: string
+          paid_at: string | null
+          product_id: string
+          quantity: number
+          status: Database["public"]["Enums"]["order_status"] | null
+          stripe_payment_intent: string | null
+          stripe_transfer_id: string | null
+          subtotal: number
+          supplier_id: string
+          supplier_notes: string | null
+          supplier_payout: number
+          total_amount: number
+          tracking_number: string | null
+          unit_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          commission_amount: number
+          commission_rate?: number | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          customer_id: string
+          customer_notes?: string | null
+          delivery_method?: string | null
+          fulfilled_at?: string | null
+          id?: string
+          order_number: string
+          paid_at?: string | null
+          product_id: string
+          quantity?: number
+          status?: Database["public"]["Enums"]["order_status"] | null
+          stripe_payment_intent?: string | null
+          stripe_transfer_id?: string | null
+          subtotal: number
+          supplier_id: string
+          supplier_notes?: string | null
+          supplier_payout: number
+          total_amount: number
+          tracking_number?: string | null
+          unit_price: number
+          updated_at?: string | null
+        }
+        Update: {
+          commission_amount?: number
+          commission_rate?: number | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          customer_id?: string
+          customer_notes?: string | null
+          delivery_method?: string | null
+          fulfilled_at?: string | null
+          id?: string
+          order_number?: string
+          paid_at?: string | null
+          product_id?: string
+          quantity?: number
+          status?: Database["public"]["Enums"]["order_status"] | null
+          stripe_payment_intent?: string | null
+          stripe_transfer_id?: string | null
+          subtotal?: number
+          supplier_id?: string
+          supplier_notes?: string | null
+          supplier_payout?: number
+          total_amount?: number
+          tracking_number?: string | null
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_payouts: {
+        Row: {
+          amount: number
+          commission_deducted: number
+          completed_at: string | null
+          created_at: string | null
+          failed_reason: string | null
+          id: string
+          initiated_at: string | null
+          order_id: string
+          status: Database["public"]["Enums"]["payout_status"] | null
+          stripe_transfer_id: string | null
+          supplier_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          commission_deducted: number
+          completed_at?: string | null
+          created_at?: string | null
+          failed_reason?: string | null
+          id?: string
+          initiated_at?: string | null
+          order_id: string
+          status?: Database["public"]["Enums"]["payout_status"] | null
+          stripe_transfer_id?: string | null
+          supplier_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          commission_deducted?: number
+          completed_at?: string | null
+          created_at?: string | null
+          failed_reason?: string | null
+          id?: string
+          initiated_at?: string | null
+          order_id?: string
+          status?: Database["public"]["Enums"]["payout_status"] | null
+          stripe_transfer_id?: string | null
+          supplier_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_payouts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_payouts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_products: {
+        Row: {
+          admin_approved: boolean | null
+          approved_at: string | null
+          approved_by: string | null
+          category: string
+          condition: string
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          oem_cross_ref: string | null
+          part_name: string
+          price: number
+          quantity: number
+          region: string | null
+          sku: string
+          supplier_id: string
+          updated_at: string | null
+          warranty_months: number | null
+        }
+        Insert: {
+          admin_approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          category: string
+          condition: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          oem_cross_ref?: string | null
+          part_name: string
+          price: number
+          quantity?: number
+          region?: string | null
+          sku: string
+          supplier_id: string
+          updated_at?: string | null
+          warranty_months?: number | null
+        }
+        Update: {
+          admin_approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string
+          condition?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          oem_cross_ref?: string | null
+          part_name?: string
+          price?: number
+          quantity?: number
+          region?: string | null
+          sku?: string
+          supplier_id?: string
+          updated_at?: string | null
+          warranty_months?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          acceptance_rate: number | null
+          business_address: string
+          business_name: string
+          cancelled_orders: number | null
+          city: string
+          contact_name: string
+          created_at: string | null
+          delivery_radius_km: number | null
+          email: string
+          fulfilled_orders: number | null
+          id: string
+          on_time_rate: number | null
+          phone: string
+          pickup_available: boolean | null
+          product_categories: string[] | null
+          state: string
+          status: Database["public"]["Enums"]["supplier_status"] | null
+          stripe_connect_account_id: string | null
+          stripe_onboarding_complete: boolean | null
+          total_orders: number | null
+          updated_at: string | null
+          user_id: string
+          verification_notes: string | null
+          verified_at: string | null
+          verified_by: string | null
+          zip: string
+        }
+        Insert: {
+          acceptance_rate?: number | null
+          business_address: string
+          business_name: string
+          cancelled_orders?: number | null
+          city: string
+          contact_name: string
+          created_at?: string | null
+          delivery_radius_km?: number | null
+          email: string
+          fulfilled_orders?: number | null
+          id?: string
+          on_time_rate?: number | null
+          phone: string
+          pickup_available?: boolean | null
+          product_categories?: string[] | null
+          state: string
+          status?: Database["public"]["Enums"]["supplier_status"] | null
+          stripe_connect_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
+          total_orders?: number | null
+          updated_at?: string | null
+          user_id: string
+          verification_notes?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          zip: string
+        }
+        Update: {
+          acceptance_rate?: number | null
+          business_address?: string
+          business_name?: string
+          cancelled_orders?: number | null
+          city?: string
+          contact_name?: string
+          created_at?: string | null
+          delivery_radius_km?: number | null
+          email?: string
+          fulfilled_orders?: number | null
+          id?: string
+          on_time_rate?: number | null
+          phone?: string
+          pickup_available?: boolean | null
+          product_categories?: string[] | null
+          state?: string
+          status?: Database["public"]["Enums"]["supplier_status"] | null
+          stripe_connect_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
+          total_orders?: number | null
+          updated_at?: string | null
+          user_id?: string
+          verification_notes?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          zip?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -705,6 +1057,7 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: undefined
       }
+      generate_order_number: { Args: never; Returns: string }
       get_confirmation_timer_minutes: {
         Args: { urgency_value: string }
         Returns: number
@@ -777,9 +1130,12 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "customer" | "pro" | "admin"
+      app_role: "customer" | "pro" | "admin" | "supplier"
       lead_status: "new" | "accepted" | "declined"
-      user_role: "customer" | "pro" | "admin"
+      order_status: "pending" | "confirmed" | "fulfilled" | "cancelled" | "paid"
+      payout_status: "pending" | "processing" | "completed" | "failed"
+      supplier_status: "pending" | "approved" | "rejected" | "suspended"
+      user_role: "customer" | "pro" | "admin" | "supplier"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -907,9 +1263,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["customer", "pro", "admin"],
+      app_role: ["customer", "pro", "admin", "supplier"],
       lead_status: ["new", "accepted", "declined"],
-      user_role: ["customer", "pro", "admin"],
+      order_status: ["pending", "confirmed", "fulfilled", "cancelled", "paid"],
+      payout_status: ["pending", "processing", "completed", "failed"],
+      supplier_status: ["pending", "approved", "rejected", "suspended"],
+      user_role: ["customer", "pro", "admin", "supplier"],
     },
   },
 } as const
