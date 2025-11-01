@@ -98,7 +98,22 @@ export default function SupplierSignup() {
         }
       });
 
-      if (authError) throw authError;
+      // Check for duplicate email error
+      if (authError) {
+        if (authError.message.includes('already registered') || 
+            authError.message.includes('User already registered') ||
+            authError.status === 400) {
+          toast({ 
+            title: 'Email Already In Use', 
+            description: 'This email address is already associated with an account. Please use a different email or sign in to your existing account.',
+            variant: 'destructive' 
+          });
+          setLoading(false);
+          return;
+        }
+        throw authError;
+      }
+      
       if (!authData.user) throw new Error('User creation failed');
 
       toast({ 
@@ -110,9 +125,18 @@ export default function SupplierSignup() {
       
     } catch (error: any) {
       console.error('Signup error:', error);
+      
+      // Provide user-friendly error messages
+      let errorMessage = error.message;
+      if (error.message.includes('invalid email')) {
+        errorMessage = 'Please provide a valid email address.';
+      } else if (error.message.includes('password')) {
+        errorMessage = 'Password must be at least 6 characters long.';
+      }
+      
       toast({ 
-        title: 'Error', 
-        description: error.message, 
+        title: 'Registration Error', 
+        description: errorMessage, 
         variant: 'destructive' 
       });
     } finally {
