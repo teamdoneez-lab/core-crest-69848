@@ -296,7 +296,7 @@ export function ProDetailModal({ requestId, open, onOpenChange }: ProDetailModal
           <div className="space-y-3 text-sm">
             <div>
               <p className="text-muted-foreground mb-2">Service Radius</p>
-              <Badge variant="outline">{proDetail.service_radius} km</Badge>
+              <Badge variant="outline">{proDetail.service_radius} miles</Badge>
             </div>
             
             {categories.length > 0 && (

@@ -1248,7 +1248,7 @@ const AdminDashboard = () => {
                               )}
                               {pro.pro_profiles && pro.pro_profiles.length > 0 && (
                                 <p className="text-sm text-muted-foreground">
-                                  Service radius: {pro.pro_profiles[0].radius_km}km
+                                  Service radius: {pro.pro_profiles[0].radius_km} miles
                                 </p>
                               )}
                             </div>

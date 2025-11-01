@@ -290,7 +290,7 @@ export default function SupplierSignup() {
                 <h3 className="text-lg font-semibold">Service Details</h3>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="deliveryRadius">Delivery Radius (km)</Label>
+                  <Label htmlFor="deliveryRadius">Delivery Radius (miles)</Label>
                   <Input
                     id="deliveryRadius"
                     type="number"

@@ -236,7 +236,7 @@ export const ProfessionalDetailModal = ({ proId, open, onOpenChange }: Professio
                       <p className="text-sm font-medium">Service Radius</p>
                       <p className="text-sm text-muted-foreground">
                         <MapPin className="h-3 w-3 inline mr-1" />
-                        {proDetail.pro_profiles[0].service_radius} km
+                        {proDetail.pro_profiles[0].service_radius} miles
                       </p>
                     </div>
                     {proDetail.pro_profiles[0].phone && (
