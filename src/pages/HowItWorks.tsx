@@ -86,7 +86,7 @@ export default function HowItWorks() {
                 </div>
                 <h3 className="text-lg font-bold mb-3">Submit Quote</h3>
                 <p className="text-sm text-muted-foreground">
-                  Review the service request details and submit your competitive quote to the customer.
+                  Review the service request details and submit your competitive estimated quote to the customer.
                 </p>
               </CardContent>
             </Card>
@@ -98,7 +98,7 @@ export default function HowItWorks() {
                 </div>
                 <h3 className="text-lg font-bold mb-3">Get Selected</h3>
                 <p className="text-sm text-muted-foreground">
-                  When a customer accepts your quote, pay a 10% referral fee to lock in the job for 60 minutes.
+                  When a customer accepts your quote, confirm the appointment by paying a one-time referral fee based on your estimated quote. (Referral fee rates are outlined in the FAQ section.)
                 </p>
               </CardContent>
             </Card>
@@ -123,28 +123,28 @@ export default function HowItWorks() {
                 <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                 <div>
                   <h4 className="font-semibold mb-1">Only Pay When You Win</h4>
-                  <p className="text-sm text-muted-foreground">No subscription fees - only a 10% referral fee on jobs you secure</p>
+                  <p className="text-sm text-muted-foreground">no subscription fees; pay a one-time referral fee only when a customer accepts your quote.</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                 <div>
                   <h4 className="font-semibold mb-1">Qualified Leads</h4>
-                  <p className="text-sm text-muted-foreground">Receive pre-screened service requests matching your skills and location</p>
+                  <p className="text-sm text-muted-foreground">receive pre-screened service requests that match your skills and location.</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                 <div>
                   <h4 className="font-semibold mb-1">Set Your Own Prices</h4>
-                  <p className="text-sm text-muted-foreground">You control your quotes and maintain your profit margins</p>
+                  <p className="text-sm text-muted-foreground">control your quotes and maintain your profit margins.</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                 <div>
                   <h4 className="font-semibold mb-1">Build Your Business</h4>
-                  <p className="text-sm text-muted-foreground">Grow your customer base and establish your reputation</p>
+                  <p className="text-sm text-muted-foreground">grow your customer base and establish your reputation through verified reviews and completed jobs.</p>
                 </div>
               </div>
             </div>
