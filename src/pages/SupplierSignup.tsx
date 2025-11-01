@@ -72,7 +72,7 @@ export default function SupplierSignup() {
         return;
       }
 
-      // Create auth user with supplier role
+      // Create auth user with supplier data in metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -80,69 +80,32 @@ export default function SupplierSignup() {
           data: {
             name: formData.contactName,
             role: 'supplier',
+            // Store supplier data in metadata for the trigger
+            supplier_data: {
+              business_name: formData.businessName,
+              contact_name: formData.contactName,
+              phone: formData.phone,
+              business_address: formData.businessAddress,
+              city: formData.city,
+              state: formData.state,
+              zip: formData.zip,
+              delivery_radius_km: formData.deliveryRadius,
+              pickup_available: formData.pickupAvailable,
+              product_categories: formData.productCategories,
+            }
           },
-          emailRedirectTo: `${window.location.origin}/supplier-dashboard`
+          emailRedirectTo: `${window.location.origin}/supplier-login`
         }
       });
 
       if (authError) throw authError;
       if (!authData.user) throw new Error('User creation failed');
 
-      // Create supplier profile
-      const { data: supplier, error: supplierError } = await supabase
-        .from('suppliers')
-        .insert({
-          user_id: authData.user.id,
-          business_name: formData.businessName,
-          contact_name: formData.contactName,
-          email: formData.email,
-          phone: formData.phone,
-          business_address: formData.businessAddress,
-          city: formData.city,
-          state: formData.state,
-          zip: formData.zip,
-          delivery_radius_km: formData.deliveryRadius,
-          pickup_available: formData.pickupAvailable,
-          product_categories: formData.productCategories,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (supplierError) throw supplierError;
-
-      // Upload documents if provided
-      if (documents.length > 0 && supplier) {
-        for (const file of documents) {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${supplier.id}/${Date.now()}.${fileExt}`;
-          
-          const { error: uploadError } = await supabase.storage
-            .from('service-images')
-            .upload(fileName, file);
-
-          if (uploadError) throw uploadError;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('service-images')
-            .getPublicUrl(fileName);
-
-          await supabase.from('supplier_documents').insert({
-            supplier_id: supplier.id,
-            document_type: 'resale_license',
-            file_url: publicUrl,
-            file_name: file.name,
-          });
-        }
-      }
-
       toast({ 
-        title: 'Application Submitted!', 
-        description: "Your application has been submitted. You'll be notified after admin approval via email.",
+        title: 'Check Your Email!', 
+        description: "Please confirm your email address to complete your supplier registration. Check your inbox for the confirmation link.",
       });
       
-      // Sign out and redirect to login
-      await supabase.auth.signOut();
       setTimeout(() => navigate('/supplier-login'), 2000);
       
     } catch (error: any) {
