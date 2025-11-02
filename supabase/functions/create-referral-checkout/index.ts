@@ -1,11 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const ReferralCheckoutSchema = z.object({
+  quote_id: z.string().uuid("Invalid quote ID format")
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -40,11 +45,21 @@ serve(async (req) => {
     
     console.log("[REFERRAL-CHECKOUT] Authenticated user:", user.id, user.email);
 
-    const { quote_id } = await req.json();
+    const body = await req.json();
+    const validation = ReferralCheckoutSchema.safeParse(body);
 
-    if (!quote_id) {
-      throw new Error("Missing quote_id");
+    if (!validation.success) {
+      console.error("[REFERRAL-CHECKOUT] Validation error:", validation.error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid input", 
+          details: validation.error.issues.map(i => ({ field: i.path.join('.'), message: i.message }))
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    const { quote_id } = validation.data;
 
     console.log("[REFERRAL-CHECKOUT] Processing quote:", quote_id);
 

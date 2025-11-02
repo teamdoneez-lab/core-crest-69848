@@ -1,11 +1,18 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const VerifyPaymentSchema = z.object({
+  session_id: z.string()
+    .min(1, "Session ID is required")
+    .startsWith("cs_", "Invalid Stripe session ID format")
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,11 +35,21 @@ serve(async (req) => {
       throw new Error("Not authenticated");
     }
 
-    const { session_id } = await req.json();
+    const body = await req.json();
+    const validation = VerifyPaymentSchema.safeParse(body);
 
-    if (!session_id) {
-      throw new Error("Missing session_id");
+    if (!validation.success) {
+      console.error("[VERIFY-QUOTE-PAYMENT] Validation error:", validation.error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid input", 
+          details: validation.error.issues.map(i => ({ field: i.path.join('.'), message: i.message }))
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    const { session_id } = validation.data;
 
     console.log("[VERIFY-QUOTE-PAYMENT] Verifying session:", session_id);
 
@@ -51,7 +68,37 @@ serve(async (req) => {
     console.log("[VERIFY-QUOTE-PAYMENT] Payment verified, creating quote");
 
     const metadata = session.metadata!;
-    const { request_id, pro_id, estimated_price, description, notes, fee_amount } = metadata;
+    
+    // Validate metadata from Stripe
+    const MetadataSchema = z.object({
+      request_id: z.string().uuid(),
+      pro_id: z.string().uuid(),
+      estimated_price: z.string().transform(val => {
+        const num = parseFloat(val);
+        if (isNaN(num) || num < 1 || num > 999999) {
+          throw new Error("Invalid estimated_price in metadata");
+        }
+        return num;
+      }),
+      description: z.string().min(1).max(1000),
+      notes: z.string().optional(),
+      fee_amount: z.string().transform(val => {
+        const num = parseFloat(val);
+        if (isNaN(num) || num < 0) {
+          throw new Error("Invalid fee_amount in metadata");
+        }
+        return num;
+      })
+    });
+
+    const metadataValidation = MetadataSchema.safeParse(metadata);
+    
+    if (!metadataValidation.success) {
+      console.error("[VERIFY-QUOTE-PAYMENT] Metadata validation error:", metadataValidation.error);
+      throw new Error("Invalid payment metadata");
+    }
+
+    const { request_id, pro_id, estimated_price, description, notes, fee_amount } = metadataValidation.data;
 
     // Create the quote
     const { data: quoteData, error: quoteError } = await supabaseClient
@@ -59,7 +106,7 @@ serve(async (req) => {
       .insert({
         request_id,
         pro_id,
-        estimated_price: parseFloat(estimated_price),
+        estimated_price,
         description,
         notes: notes || null,
         status: "pending",
@@ -82,7 +129,7 @@ serve(async (req) => {
         request_id,
         pro_id,
         quote_id: quoteData.id,
-        amount: parseFloat(fee_amount),
+        amount: fee_amount,
         status: "paid",
         paid_at: new Date().toISOString(),
         stripe_session_id: session_id,

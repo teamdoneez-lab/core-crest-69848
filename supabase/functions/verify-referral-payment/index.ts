@@ -1,11 +1,19 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const VerifyReferralPaymentSchema = z.object({
+  session_id: z.string()
+    .min(1, "Session ID is required")
+    .startsWith("cs_", "Invalid Stripe session ID format"),
+  request_id: z.string().uuid("Invalid request ID format")
+});
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -19,10 +27,21 @@ serve(async (req) => {
   );
 
   try {
-    const { session_id, request_id } = await req.json();
-    if (!session_id || !request_id) {
-      throw new Error("Missing session_id or request_id");
+    const body = await req.json();
+    const validation = VerifyReferralPaymentSchema.safeParse(body);
+
+    if (!validation.success) {
+      console.error("[VERIFY-PAYMENT] Validation error:", validation.error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid input", 
+          details: validation.error.issues.map(i => ({ field: i.path.join('.'), message: i.message }))
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    const { session_id, request_id } = validation.data;
 
     console.log("[VERIFY-PAYMENT] Verifying session:", session_id);
 

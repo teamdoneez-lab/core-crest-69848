@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 
@@ -8,15 +9,33 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface BookingConfirmationRequest {
-  email: string;
-  name: string;
-  services: string[];
-  vehicle: string;
-  preferredTime: string;
-  appointmentType: string;
-  zip: string;
-}
+const BookingConfirmationSchema = z.object({
+  email: z.string()
+    .email("Invalid email address")
+    .max(255, "Email cannot exceed 255 characters")
+    .trim(),
+  name: z.string()
+    .min(1, "Name is required")
+    .max(100, "Name cannot exceed 100 characters")
+    .trim(),
+  services: z.array(z.string().max(200))
+    .min(1, "At least one service is required")
+    .max(20, "Cannot exceed 20 services"),
+  vehicle: z.string()
+    .min(1, "Vehicle information is required")
+    .max(200, "Vehicle info cannot exceed 200 characters")
+    .trim(),
+  preferredTime: z.string()
+    .min(1, "Preferred time is required")
+    .max(100, "Preferred time cannot exceed 100 characters")
+    .trim(),
+  appointmentType: z.enum(["mobile", "shop"], {
+    errorMap: () => ({ message: "Appointment type must be 'mobile' or 'shop'" })
+  }),
+  zip: z.string()
+    .regex(/^\d{5}$/, "ZIP code must be 5 digits")
+    .trim()
+});
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -24,6 +43,20 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const body = await req.json();
+    const validation = BookingConfirmationSchema.safeParse(body);
+
+    if (!validation.success) {
+      console.error("[BOOKING-CONFIRMATION] Validation error:", validation.error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid input", 
+          details: validation.error.issues.map(i => ({ field: i.path.join('.'), message: i.message }))
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const {
       email,
       name,
@@ -32,7 +65,7 @@ const handler = async (req: Request): Promise<Response> => {
       preferredTime,
       appointmentType,
       zip,
-    }: BookingConfirmationRequest = await req.json();
+    } = validation.data;
 
     console.log("Sending booking confirmation to:", email);
 

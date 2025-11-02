@@ -1,11 +1,28 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const QuoteCheckoutSchema = z.object({
+  request_id: z.string().uuid("Invalid request ID format"),
+  estimated_price: z.number()
+    .min(1, "Price must be at least $1")
+    .max(999999, "Price cannot exceed $999,999")
+    .finite("Price must be a valid number"),
+  description: z.string()
+    .min(10, "Description must be at least 10 characters")
+    .max(1000, "Description cannot exceed 1000 characters")
+    .trim(),
+  notes: z.string()
+    .max(500, "Notes cannot exceed 500 characters")
+    .trim()
+    .optional()
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,11 +45,21 @@ serve(async (req) => {
       throw new Error("Not authenticated");
     }
 
-    const { request_id, estimated_price, description, notes } = await req.json();
+    const body = await req.json();
+    const validation = QuoteCheckoutSchema.safeParse(body);
 
-    if (!request_id || !estimated_price || !description) {
-      throw new Error("Missing required fields");
+    if (!validation.success) {
+      console.error("[QUOTE-CHECKOUT] Validation error:", validation.error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid input", 
+          details: validation.error.issues.map(i => ({ field: i.path.join('.'), message: i.message }))
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    const { request_id, estimated_price, description, notes } = validation.data;
 
     console.log("[QUOTE-CHECKOUT] Creating checkout for quote:", {
       request_id,
