@@ -123,28 +123,28 @@ export default function HowItWorks() {
                 <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                 <div>
                   <h4 className="font-semibold mb-1">Only Pay When You Win</h4>
-                  <p className="text-sm text-muted-foreground">no subscription fees; pay a one-time referral fee only when a customer accepts your quote.</p>
+                  <p className="text-sm text-muted-foreground">No subscription fees; pay a one-time referral fee only when a customer accepts your quote.</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                 <div>
                   <h4 className="font-semibold mb-1">Qualified Leads</h4>
-                  <p className="text-sm text-muted-foreground">receive pre-screened service requests that match your skills and location.</p>
+                  <p className="text-sm text-muted-foreground">Receive pre-screened service requests that match your skills and location.</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                 <div>
                   <h4 className="font-semibold mb-1">Set Your Own Prices</h4>
-                  <p className="text-sm text-muted-foreground">control your quotes and maintain your profit margins.</p>
+                  <p className="text-sm text-muted-foreground">Control your quotes and maintain your profit margins.</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                 <div>
                   <h4 className="font-semibold mb-1">Build Your Business</h4>
-                  <p className="text-sm text-muted-foreground">grow your customer base and establish your reputation through verified reviews and completed jobs.</p>
+                  <p className="text-sm text-muted-foreground">Grow your customer base and establish your reputation through verified reviews and completed jobs.</p>
                 </div>
               </div>
             </div>
