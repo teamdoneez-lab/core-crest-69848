@@ -18,6 +18,7 @@ import { accordionsData } from '@/data/serviceslist-detailed';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const proProfileSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(100, 'Name too long'),
   business_name: z.string().trim().min(1, 'Business name is required').max(100, 'Business name too long'),
   phone: z.string().trim().min(10, 'Phone must be at least 10 digits').max(15, 'Phone too long').optional().or(z.literal('')),
   address: z.string().trim().max(200, 'Address too long').optional().or(z.literal('')),
@@ -54,6 +55,7 @@ export default function ProProfile() {
   const [searchTerm, setSearchTerm] = useState('');
   
   const [formData, setFormData] = useState({
+    name: '',
     business_name: '',
     phone: '',
     address: '',
@@ -77,20 +79,26 @@ export default function ProProfile() {
   }, [user]);
 
   const fetchProProfile = async () => {
-    const { data } = await supabase
+    const { data: proData } = await supabase
       .from('pro_profiles')
       .select('*')
       .eq('pro_id', user?.id)
       .single();
     
-    if (data) {
-      setProfile(data);
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', user?.id)
+      .single();
+    
+    if (proData) {
+      setProfile(proData);
       
       // Parse selectedServices from notes field
       let selectedServices: string[] = [];
-      if (data.notes) {
+      if (proData.notes) {
         try {
-          const parsedNotes = JSON.parse(data.notes);
+          const parsedNotes = JSON.parse(proData.notes);
           selectedServices = parsedNotes.selectedServices || [];
         } catch (e) {
           console.error('Error parsing notes:', e);
@@ -99,15 +107,16 @@ export default function ProProfile() {
       
       setFormData(prev => ({
         ...prev,
-        business_name: data.business_name,
-        phone: data.phone || '',
-        address: data.address || '',
-        website: data.website || '',
-        description: data.description || '',
-        zip_code: data.zip_code || '',
-        city: data.city || '',
-        state: data.state || '',
-        service_radius: data.service_radius || 25,
+        name: profileData?.name || '',
+        business_name: proData.business_name,
+        phone: proData.phone || '',
+        address: proData.address || '',
+        website: proData.website || '',
+        description: proData.description || '',
+        zip_code: proData.zip_code || '',
+        city: proData.city || '',
+        state: proData.state || '',
+        service_radius: proData.service_radius || 25,
         selectedServices
       }));
     }
@@ -185,6 +194,14 @@ export default function ProProfile() {
         .split(',')
         .map(zip => zip.trim())
         .filter(zip => zip.length > 0);
+
+      // Update user profile name
+      const { error: nameError } = await supabase
+        .from('profiles')
+        .update({ name: validatedData.name })
+        .eq('id', user?.id);
+
+      if (nameError) throw nameError;
 
       // Upsert pro profile
       const { error: profileError } = await supabase
@@ -326,6 +343,19 @@ export default function ProProfile() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Your Name</Label>
+                  {isEditing ? (
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{formData.name || 'Not provided'}</p>
+                  )}
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="business_name">Business Name</Label>
                   {isEditing ? (

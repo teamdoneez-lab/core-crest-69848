@@ -15,6 +15,7 @@ interface ProfessionalDetailModalProps {
 interface ProDetail {
   id: string;
   name: string;
+  email?: string;
   phone?: string;
   role: string;
   created_at: string;
@@ -64,7 +65,7 @@ export const ProfessionalDetailModal = ({ proId, open, onOpenChange }: Professio
       // Fetch professional profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, name, email, phone, role, created_at, violation_flags, last_violation_at')
         .eq('id', proId)
         .single();
 
@@ -165,6 +166,13 @@ export const ProfessionalDetailModal = ({ proId, open, onOpenChange }: Professio
                   <div>
                     <p className="text-sm font-medium">Name</p>
                     <p className="text-sm text-muted-foreground">{proDetail.name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Email</p>
+                    <p className="text-sm text-muted-foreground">
+                      <Mail className="h-3 w-3 inline mr-1" />
+                      {proDetail.email || 'N/A'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium">User ID</p>
