@@ -48,8 +48,22 @@ export default function SupplierSignup() {
   });
 
   const categories = [
-    'Alternators', 'Starters', 'Compressors', 'Brake Parts', 
-    'Suspension', 'Engine Parts', 'Transmission', 'Electrical'
+    { 
+      name: 'Auto Parts', 
+      description: 'Brakes, suspension, engine, transmission, electrical, and other replacement parts.' 
+    },
+    { 
+      name: 'Shop Supplies', 
+      description: 'Oils, fluids, cleaners, fasteners, and maintenance consumables.' 
+    },
+    { 
+      name: 'Equipment & Lifts', 
+      description: 'Vehicle lifts, tire changers, compressors, and diagnostic machines.' 
+    },
+    { 
+      name: 'Tools', 
+      description: 'Hand tools, power tools, and specialty automotive tools.' 
+    }
   ];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -299,29 +313,37 @@ export default function SupplierSignup() {
                   <Label htmlFor="pickupAvailable">Pickup available at your location</Label>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Product Categories * (Select at least one)</Label>
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3">
+                  <Label className="text-base">Product Categories * (Select at least one)</Label>
+                  <div className="space-y-3">
                     {categories.map((category) => (
-                      <div key={category} className="flex items-center space-x-2">
+                      <div key={category.name} className="flex items-start space-x-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
                         <Checkbox
-                          id={category}
-                          checked={formData.productCategories.includes(category)}
+                          id={category.name}
+                          checked={formData.productCategories.includes(category.name)}
                           onCheckedChange={(checked) => {
                             if (checked) {
                               setFormData(prev => ({
                                 ...prev,
-                                productCategories: [...prev.productCategories, category]
+                                productCategories: [...prev.productCategories, category.name]
                               }));
                             } else {
                               setFormData(prev => ({
                                 ...prev,
-                                productCategories: prev.productCategories.filter(c => c !== category)
+                                productCategories: prev.productCategories.filter(c => c !== category.name)
                               }));
                             }
                           }}
+                          className="mt-1"
                         />
-                        <Label htmlFor={category} className="font-normal">{category}</Label>
+                        <div className="flex-1">
+                          <Label htmlFor={category.name} className="font-medium cursor-pointer">
+                            {category.name}
+                          </Label>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {category.description}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
