@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Building2, Upload } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Building2 } from 'lucide-react';
 
 export default function SupplierOnboarding() {
   const { user } = useAuth();
@@ -32,8 +33,22 @@ export default function SupplierOnboarding() {
   });
 
   const categories = [
-    'Alternators', 'Starters', 'Compressors', 'Brake Parts', 
-    'Suspension', 'Engine Parts', 'Transmission', 'Electrical'
+    {
+      name: 'Auto Parts',
+      description: 'Brakes, suspension, engine, transmission, electrical, and other replacement parts.'
+    },
+    {
+      name: 'Shop Supplies',
+      description: 'Oils, fluids, cleaners, fasteners, and maintenance consumables.'
+    },
+    {
+      name: 'Equipment & Lifts',
+      description: 'Vehicle lifts, tire changers, compressors, and diagnostic machines.'
+    },
+    {
+      name: 'Tools',
+      description: 'Hand tools, power tools, and specialty automotive tools.'
+    }
   ];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,9 +146,16 @@ export default function SupplierOnboarding() {
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Business Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Business Information</h3>
+              <div>
+                <h3 className="text-lg font-semibold">Business Information</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Provide your business details and contact information
+                </p>
+              </div>
+              <Separator />
               
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
@@ -225,8 +247,15 @@ export default function SupplierOnboarding() {
               </div>
             </div>
 
+            {/* Service Details */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Service Details</h3>
+              <div>
+                <h3 className="text-lg font-semibold">Service Details</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Specify your delivery options and service area
+                </p>
+              </div>
+              <Separator />
               
                 <div className="space-y-2">
                   <Label htmlFor="deliveryRadius">Delivery Radius (miles)</Label>
@@ -250,40 +279,85 @@ export default function SupplierOnboarding() {
                 <Label htmlFor="pickupAvailable">Pickup available at your location</Label>
               </div>
 
-              <div className="space-y-2">
-                <Label>Product Categories *</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {categories.map((category) => (
-                    <div key={category} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={category}
-                        checked={formData.productCategories.includes(category)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setFormData(prev => ({
-                              ...prev,
-                              productCategories: [...prev.productCategories, category]
-                            }));
-                          } else {
-                            setFormData(prev => ({
-                              ...prev,
-                              productCategories: prev.productCategories.filter(c => c !== category)
-                            }));
-                          }
-                        }}
-                      />
-                      <Label htmlFor={category} className="font-normal">{category}</Label>
+            </div>
+
+            {/* Product Categories */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">Product Categories</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Select at least one category that matches your inventory
+                </p>
+              </div>
+              <Separator />
+              
+              <div className="space-y-4">
+                {categories.map((category) => (
+                  <div key={category.name} className="flex items-start space-x-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                    <Checkbox
+                      id={category.name}
+                      checked={formData.productCategories.includes(category.name)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            productCategories: [...prev.productCategories, category.name]
+                          }));
+                        } else {
+                          setFormData(prev => ({
+                            ...prev,
+                            productCategories: prev.productCategories.filter(c => c !== category.name)
+                          }));
+                        }
+                      }}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor={category.name} className="font-medium cursor-pointer">
+                        {category.name}
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {category.description}
+                      </p>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
+                {formData.productCategories.length === 0 && (
+                  <p className="text-sm text-destructive">Please select at least one category</p>
+                )}
               </div>
             </div>
 
+            {/* Banking Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Documents</h3>
+              <div>
+                <h3 className="text-lg font-semibold">Banking Information</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Payment setup will be completed via Stripe after your application is approved
+                </p>
+              </div>
+              <Separator />
+              
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <p className="text-sm text-muted-foreground">
+                  Once your supplier application is approved, you'll receive an email with instructions to complete your Stripe Connect onboarding. This secure process will enable you to receive payments for orders.
+                </p>
+              </div>
+            </div>
+
+            {/* Documents */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">Documents</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Upload verification documents (optional but recommended)
+                </p>
+              </div>
+              <Separator />
+
               <div className="space-y-2">
                 <Label htmlFor="documents">
-                  Upload Business License / Resale Certificate (optional)
+                  Upload Business License / Resale Certificate
                 </Label>
                 <Input
                   id="documents"
@@ -291,16 +365,27 @@ export default function SupplierOnboarding() {
                   multiple
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={handleFileChange}
+                  className="cursor-pointer"
                 />
                 <p className="text-sm text-muted-foreground">
-                  Accepted formats: PDF, JPG, PNG
+                  Accepted formats: PDF, JPG, PNG. Multiple files allowed.
                 </p>
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Submitting...' : 'Submit Application'}
-            </Button>
+            {/* Submit Button */}
+            <div className="pt-4">
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={loading || formData.productCategories.length === 0}
+              >
+                {loading ? 'Submitting Application...' : 'Submit Application'}
+              </Button>
+              <p className="text-xs text-center text-muted-foreground mt-3">
+                By submitting, you agree to our terms of service and supplier agreement
+              </p>
+            </div>
           </form>
         </CardContent>
       </Card>
