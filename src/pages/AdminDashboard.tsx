@@ -28,6 +28,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 interface Customer {
   id: string;
   name: string;
+  email?: string;
   role: string;
   created_at: string;
   phone?: string;
@@ -36,6 +37,7 @@ interface Customer {
 interface Pro {
   id: string;
   name: string;
+  email?: string;
   role: string;
   created_at: string;
   phone?: string;
@@ -50,9 +52,6 @@ interface Pro {
     state?: string;
     zip_code?: string;
   }[];
-  auth_users?: {
-    email: string;
-  };
 }
 
 const addProSchema = z.object({
@@ -225,16 +224,11 @@ const AdminDashboard = () => {
       .from('pro_profiles')
       .select('*')
       .in('pro_id', proIds);
-
-    // Fetch emails from auth.users
-    const { data: usersData } = await supabase.auth.admin.listUsers();
-    const users = usersData?.users || [];
     
     // Combine the data
     const prosWithProfiles = data?.map(pro => ({
       ...pro,
-      pro_profiles: proProfilesData?.filter(pp => pp.pro_id === pro.id) || [],
-      auth_users: { email: users?.find(u => u.id === pro.id)?.email || 'N/A' }
+      pro_profiles: proProfilesData?.filter(pp => pp.pro_id === pro.id) || []
     }));
 
     setPros(prosWithProfiles || []);
@@ -905,6 +899,12 @@ const AdminDashboard = () => {
                             <p className="text-sm text-muted-foreground">
                               Joined: {format(new Date(customer.created_at), 'PPP')}
                             </p>
+                            {customer.email && (
+                              <p className="text-sm text-muted-foreground">
+                                <Mail className="h-3 w-3 inline mr-1" />
+                                {customer.email}
+                              </p>
+                            )}
                             {customer.phone && (
                               <p className="text-sm text-muted-foreground">
                                 <Phone className="h-3 w-3 inline mr-1" />
@@ -1225,10 +1225,10 @@ const AdminDashboard = () => {
                             </p>
                             
                             <div className="mt-3 space-y-1">
-                              {pro.auth_users?.email && (
+                              {pro.email && (
                                 <p className="text-sm text-muted-foreground">
                                   <Mail className="h-3 w-3 inline mr-1" />
-                                  {pro.auth_users.email}
+                                  {pro.email}
                                 </p>
                               )}
                               {(pro.phone || (pro.pro_profiles && pro.pro_profiles.length > 0 && pro.pro_profiles[0].phone)) && (
