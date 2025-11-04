@@ -41,24 +41,25 @@ export function AppointmentCancellation({
     try {
       const cancellationReason = hasRevisedQuote ? "cancelled_after_requote" : "cancelled_by_customer";
 
-      const { data, error } = await supabase.rpc("cancel_appointment_with_validation", {
-        appointment_id_input: appointmentId,
-        cancellation_reason_input: cancellationReason,
+      // Call edge function to process cancellation and refund
+      const { data, error } = await supabase.functions.invoke("process-appointment-cancellation", {
+        body: {
+          appointment_id: appointmentId,
+          cancellation_reason: cancellationReason,
+        },
       });
 
       if (error) throw error;
 
-      const result = data as { success: boolean; error?: string };
-      
-      if (!result.success) {
-        throw new Error(result.error || "Failed to cancel appointment");
+      if (!data?.success) {
+        throw new Error(data?.error || "Failed to cancel appointment");
       }
 
       toast({
         title: "Appointment Cancelled",
         description: hasRevisedQuote 
-          ? "The revised quote was declined. The professional's fee has been refunded."
-          : "Your appointment has been cancelled.",
+          ? "The revised quote was declined. The professional's referral fee has been refunded."
+          : "Your appointment has been cancelled and the professional's fee has been refunded.",
       });
 
       onCancelled();
