@@ -115,6 +115,28 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
     }
   };
 
+  // Calculate tiered referral fee for display
+  const getReferralFeeDisplay = (jobTotal: number) => {
+    let fee;
+    let rate;
+    
+    if (jobTotal < 1000) {
+      fee = Math.max(5.00, jobTotal * 0.05);
+      rate = "5%";
+    } else if (jobTotal < 5000) {
+      fee = jobTotal * 0.03;
+      rate = "3%";
+    } else if (jobTotal < 10000) {
+      fee = jobTotal * 0.02;
+      rate = "2%";
+    } else {
+      fee = jobTotal * 0.01;
+      rate = "1%";
+    }
+    
+    return `$${fee.toFixed(2)} (${rate})`;
+  };
+
   const handleDecline = async () => {
     setIsProcessing(true);
     
@@ -250,7 +272,7 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
               ⚡ Confirm now to secure this appointment
             </p>
             <p className="text-xs text-orange-700 mt-1">
-              {timeRemaining} remaining • Referral fee: ${(quote.estimated_price * 0.1).toFixed(2)}
+              {timeRemaining} remaining • Referral fee: {getReferralFeeDisplay(quote.estimated_price)}
             </p>
           </div>
         </div>
@@ -267,7 +289,7 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
             <AlertDialogHeader>
               <AlertDialogTitle>Confirm this appointment?</AlertDialogTitle>
               <AlertDialogDescription>
-                You will be redirected to pay the referral fee (${(quote.estimated_price * 0.1).toFixed(2)}). Once paid, the appointment will be confirmed and customer contact details will be shared with you.
+                You will be redirected to pay the referral fee ({getReferralFeeDisplay(quote.estimated_price)}). Once paid, the appointment will be confirmed and customer contact details will be shared with you.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

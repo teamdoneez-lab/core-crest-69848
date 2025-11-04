@@ -91,15 +91,35 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!referralFee) {
-      // Try to create it if it doesn't exist
-      console.log("[REFERRAL-CHECKOUT] No fee found, attempting to create...");
+      // Try to create it if it doesn't exist - use tiered calculation
+      console.log("[REFERRAL-CHECKOUT] No fee found, calculating tiered fee...");
+      
+      // Calculate tiered referral fee
+      let calculatedFee;
+      const estimatedPrice = quote.estimated_price;
+      
+      if (estimatedPrice < 1000) {
+        calculatedFee = Math.max(5.00, estimatedPrice * 0.05);
+      } else if (estimatedPrice < 5000) {
+        calculatedFee = estimatedPrice * 0.03;
+      } else if (estimatedPrice < 10000) {
+        calculatedFee = estimatedPrice * 0.02;
+      } else {
+        calculatedFee = estimatedPrice * 0.01;
+      }
+      
+      // Round to 2 decimal places
+      calculatedFee = Math.round(calculatedFee * 100) / 100;
+      
+      console.log("[REFERRAL-CHECKOUT] Calculated fee:", calculatedFee, "for job total:", estimatedPrice);
+      
       const { data: newFee, error: createError } = await supabaseAdmin
         .from("referral_fees")
         .insert({
           quote_id,
           pro_id: user.id,
           request_id: quote.request_id,
-          amount: quote.estimated_price * 0.10,
+          amount: calculatedFee,
           status: "owed",
         })
         .select()
