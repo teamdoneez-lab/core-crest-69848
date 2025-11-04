@@ -63,10 +63,20 @@ export default function ProductDetailPage() {
         // Fallback image for automotive parts
         const fallbackImage = 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=1200&h=1200&fit=crop&q=80';
         
+        // Check if image URL is valid (not a placeholder)
+        const isValidImageUrl = (url: string | null) => {
+          if (!url) return false;
+          if (url.includes('example.com')) return false; // Placeholder domain
+          if (url.includes('placeholder')) return false;
+          if (url.trim() === '') return false;
+          return true;
+        };
+
+        // Use fallback immediately if URL is invalid
+        const productImageUrl = isValidImageUrl(data.image_url) ? data.image_url : fallbackImage;
+        
         // Support for multiple images - currently single image, structured for future expansion
-        const productImages = data.image_url 
-          ? [data.image_url]
-          : [fallbackImage];
+        const productImages = [productImageUrl];
 
         const mappedProduct: Product = {
           id: data.id,
@@ -83,6 +93,8 @@ export default function ProductDetailPage() {
           supplierId: data.supplier_id,
         };
         setProduct(mappedProduct);
+        
+        console.log('Product loaded with image:', productImageUrl);
       }
     } catch (error) {
       console.error('Error fetching product:', error);
