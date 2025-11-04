@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
@@ -8,11 +8,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useCart } from '@/contexts/CartContext';
+import { useCart, Product } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
-import { MOCK_PRODUCT_DETAILS } from '@/data/mockProductDetails';
 import { ShoppingCart, ArrowLeft, Minus, Plus, Check } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function ProductDetailPage() {
   const { productHandle } = useParams<{ productHandle: string }>();
@@ -23,6 +23,52 @@ export default function ProductDetailPage() {
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [productLoading, setProductLoading] = useState(true);
+
+  // Fetch product from database
+  useEffect(() => {
+    if (productHandle) {
+      fetchProduct();
+    }
+  }, [productHandle]);
+
+  const fetchProduct = async () => {
+    try {
+      setProductLoading(true);
+      const { data, error } = await supabase
+        .from('supplier_products')
+        .select('*')
+        .eq('id', productHandle)
+        .eq('admin_approved', true)
+        .eq('is_active', true)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedProduct: Product = {
+          id: data.id,
+          name: data.part_name,
+          price: Number(data.price),
+          category: data.category,
+          image: data.image_url || 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=400&fit=crop',
+          description: data.description || '',
+          inStock: (data.quantity || 0) > 0,
+          sku: data.sku,
+          condition: data.condition,
+          quantity: data.quantity || 0,
+          supplierId: data.supplier_id,
+        };
+        setProduct(mappedProduct);
+      }
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      setProduct(null);
+    } finally {
+      setProductLoading(false);
+    }
+  };
 
   // Redirect if not authenticated
   if (!authLoading && !user) {
@@ -34,9 +80,7 @@ export default function ProductDetailPage() {
     return <Navigate to="/" replace />;
   }
 
-  const product = productHandle ? MOCK_PRODUCT_DETAILS[productHandle] : null;
-
-  if (!product && !authLoading && !roleLoading) {
+  if (!product && !authLoading && !roleLoading && !productLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
@@ -51,7 +95,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  if (authLoading || roleLoading || !product) {
+  if (authLoading || roleLoading || productLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
@@ -75,6 +119,10 @@ export default function ProductDetailPage() {
         </main>
       </div>
     );
+  }
+
+  if (!product) {
+    return null;
   }
 
   const handleAddToCart = () => {
@@ -111,28 +159,11 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             <Card className="overflow-hidden">
               <img
-                src={product.images[selectedImage]}
+                src={product.image}
                 alt={product.name}
                 className="w-full aspect-square object-cover"
               />
             </Card>
-            <div className="grid grid-cols-4 gap-2">
-              {product.images.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedImage(idx)}
-                  className={`aspect-square rounded-md overflow-hidden border-2 transition-colors ${
-                    selectedImage === idx ? 'border-primary' : 'border-border'
-                  }`}
-                >
-                  <img
-                    src={img}
-                    alt={`${product.name} view ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Product Info */}
@@ -142,13 +173,17 @@ export default function ProductDetailPage() {
                 {product.category}
               </Badge>
               <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-              <p className="text-muted-foreground mb-4">
-                by <span className="font-semibold text-foreground">{product.brand}</span>
-              </p>
-              <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-sm text-muted-foreground">SKU:</span>
-                <span className="text-sm font-mono">{product.sku}</span>
-              </div>
+              {product.condition && (
+                <p className="text-muted-foreground mb-4">
+                  Condition: <span className="font-semibold text-foreground">{product.condition}</span>
+                </p>
+              )}
+              {product.sku && (
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-sm text-muted-foreground">SKU:</span>
+                  <span className="text-sm font-mono">{product.sku}</span>
+                </div>
+              )}
             </div>
 
             <Separator />
@@ -208,78 +243,19 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Detailed Information Tabs */}
-        <Card>
-          <CardContent className="pt-6">
-            <Tabs defaultValue="description" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="description">Description</TabsTrigger>
-                <TabsTrigger value="specifications">Specifications</TabsTrigger>
-                <TabsTrigger value="fitment">Fitment</TabsTrigger>
-                <TabsTrigger value="cross-reference">Cross Reference</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="description" className="space-y-4 pt-4">
-                <div className="prose prose-sm max-w-none">
-                  {product.longDescription.split('\n\n').map((paragraph, idx) => (
-                    <p key={idx} className="text-muted-foreground whitespace-pre-line">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="specifications" className="pt-4">
-                <div className="divide-y">
-                  {product.specifications.map((spec, idx) => (
-                    <div key={idx} className="grid grid-cols-2 gap-4 py-3">
-                      <span className="font-medium">{spec.label}</span>
-                      <span className="text-muted-foreground">{spec.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="fitment" className="pt-4">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4 font-medium">Make</th>
-                        <th className="text-left py-3 px-4 font-medium">Model</th>
-                        <th className="text-left py-3 px-4 font-medium">Years</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {product.fitment.map((fit, idx) => (
-                        <tr key={idx} className="hover:bg-muted/50">
-                          <td className="py-3 px-4">{fit.make}</td>
-                          <td className="py-3 px-4">{fit.model}</td>
-                          <td className="py-3 px-4">{fit.years}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="cross-reference" className="pt-4">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Alternative part numbers that may be compatible:
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {product.crossReference.map((ref, idx) => (
-                      <Badge key={idx} variant="outline" className="font-mono">
-                        {ref}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+        {/* Detailed Information */}
+        {product.description && (
+          <Card>
+            <CardContent className="pt-6">
+              <h2 className="text-xl font-semibold mb-4">Description</h2>
+              <div className="prose prose-sm max-w-none">
+                <p className="text-muted-foreground whitespace-pre-line">
+                  {product.description}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );
