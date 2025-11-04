@@ -36,6 +36,7 @@ export default function ProductDetailPage() {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   // Fetch product from database
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function ProductDetailPage() {
   const fetchProduct = async () => {
     try {
       setProductLoading(true);
+      setImageError(false);
       const { data, error } = await supabase
         .from('supplier_products')
         .select('*')
@@ -58,10 +60,13 @@ export default function ProductDetailPage() {
       if (error) throw error;
 
       if (data) {
+        // Fallback image for automotive parts
+        const fallbackImage = 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=1200&h=1200&fit=crop&q=80';
+        
         // Support for multiple images - currently single image, structured for future expansion
         const productImages = data.image_url 
           ? [data.image_url]
-          : ['https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=1200&h=1200&fit=crop'];
+          : [fallbackImage];
 
         const mappedProduct: Product = {
           id: data.id,
@@ -157,12 +162,19 @@ export default function ProductDetailPage() {
 
   // Get all images or fallback to single image
   const productImages = product.images || [product.image];
-  const currentImage = productImages[selectedImageIndex];
+  const fallbackImage = 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=1200&h=1200&fit=crop&q=80';
+  const currentImage = imageError ? fallbackImage : productImages[selectedImageIndex];
 
   // Generate SEO-friendly alt text
   const generateAltText = (index: number) => {
     const baseAlt = `${product.name} - ${product.category}`;
     return index === 0 ? baseAlt : `${baseAlt} - View ${index + 1}`;
+  };
+
+  // Handle image load error
+  const handleImageError = () => {
+    console.warn('Image failed to load, using fallback');
+    setImageError(true);
   };
 
   return (
@@ -192,6 +204,7 @@ export default function ProductDetailPage() {
                   alt={generateAltText(selectedImageIndex)}
                   className="w-full h-full object-contain bg-background cursor-zoom-in transition-transform duration-300 group-hover:scale-105"
                   onClick={() => setIsLightboxOpen(true)}
+                  onError={handleImageError}
                   loading="eager"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none" />
@@ -217,13 +230,17 @@ export default function ProductDetailPage() {
                         ? 'border-2 border-primary shadow-md ring-2 ring-primary/20'
                         : 'border-2 border-border hover:border-primary/50 shadow-sm'
                     }`}
-                    onClick={() => setSelectedImageIndex(index)}
+                    onClick={() => {
+                      setSelectedImageIndex(index);
+                      setImageError(false);
+                    }}
                   >
                     <AspectRatio ratio={1}>
                       <img
                         src={image}
                         alt={generateAltText(index)}
                         className="w-full h-full object-contain bg-muted"
+                        onError={handleImageError}
                         loading="lazy"
                       />
                     </AspectRatio>
@@ -509,6 +526,7 @@ export default function ProductDetailPage() {
               src={currentImage}
               alt={generateAltText(selectedImageIndex)}
               className="max-w-full max-h-full object-contain"
+              onError={handleImageError}
               loading="eager"
             />
 
