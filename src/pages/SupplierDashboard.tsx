@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, DollarSign, TrendingUp, AlertCircle, Upload, ShoppingCart, CheckCircle, LogOut } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Package, DollarSign, TrendingUp, AlertCircle, Upload, ShoppingCart, CheckCircle, LogOut, RefreshCw } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
@@ -19,12 +20,28 @@ interface SupplierData {
   stripe_onboarding_complete: boolean;
 }
 
+interface SupplierProduct {
+  id: string;
+  sku: string;
+  part_name: string;
+  category: string;
+  condition: string;
+  price: number;
+  quantity: number;
+  admin_approved: boolean;
+  is_active: boolean;
+  created_at: string;
+  description?: string;
+}
+
 export default function SupplierDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [supplier, setSupplier] = useState<SupplierData | null>(null);
+  const [products, setProducts] = useState<SupplierProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [stripeLoading, setStripeLoading] = useState(false);
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -38,6 +55,12 @@ export default function SupplierDashboard() {
       fetchSupplierData();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (supplier) {
+      fetchProducts();
+    }
+  }, [supplier]);
 
   useEffect(() => {
     // Check for Stripe redirect status
@@ -68,7 +91,7 @@ export default function SupplierDashboard() {
         .from('suppliers')
         .select('*')
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (supplierError) throw supplierError;
       setSupplier(supplierData);
@@ -181,6 +204,41 @@ export default function SupplierDashboard() {
         variant: "destructive",
       });
     }
+  };
+
+  const fetchProducts = async () => {
+    if (!supplier?.id) return;
+    
+    setProductsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('supplier_products')
+        .select('*')
+        .eq('supplier_id', supplier.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load products",
+        variant: "destructive",
+      });
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  const getProductStatusBadge = (product: SupplierProduct) => {
+    if (!product.admin_approved) {
+      return <Badge variant="secondary">Pending Approval</Badge>;
+    }
+    if (product.admin_approved && product.is_active) {
+      return <Badge variant="default">Active</Badge>;
+    }
+    return <Badge variant="outline">Inactive</Badge>;
   };
 
   if (loading) {
@@ -342,16 +400,83 @@ export default function SupplierDashboard() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Product Inventory</CardTitle>
-                <Link to="/supplier/upload-products">
-                  <Button>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Products
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={fetchProducts} disabled={productsLoading}>
+                    <RefreshCw className={`mr-2 h-4 w-4 ${productsLoading ? 'animate-spin' : ''}`} />
+                    Refresh
                   </Button>
-                </Link>
+                  <Link to="/supplier/upload-products">
+                    <Button>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Products
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Your product listings will appear here.</p>
+              {productsLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading products...
+                </div>
+              ) : products.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground">No products uploaded yet.</p>
+                  <Link to="/supplier/upload-products">
+                    <Button className="mt-4" variant="outline">
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Your First Product
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>SKU</TableHead>
+                        <TableHead>Part Name</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Condition</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {products.map((product) => (
+                        <TableRow key={product.id}>
+                          <TableCell className="font-mono text-sm">{product.sku}</TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{product.part_name}</div>
+                              {product.description && (
+                                <div className="text-xs text-muted-foreground truncate max-w-xs">
+                                  {product.description}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{product.category}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{product.condition}</Badge>
+                          </TableCell>
+                          <TableCell>${product.price.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <span className={product.quantity === 0 ? 'text-destructive' : ''}>
+                              {product.quantity}
+                            </span>
+                          </TableCell>
+                          <TableCell>{getProductStatusBadge(product)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
