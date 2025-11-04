@@ -33,7 +33,8 @@ export function AppointmentCancellation({
 }: AppointmentCancellationProps) {
   const [isCancelling, setIsCancelling] = useState(false);
 
-  const canCancel = status === "pending_inspection" || hasRevisedQuote;
+  // PHASE 4: Anti-bypass logic - Only allow cancellation during inspection or after declining revised quote
+  const canCancel = status === "pending_inspection" || (status === "confirmed" && hasRevisedQuote);
 
   const handleCancel = async () => {
     setIsCancelling(true);
@@ -73,13 +74,13 @@ export function AppointmentCancellation({
     }
   };
 
-  if (!canCancel && status !== "pending_inspection") {
+  // Show warning if trying to cancel confirmed job without declined revised quote
+  if (status === "confirmed" && !canCancel) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          ⚠️ Cancellations are only allowed if the professional has submitted a revised quote that you declined. 
-          Please contact support if you need assistance.
+          Cancellations are only allowed if the mechanic has submitted a revised quote that you declined.
         </AlertDescription>
       </Alert>
     );
