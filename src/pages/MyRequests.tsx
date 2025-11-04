@@ -25,6 +25,7 @@ import { QuotesList } from '@/components/customer/QuotesList';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getServiceNamesByIds } from '@/utils/serviceHelpers';
+import { getServiceDescription } from '@/utils/serviceDescriptions';
 
 interface ServiceRequest {
   id: string;
@@ -378,15 +379,28 @@ const MyRequests = () => {
                                 {request.service_category.length} {request.service_category.length === 1 ? 'Service' : 'Services'}
                               </Badge>
                             </div>
-                            <div className="space-y-1.5">
-                              {getServiceNamesByIds(request.service_category).map((serviceName, idx) => (
-                                <div key={idx} className="flex items-start gap-2">
-                                  <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
-                                  <p className="text-sm text-foreground leading-relaxed">
-                                    {serviceName}
-                                  </p>
-                                </div>
-                              ))}
+                            <div className="space-y-2.5">
+                              {request.service_category.map((serviceId, idx) => {
+                                const serviceName = getServiceNamesByIds([serviceId])[0];
+                                const description = getServiceDescription(serviceId);
+                                return (
+                                  <div key={idx} className="border-l-2 border-primary/30 pl-3 py-1">
+                                    <div className="flex items-start gap-2">
+                                      <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <p className="text-sm font-medium text-foreground leading-relaxed">
+                                          {serviceName}
+                                        </p>
+                                        {description && (
+                                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                                            {description}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         </div>
