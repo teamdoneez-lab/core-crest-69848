@@ -371,17 +371,24 @@ const MyRequests = () => {
                         Services Requested
                       </h4>
                       {request.service_category && request.service_category.length > 0 ? (
-                        <div className="space-y-1">
-                          {getServiceNamesByIds(request.service_category).slice(0, 3).map((serviceName, idx) => (
-                            <p key={idx} className="text-sm text-muted-foreground">
-                              • {serviceName}
-                            </p>
-                          ))}
-                          {request.service_category.length > 3 && (
-                            <p className="text-sm text-primary font-medium">
-                              +{request.service_category.length - 3} more service{request.service_category.length - 3 > 1 ? 's' : ''}
-                            </p>
-                          )}
+                        <div className="space-y-2">
+                          <div className="bg-muted/50 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {request.service_category.length} {request.service_category.length === 1 ? 'Service' : 'Services'}
+                              </Badge>
+                            </div>
+                            <div className="space-y-1.5">
+                              {getServiceNamesByIds(request.service_category).map((serviceName, idx) => (
+                                <div key={idx} className="flex items-start gap-2">
+                                  <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                                  <p className="text-sm text-foreground leading-relaxed">
+                                    {serviceName}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       ) : request.service_categories ? (
                         <p className="text-sm text-muted-foreground">{request.service_categories.name}</p>
