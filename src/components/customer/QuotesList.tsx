@@ -256,17 +256,42 @@ export function QuotesList({ requestId }: QuotesListProps) {
   };
 
   const getStatusBadge = (status: string, isRevised: boolean = false) => {
-    const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
-      pending: { variant: "outline", label: isRevised ? "Revised Quote" : "Pending" },
-      pending_confirmation: { variant: "secondary", label: "⏱ Awaiting Confirmation" },
-      confirmed: { variant: "default", label: "✅ Confirmed" },
-      accepted: { variant: "default", label: "Accepted" },
-      declined: { variant: "destructive", label: "❌ Declined" },
-      expired: { variant: "destructive", label: "⏱ Expired" },
-    };
-
-    const config = variants[status] || variants.pending;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    if (status === 'pending') {
+      return (
+        <Badge variant="secondary">
+          {isRevised ? "Revised Quote Available" : "Available to Select"}
+        </Badge>
+      );
+    }
+    if (status === 'pending_confirmation') {
+      return (
+        <Badge className="bg-orange-100 text-orange-800">
+          ⏳ Awaiting Pro Confirmation
+        </Badge>
+      );
+    }
+    if (status === 'confirmed') {
+      return (
+        <Badge className="bg-green-100 text-green-800">
+          ✓ Confirmed - Job Secured
+        </Badge>
+      );
+    }
+    if (status === 'declined') {
+      return (
+        <Badge variant="outline" className="text-gray-500">
+          Declined by Pro
+        </Badge>
+      );
+    }
+    if (status === 'expired') {
+      return (
+        <Badge variant="outline" className="text-red-500">
+          ⏰ Expired - Choose Another
+        </Badge>
+      );
+    }
+    return <Badge variant="outline">{status}</Badge>;
   };
 
   const getTimeRemaining = (expiresAt: string | null) => {

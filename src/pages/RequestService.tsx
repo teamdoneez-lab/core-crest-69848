@@ -83,7 +83,7 @@ export default function RequestService() {
         mileage: formData.mileage ? Number(formData.mileage) : undefined
       });
 
-      // Insert service request
+      // Insert service request with status 'quote_requested'
       const { data: newRequest, error } = await supabase
         .from('service_requests')
         .insert({
@@ -99,7 +99,8 @@ export default function RequestService() {
           zip: validatedData.zip,
           contact_email: validatedData.contact_email,
           contact_phone: validatedData.contact_phone,
-          notes: validatedData.notes
+          notes: validatedData.notes,
+          status: 'quote_requested'
         })
         .select()
         .single();

@@ -87,7 +87,7 @@ const MyRequests = () => {
           )
         `)
         .eq('customer_id', user.id)
-        .eq('status', 'pending')
+        .in('status', ['quote_requested', 'pending_confirmation', 'confirmed', 'cancelled_by_customer', 'cancelled_after_requote', 'expired'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -182,24 +182,28 @@ const MyRequests = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'accepted': return 'bg-green-100 text-green-800';
+      case 'quote_requested': return 'bg-yellow-100 text-yellow-800';
+      case 'pending_confirmation': return 'bg-blue-100 text-blue-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      case 'in_progress': return 'bg-purple-100 text-purple-800';
+      case 'expired': return 'bg-gray-100 text-gray-800';
+      case 'cancelled_by_customer':
+      case 'cancelled_after_requote': 
+      case 'cancelled_off_platform': return 'bg-red-100 text-red-800';
       case 'completed': return 'bg-emerald-100 text-emerald-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return '🟡';
-      case 'accepted':
-      case 'scheduled': return '🟢';
-      case 'completed': return '🔵';
-      case 'cancelled': return '🔴';
+      case 'quote_requested': return '🟡';
+      case 'pending_confirmation': return '⏳';
+      case 'confirmed': return '🟢';
+      case 'completed': return '✅';
+      case 'expired': return '⏰';
+      case 'cancelled_by_customer':
+      case 'cancelled_after_requote':
+      case 'cancelled_off_platform': return '🔴';
       default: return '⚪';
     }
   };
@@ -263,12 +267,12 @@ const MyRequests = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="accepted">Accepted</SelectItem>
+                    <SelectItem value="quote_requested">Awaiting Quotes</SelectItem>
+                    <SelectItem value="pending_confirmation">Pending Confirmation</SelectItem>
                     <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="scheduled">Scheduled</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value="cancelled_by_customer">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -449,7 +453,7 @@ const MyRequests = () => {
 
                   {/* Actions */}
                   <div className="flex flex-wrap gap-2 pt-4 border-t">
-                    {request.status === 'pending' && (
+                    {request.status === 'quote_requested' && (
                       <>
                         <Button variant="outline" size="sm" onClick={() => handleCancelRequest(request.id)}>
                           <Trash2 className="h-4 w-4 mr-2" />
@@ -458,7 +462,7 @@ const MyRequests = () => {
                       </>
                     )}
 
-                    {request.status === 'accepted' && (
+                    {request.status === 'confirmed' && (
                       <Button variant="outline" size="sm" onClick={() => navigate('/appointments')}>
                         <Eye className="h-4 w-4 mr-2" />
                         View Appointment
