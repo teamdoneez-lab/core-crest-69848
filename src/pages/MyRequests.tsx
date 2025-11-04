@@ -88,7 +88,6 @@ const MyRequests = () => {
           )
         `)
         .eq('customer_id', user.id)
-        .in('status', ['quote_requested', 'pending_confirmation', 'confirmed', 'cancelled_by_customer', 'cancelled_after_requote', 'expired'])
         .order('created_at', { ascending: false });
 
       if (error) {
