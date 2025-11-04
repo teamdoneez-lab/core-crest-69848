@@ -8,6 +8,10 @@ export interface Product {
   image: string;
   description: string;
   inStock: boolean;
+  sku?: string;
+  condition?: string;
+  quantity?: number;
+  supplierId?: string;
 }
 
 export interface CartItem extends Product {

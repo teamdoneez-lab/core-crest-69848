@@ -1,19 +1,19 @@
 import { Navigate } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
 import { Navigation } from '@/components/Navigation';
 import { ProductGrid } from '@/components/marketplace/ProductGrid';
 import { ProductFilterSidebar } from '@/components/marketplace/ProductFilterSidebar';
 import { VehicleSelector } from '@/components/marketplace/VehicleSelector';
-import { useCart } from '@/contexts/CartContext';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
+import { useCart, Product } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Vehicle } from '@/data/mockVehicles';
 import { Package, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function ProMarketplace() {
   const { user, loading: authLoading } = useAuth();
@@ -27,9 +27,55 @@ export default function ProMarketplace() {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('relevance');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   
   // Debounce search query (300ms)
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Fetch products from Supabase
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setProductsLoading(true);
+      const { data, error } = await supabase
+        .from('supplier_products')
+        .select('*')
+        .eq('admin_approved', true)
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      // Map database products to Product interface
+      const mappedProducts: Product[] = (data || []).map(product => ({
+        id: product.id,
+        name: product.part_name,
+        price: Number(product.price),
+        category: product.category,
+        image: product.image_url || 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=400&fit=crop',
+        description: product.description || '',
+        inStock: (product.quantity || 0) > 0,
+        sku: product.sku,
+        condition: product.condition,
+        quantity: product.quantity || 0,
+        supplierId: product.supplier_id,
+      }));
+
+      setProducts(mappedProducts);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load products. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setProductsLoading(false);
+    }
+  };
 
   // Redirect if not authenticated
   if (!authLoading && !user) {
@@ -41,7 +87,7 @@ export default function ProMarketplace() {
     return <Navigate to="/" replace />;
   }
 
-  const handleAddToCart = (product: typeof MOCK_PRODUCTS[0]) => {
+  const handleAddToCart = (product: Product) => {
     addToCart(product);
     toast({
       title: 'Added to cart',
@@ -85,7 +131,7 @@ export default function ProMarketplace() {
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
-    let filtered = MOCK_PRODUCTS;
+    let filtered = products;
 
     // Apply search filter (debounced)
     if (debouncedSearchQuery.trim()) {
@@ -141,7 +187,7 @@ export default function ProMarketplace() {
     }
 
     return sorted;
-  }, [selectedCategories, selectedPartTypes, selectedBrands, selectedVehicle, debouncedSearchQuery, sortBy]);
+  }, [products, selectedCategories, selectedPartTypes, selectedBrands, selectedVehicle, debouncedSearchQuery, sortBy]);
 
   if (authLoading || roleLoading) {
     return (
@@ -224,7 +270,7 @@ export default function ProMarketplace() {
             <ProductGrid
               products={filteredProducts}
               onAddToCart={handleAddToCart}
-              isLoading={false}
+              isLoading={productsLoading}
             />
           </div>
         </div>
