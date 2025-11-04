@@ -107,11 +107,11 @@ export default function ServiceRequests() {
       // Get pro's profile to find their location
       const { data: proProfile } = await supabase
         .from('pro_profiles')
-        .select('latitude, longitude')
+        .select('latitude, longitude, is_verified')
         .eq('pro_id', user.id)
         .single();
 
-      // Build query with filters - only show pending requests
+      // Build query with filters
       let query = supabase
         .from('service_requests')
         .select(`
@@ -125,7 +125,7 @@ export default function ServiceRequests() {
             pro_id
           )
         `, { count: 'exact' })
-        .eq('status', 'pending'); // Always filter for pending requests
+        .in('status', ['pending', 'quote_requested']); // Show both pending and quote_requested
 
       // Apply date filters
       if (filters.dateFrom) {
