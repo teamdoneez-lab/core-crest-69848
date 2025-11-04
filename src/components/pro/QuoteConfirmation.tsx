@@ -87,9 +87,19 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
 
       if (error) throw error;
 
-      // Redirect to Stripe checkout
+      // Redirect to Stripe checkout in new tab
       if (data?.url) {
-        window.location.href = data.url;
+        const newWindow = window.open(data.url, '_blank');
+        if (!newWindow) {
+          // Fallback if popup blocked
+          window.location.href = data.url;
+        } else {
+          setIsProcessing(false);
+          toast({
+            title: "Payment Window Opened",
+            description: "Complete payment in the new window to confirm this job.",
+          });
+        }
       } else {
         throw new Error("No checkout URL received");
       }

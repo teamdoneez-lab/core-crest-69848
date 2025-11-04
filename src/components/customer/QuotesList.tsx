@@ -30,7 +30,16 @@ interface Quote {
   is_revised: boolean;
   pro_profiles: {
     business_name: string | null;
+    description: string | null;
+    phone: string | null;
+    website: string | null;
+    is_verified: boolean | null;
   } | null;
+  pro_service_categories?: Array<{
+    service_categories: {
+      name: string;
+    };
+  }>;
 }
 
 interface QuotesListProps {
@@ -77,19 +86,38 @@ export function QuotesList({ requestId }: QuotesListProps) {
 
       if (quotesError) throw quotesError;
 
-      // Fetch pro profiles for each quote
+      // Fetch pro profiles and service categories for each quote
       if (quotesData && quotesData.length > 0) {
         const proIds = [...new Set(quotesData.map(q => q.pro_id))];
+        
+        // Get pro profiles with more details
         const { data: proProfilesData } = await supabase
           .from("pro_profiles")
-          .select("pro_id, business_name")
+          .select("pro_id, business_name, description, phone, website, is_verified")
+          .in("pro_id", proIds);
+
+        // Get service categories for each pro
+        const { data: serviceCategoriesData } = await supabase
+          .from("pro_service_categories")
+          .select(`
+            pro_id,
+            service_categories (
+              name
+            )
+          `)
           .in("pro_id", proIds);
 
         // Merge the data
-        const quotesWithProfiles = quotesData.map(quote => ({
-          ...quote,
-          pro_profiles: proProfilesData?.find(p => p.pro_id === quote.pro_id) || null
-        }));
+        const quotesWithProfiles = quotesData.map(quote => {
+          const profile = proProfilesData?.find(p => p.pro_id === quote.pro_id);
+          const categories = serviceCategoriesData?.filter(c => c.pro_id === quote.pro_id) || [];
+          
+          return {
+            ...quote,
+            pro_profiles: profile || null,
+            pro_service_categories: categories
+          };
+        });
 
         setQuotes(quotesWithProfiles);
       } else {
@@ -279,13 +307,36 @@ export function QuotesList({ requestId }: QuotesListProps) {
         <Card key={quote.id}>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1">
                 <CardTitle className="text-lg">
                   {quote.pro_profiles?.business_name || "Unknown Professional"}
                 </CardTitle>
-                <Badge variant="secondary" className="mt-1">
-                  ✓ Verified Professional
-                </Badge>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {quote.pro_profiles?.is_verified && (
+                    <Badge variant="secondary" className="text-xs">
+                      ✓ Verified
+                    </Badge>
+                  )}
+                  {quote.pro_service_categories && quote.pro_service_categories.length > 0 && (
+                    <>
+                      {quote.pro_service_categories.slice(0, 2).map((cat, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {cat.service_categories.name}
+                        </Badge>
+                      ))}
+                      {quote.pro_service_categories.length > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{quote.pro_service_categories.length - 2} more
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                </div>
+                {quote.pro_profiles?.description && (
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                    {quote.pro_profiles.description}
+                  </p>
+                )}
               </div>
               {getStatusBadge(quote.status, quote.is_revised)}
             </div>
