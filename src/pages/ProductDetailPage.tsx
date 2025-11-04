@@ -10,9 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useCart, Product } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingCart, ArrowLeft, Minus, Plus, Check, Package } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Minus, Plus, Check, Package, ZoomIn, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import {
   Table,
   TableBody,
@@ -30,7 +32,8 @@ export default function ProductDetailPage() {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
 
@@ -55,12 +58,18 @@ export default function ProductDetailPage() {
       if (error) throw error;
 
       if (data) {
+        // Support for multiple images - currently single image, structured for future expansion
+        const productImages = data.image_url 
+          ? [data.image_url]
+          : ['https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=1200&h=1200&fit=crop'];
+
         const mappedProduct: Product = {
           id: data.id,
           name: data.part_name,
           price: Number(data.price),
           category: data.category,
-          image: data.image_url || 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=400&fit=crop',
+          image: productImages[0], // Primary image
+          images: productImages, // All images for gallery
           description: data.description || '',
           inStock: (data.quantity || 0) > 0,
           sku: data.sku,
@@ -146,6 +155,16 @@ export default function ProductDetailPage() {
   const incrementQuantity = () => setQuantity(prev => Math.min(prev + 1, 99));
   const decrementQuantity = () => setQuantity(prev => Math.max(prev - 1, 1));
 
+  // Get all images or fallback to single image
+  const productImages = product.images || [product.image];
+  const currentImage = productImages[selectedImageIndex];
+
+  // Generate SEO-friendly alt text
+  const generateAltText = (index: number) => {
+    const baseAlt = `${product.name} - ${product.category}`;
+    return index === 0 ? baseAlt : `${baseAlt} - View ${index + 1}`;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -165,23 +184,60 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Image Gallery */}
           <div className="space-y-4">
-            <Card className="overflow-hidden border-2">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full aspect-square object-cover bg-muted"
-              />
-            </Card>
-            {/* Thumbnail gallery - ready for multiple images */}
-            <div className="grid grid-cols-4 gap-2">
-              <Card className="overflow-hidden border-2 border-primary cursor-pointer">
+            {/* Main Image with Zoom */}
+            <Card className="overflow-hidden border-2 shadow-lg group relative">
+              <AspectRatio ratio={1}>
                 <img
-                  src={product.image}
-                  alt={`${product.name} thumbnail`}
-                  className="w-full aspect-square object-cover"
+                  src={currentImage}
+                  alt={generateAltText(selectedImageIndex)}
+                  className="w-full h-full object-contain bg-background cursor-zoom-in transition-transform duration-300 group-hover:scale-105"
+                  onClick={() => setIsLightboxOpen(true)}
+                  loading="eager"
                 />
-              </Card>
-            </div>
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none" />
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                  onClick={() => setIsLightboxOpen(true)}
+                >
+                  <ZoomIn className="h-5 w-5" />
+                </Button>
+              </AspectRatio>
+            </Card>
+
+            {/* Thumbnail Gallery */}
+            {productImages.length > 1 && (
+              <div className="grid grid-cols-4 gap-3">
+                {productImages.map((image, index) => (
+                  <Card
+                    key={index}
+                    className={`overflow-hidden cursor-pointer transition-all duration-200 ${
+                      selectedImageIndex === index
+                        ? 'border-2 border-primary shadow-md ring-2 ring-primary/20'
+                        : 'border-2 border-border hover:border-primary/50 shadow-sm'
+                    }`}
+                    onClick={() => setSelectedImageIndex(index)}
+                  >
+                    <AspectRatio ratio={1}>
+                      <img
+                        src={image}
+                        alt={generateAltText(index)}
+                        className="w-full h-full object-contain bg-muted"
+                        loading="lazy"
+                      />
+                    </AspectRatio>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* Image Counter */}
+            {productImages.length > 1 && (
+              <div className="text-center text-sm text-muted-foreground">
+                Image {selectedImageIndex + 1} of {productImages.length}
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
@@ -407,6 +463,65 @@ export default function ProductDetailPage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Lightbox Modal for Image Zoom */}
+      <Dialog open={isLightboxOpen} onOpenChange={setIsLightboxOpen}>
+        <DialogContent className="max-w-7xl w-[95vw] h-[95vh] p-0 bg-background/95 backdrop-blur-sm">
+          <DialogTitle className="sr-only">
+            Product Image Zoom - {product.name}
+          </DialogTitle>
+          <div className="relative w-full h-full flex items-center justify-center p-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 z-50 bg-background/80 backdrop-blur-sm hover:bg-background"
+              onClick={() => setIsLightboxOpen(false)}
+            >
+              <X className="h-6 w-6" />
+            </Button>
+
+            {/* Navigation for multiple images */}
+            {productImages.length > 1 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-50 bg-background/80 backdrop-blur-sm hover:bg-background"
+                  onClick={() => setSelectedImageIndex(prev => (prev === 0 ? productImages.length - 1 : prev - 1))}
+                  disabled={selectedImageIndex === 0}
+                >
+                  <ArrowLeft className="h-6 w-6" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-50 bg-background/80 backdrop-blur-sm hover:bg-background"
+                  onClick={() => setSelectedImageIndex(prev => (prev === productImages.length - 1 ? 0 : prev + 1))}
+                  disabled={selectedImageIndex === productImages.length - 1}
+                >
+                  <ArrowLeft className="h-6 w-6 rotate-180" />
+                </Button>
+              </>
+            )}
+
+            {/* High-res image */}
+            <img
+              src={currentImage}
+              alt={generateAltText(selectedImageIndex)}
+              className="max-w-full max-h-full object-contain"
+              loading="eager"
+            />
+
+            {/* Image info */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg">
+              <p className="text-sm font-medium">
+                {product.name}
+                {productImages.length > 1 && ` - ${selectedImageIndex + 1}/${productImages.length}`}
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

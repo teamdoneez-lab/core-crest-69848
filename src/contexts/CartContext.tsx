@@ -6,6 +6,7 @@ export interface Product {
   price: number;
   category: string;
   image: string;
+  images?: string[]; // Support for multiple images
   description: string;
   inStock: boolean;
   sku?: string;
