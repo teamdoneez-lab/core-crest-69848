@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
-import { CheckCircle, XCircle, Eye, Building2 } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Building2, Package, AlertCircle } from 'lucide-react';
 
 interface Supplier {
   id: string;
@@ -26,16 +26,40 @@ interface Supplier {
   created_at: string;
 }
 
+interface SupplierProduct {
+  id: string;
+  supplier_id: string;
+  sku: string;
+  part_name: string;
+  category: string;
+  condition: string;
+  price: number;
+  quantity: number;
+  admin_approved: boolean;
+  is_active: boolean;
+  created_at: string;
+  suppliers: {
+    business_name: string;
+    stripe_onboarding_complete: boolean;
+  };
+}
+
 export function SuppliersTab() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [products, setProducts] = useState<SupplierProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<SupplierProduct | null>(null);
   const [verificationNotes, setVerificationNotes] = useState('');
   const [showDialog, setShowDialog] = useState(false);
+  const [showProductDialog, setShowProductDialog] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
+  const [productActionType, setProductActionType] = useState<'approve' | 'reject' | null>(null);
 
   useEffect(() => {
     fetchSuppliers();
+    fetchPendingProducts();
   }, []);
 
   const fetchSuppliers = async () => {
@@ -52,6 +76,30 @@ export function SuppliersTab() {
       toast({ title: 'Error', description: 'Failed to load suppliers', variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPendingProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('supplier_products')
+        .select(`
+          *,
+          suppliers (
+            business_name,
+            stripe_onboarding_complete
+          )
+        `)
+        .eq('admin_approved', false)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({ title: 'Error', description: 'Failed to load products', variant: 'destructive' });
+    } finally {
+      setProductsLoading(false);
     }
   };
 
@@ -108,6 +156,43 @@ export function SuppliersTab() {
     }
   };
 
+  const openProductDialog = (product: SupplierProduct, action: 'approve' | 'reject') => {
+    setSelectedProduct(product);
+    setProductActionType(action);
+    setShowProductDialog(true);
+  };
+
+  const handleProductApproval = async () => {
+    if (!selectedProduct || !productActionType) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('supplier_products')
+        .update({
+          admin_approved: productActionType === 'approve',
+          is_active: productActionType === 'approve',
+          approved_by: user?.id,
+          approved_at: new Date().toISOString(),
+        })
+        .eq('id', selectedProduct.id);
+
+      if (error) throw error;
+
+      toast({ 
+        title: 'Success', 
+        description: `Product ${productActionType === 'approve' ? 'approved' : 'rejected'} successfully.` 
+      });
+      
+      setShowProductDialog(false);
+      fetchPendingProducts();
+    } catch (error: any) {
+      console.error('Product approval error:', error);
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       approved: 'default',
@@ -123,7 +208,7 @@ export function SuppliersTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -220,6 +305,98 @@ export function SuppliersTab() {
         </CardContent>
       </Card>
 
+      {/* Pending Products Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Package className="h-6 w-6 text-primary" />
+            <div>
+              <CardTitle>Pending Product Approvals</CardTitle>
+              <CardDescription>
+                Review and approve products uploaded by suppliers
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {productsLoading ? (
+            <div>Loading products...</div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No pending products to review
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Supplier</TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Part Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Condition</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{product.suppliers.business_name}</div>
+                          {!product.suppliers.stripe_onboarding_complete && (
+                            <div className="flex items-center gap-1 text-xs text-orange-600">
+                              <AlertCircle className="h-3 w-3" />
+                              Stripe not connected
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">{product.sku}</TableCell>
+                      <TableCell>{product.part_name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{product.category}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{product.condition}</Badge>
+                      </TableCell>
+                      <TableCell>${product.price.toFixed(2)}</TableCell>
+                      <TableCell>{product.quantity}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">Pending Approval</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openProductDialog(product, 'approve')}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openProductDialog(product, 'reject')}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -291,6 +468,71 @@ export function SuppliersTab() {
               </Button>
             </DialogFooter>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Product Approval Dialog */}
+      <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {productActionType === 'approve' ? 'Approve Product' : 'Reject Product'}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedProduct?.part_name} by {selectedProduct?.suppliers.business_name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedProduct && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>SKU</Label>
+                  <p className="text-sm font-mono">{selectedProduct.sku}</p>
+                </div>
+                <div>
+                  <Label>Category</Label>
+                  <p className="text-sm">{selectedProduct.category}</p>
+                </div>
+                <div>
+                  <Label>Condition</Label>
+                  <p className="text-sm">{selectedProduct.condition}</p>
+                </div>
+                <div>
+                  <Label>Price</Label>
+                  <p className="text-sm">${selectedProduct.price.toFixed(2)}</p>
+                </div>
+                <div>
+                  <Label>Quantity</Label>
+                  <p className="text-sm">{selectedProduct.quantity}</p>
+                </div>
+              </div>
+
+              {!selectedProduct.suppliers.stripe_onboarding_complete && (
+                <div className="flex items-start gap-2 p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-md">
+                  <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-orange-900 dark:text-orange-100">Stripe Not Connected</p>
+                    <p className="text-orange-700 dark:text-orange-300">
+                      This supplier hasn't completed Stripe setup. They won't be able to receive payouts until they connect their account.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowProductDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleProductApproval}
+              variant={productActionType === 'approve' ? 'default' : 'destructive'}
+            >
+              {productActionType === 'approve' ? 'Approve Product' : 'Reject Product'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
