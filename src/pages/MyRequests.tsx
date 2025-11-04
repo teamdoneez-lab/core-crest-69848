@@ -24,6 +24,7 @@ import {
 import { QuotesList } from '@/components/customer/QuotesList';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { getServiceNamesByIds } from '@/utils/serviceHelpers';
 
 interface ServiceRequest {
   id: string;
@@ -368,16 +369,18 @@ const MyRequests = () => {
                     <div>
                       <h4 className="font-semibold mb-2 flex items-center gap-2">
                         <Package className="h-4 w-4" />
-                        Services
+                        Services Requested
                       </h4>
                       {request.service_category && request.service_category.length > 0 ? (
                         <div className="space-y-1">
-                          {request.service_category.slice(0, 2).map((service, idx) => (
-                            <p key={idx} className="text-sm text-muted-foreground">• {service}</p>
+                          {getServiceNamesByIds(request.service_category).slice(0, 3).map((serviceName, idx) => (
+                            <p key={idx} className="text-sm text-muted-foreground">
+                              • {serviceName}
+                            </p>
                           ))}
-                          {request.service_category.length > 2 && (
+                          {request.service_category.length > 3 && (
                             <p className="text-sm text-primary font-medium">
-                              +{request.service_category.length - 2} more
+                              +{request.service_category.length - 3} more service{request.service_category.length - 3 > 1 ? 's' : ''}
                             </p>
                           )}
                         </div>
