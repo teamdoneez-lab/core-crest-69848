@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, DollarSign, TrendingUp, AlertCircle, Upload, ShoppingCart } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Package, DollarSign, TrendingUp, AlertCircle, Upload, ShoppingCart, CheckCircle } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 
 interface SupplierData {
   id: string;
@@ -20,8 +21,10 @@ interface SupplierData {
 
 export default function SupplierDashboard() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [supplier, setSupplier] = useState<SupplierData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [stripeLoading, setStripeLoading] = useState(false);
   const [stats, setStats] = useState({
     totalProducts: 0,
     activeProducts: 0,
@@ -34,6 +37,29 @@ export default function SupplierDashboard() {
       fetchSupplierData();
     }
   }, [user]);
+
+  useEffect(() => {
+    // Check for Stripe redirect status
+    const stripeSuccess = searchParams.get('stripe_success');
+    const stripeRefresh = searchParams.get('stripe_refresh');
+
+    if (stripeSuccess === 'true') {
+      verifyStripeStatus();
+      toast({
+        title: "Stripe Setup Complete",
+        description: "Your Stripe account has been connected successfully!",
+      });
+      // Clean up URL
+      window.history.replaceState({}, '', '/supplier-dashboard');
+    } else if (stripeRefresh === 'true') {
+      toast({
+        title: "Setup Incomplete",
+        description: "Please complete the Stripe setup to receive payouts.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, '', '/supplier-dashboard');
+    }
+  }, [searchParams]);
 
   const fetchSupplierData = async () => {
     try {
@@ -85,6 +111,43 @@ export default function SupplierDashboard() {
       console.error('Error fetching supplier data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStripeSetup = async () => {
+    setStripeLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-supplier-connect-account');
+      
+      if (error) throw error;
+      if (!data?.url) throw new Error('No redirect URL received');
+
+      // Redirect to Stripe onboarding
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error('Error setting up Stripe:', error);
+      toast({
+        title: "Stripe Setup Failed",
+        description: "Please try again or contact support if the issue persists.",
+        variant: "destructive",
+      });
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
+  const verifyStripeStatus = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-supplier-stripe-status');
+      
+      if (error) throw error;
+      
+      if (data?.onboarding_complete) {
+        // Refresh supplier data to show updated status
+        await fetchSupplierData();
+      }
+    } catch (error) {
+      console.error('Error verifying Stripe status:', error);
     }
   };
 
@@ -164,8 +227,24 @@ export default function SupplierDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button>Complete Stripe Setup</Button>
+            <Button onClick={handleStripeSetup} disabled={stripeLoading}>
+              {stripeLoading ? 'Connecting...' : 'Complete Stripe Setup'}
+            </Button>
           </CardContent>
+        </Card>
+      )}
+
+      {supplier.status === 'approved' && supplier.stripe_onboarding_complete && (
+        <Card className="mb-6 border-green-500">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CardTitle>Stripe Account Connected</CardTitle>
+            </div>
+            <CardDescription>
+              Your bank account is connected and ready to receive payouts.
+            </CardDescription>
+          </CardHeader>
         </Card>
       )}
 
