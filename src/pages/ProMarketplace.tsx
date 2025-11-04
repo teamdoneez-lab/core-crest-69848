@@ -49,13 +49,25 @@ export default function ProMarketplace() {
 
       if (error) throw error;
 
+      // Fallback image for automotive parts
+      const fallbackImage = 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=1200&h=1200&fit=crop&q=80';
+      
+      // Check if image URL is valid (not a placeholder)
+      const isValidImageUrl = (url: string | null) => {
+        if (!url) return false;
+        if (url.includes('example.com')) return false; // Placeholder domain
+        if (url.includes('placeholder')) return false;
+        if (url.trim() === '') return false;
+        return true;
+      };
+
       // Map database products to Product interface
       const mappedProducts: Product[] = (data || []).map(product => ({
         id: product.id,
         name: product.part_name,
         price: Number(product.price),
         category: product.category,
-        image: product.image_url || 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=400&fit=crop',
+        image: isValidImageUrl(product.image_url) ? product.image_url : fallbackImage,
         description: product.description || '',
         inStock: (product.quantity || 0) > 0,
         sku: product.sku,
@@ -65,6 +77,7 @@ export default function ProMarketplace() {
       }));
 
       setProducts(mappedProducts);
+      console.log(`Loaded ${mappedProducts.length} products with validated images`);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast({
