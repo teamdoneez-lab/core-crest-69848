@@ -77,7 +77,7 @@ export function Navigation() {
               isActive('/my-requests') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
-            Requests
+            My Requests
           </Link>
           <Link 
             to="/appointments" 
