@@ -28,16 +28,26 @@ serve(async (req) => {
       throw new Error("User not authenticated");
     }
 
+    console.log("Verifying Stripe status for user:", user.id);
+
     // Get supplier record
     const { data: supplier, error: supplierError } = await supabaseClient
       .from('suppliers')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (supplierError || !supplier) {
-      throw new Error("Supplier not found");
+    if (supplierError) {
+      console.error("Error fetching supplier:", supplierError);
+      throw new Error(`Database error: ${supplierError.message}`);
     }
+
+    if (!supplier) {
+      console.error("No supplier record found for user:", user.id);
+      throw new Error("Supplier record not found");
+    }
+
+    console.log("Checking Stripe status for supplier:", supplier.id);
 
     if (!supplier.stripe_connect_account_id) {
       return new Response(JSON.stringify({ onboarding_complete: false }), {
@@ -77,8 +87,9 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Error verifying Stripe status:", error);
+    const errorMessage = error instanceof Error ? error.message : "Failed to verify Stripe status";
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to verify Stripe status" }),
+      JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

@@ -41,3 +41,12 @@ verify_jwt = true
 
 [functions.delete-pro]
 verify_jwt = true
+
+[functions.create-supplier-connect-account]
+verify_jwt = true
+
+[functions.verify-supplier-stripe-status]
+verify_jwt = true
+
+[functions.send-supplier-notification]
+verify_jwt = true
