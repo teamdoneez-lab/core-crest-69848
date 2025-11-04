@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, DollarSign, TrendingUp, AlertCircle, Upload, ShoppingCart, CheckCircle } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Package, DollarSign, TrendingUp, AlertCircle, Upload, ShoppingCart, CheckCircle, LogOut } from 'lucide-react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
 interface SupplierData {
@@ -21,6 +21,7 @@ interface SupplierData {
 
 export default function SupplierDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [supplier, setSupplier] = useState<SupplierData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -161,6 +162,27 @@ export default function SupplierDashboard() {
     return <Badge variant={variants[status] || 'secondary'}>{status.toUpperCase()}</Badge>;
   };
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+      
+      navigate('/auth');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast({
+        title: "Logout failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="container py-10">
@@ -197,7 +219,13 @@ export default function SupplierDashboard() {
             <h1 className="text-3xl font-bold">{supplier.business_name}</h1>
             <p className="text-muted-foreground">Supplier Dashboard</p>
           </div>
-          {getStatusBadge(supplier.status)}
+          <div className="flex items-center gap-3">
+            {getStatusBadge(supplier.status)}
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
 
