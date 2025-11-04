@@ -467,6 +467,7 @@ export type Database = {
           request_id: string
           status: string
           stripe_payment_intent: string | null
+          stripe_refund_id: string | null
           stripe_session_id: string | null
           updated_at: string
         }
@@ -482,6 +483,7 @@ export type Database = {
           request_id: string
           status?: string
           stripe_payment_intent?: string | null
+          stripe_refund_id?: string | null
           stripe_session_id?: string | null
           updated_at?: string
         }
@@ -497,6 +499,7 @@ export type Database = {
           request_id?: string
           status?: string
           stripe_payment_intent?: string | null
+          stripe_refund_id?: string | null
           stripe_session_id?: string | null
           updated_at?: string
         }
