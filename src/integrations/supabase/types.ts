@@ -1133,6 +1133,10 @@ export type Database = {
         Args: { _pro_id: string; _request_id: string }
         Returns: boolean
       }
+      pro_quoted_customer_request: {
+        Args: { _customer_id: string; _pro_id: string }
+        Returns: boolean
+      }
       promote_user_to_admin: { Args: { user_email: string }; Returns: Json }
       release_expired_job_locks: { Args: never; Returns: number }
       schedule_appointment: {
