@@ -31,16 +31,23 @@ export function useRole() {
         .from('profiles')
         .select('*')
         .eq('id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching profile:', error);
+        setLoading(false);
+        return;
+      }
+
+      if (!profileData) {
+        console.warn('No profile found for user:', user?.id);
+        setLoading(false);
         return;
       }
 
       setProfile(profileData);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Unexpected error fetching profile:', error);
     } finally {
       setLoading(false);
     }

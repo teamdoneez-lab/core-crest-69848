@@ -105,11 +105,15 @@ export default function ServiceRequests() {
       }
 
       // Get pro's profile to find their location
-      const { data: proProfile } = await supabase
+      const { data: proProfile, error: proError } = await supabase
         .from('pro_profiles')
         .select('latitude, longitude')
         .eq('pro_id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (proError) {
+        console.error('Error fetching pro profile:', proError);
+      }
 
       // Build query with filters - only show pending requests
       let query = supabase
