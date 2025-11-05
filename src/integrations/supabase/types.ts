@@ -1137,6 +1137,10 @@ export type Database = {
         Args: { _customer_id: string; _pro_id: string }
         Returns: boolean
       }
+      pro_serves_category: {
+        Args: { _category_id: string; _pro_id: string }
+        Returns: boolean
+      }
       promote_user_to_admin: { Args: { user_email: string }; Returns: Json }
       release_expired_job_locks: { Args: never; Returns: number }
       schedule_appointment: {
@@ -1155,6 +1159,7 @@ export type Database = {
         Args: { _quote_pro_id: string; _user_id: string }
         Returns: boolean
       }
+      user_is_verified_pro: { Args: { _user_id: string }; Returns: boolean }
       user_owns_request: {
         Args: { _request_id: string; _user_id: string }
         Returns: boolean
