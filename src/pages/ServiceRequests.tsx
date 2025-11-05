@@ -93,7 +93,7 @@ export default function ServiceRequests() {
       fetchPendingQuotes();
       fetchServiceRequests();
     }
-  }, [user, currentPage, filters]);
+  }, [user]);
 
   const fetchServiceRequests = async () => {
     try {
@@ -107,11 +107,11 @@ export default function ServiceRequests() {
       // Get pro's profile to find their location
       const { data: proProfile } = await supabase
         .from('pro_profiles')
-        .select('latitude, longitude, is_verified')
+        .select('latitude, longitude')
         .eq('pro_id', user.id)
         .single();
 
-      // Build query with filters
+      // Build query with filters - only show pending requests
       let query = supabase
         .from('service_requests')
         .select(`
@@ -125,7 +125,7 @@ export default function ServiceRequests() {
             pro_id
           )
         `, { count: 'exact' })
-        .in('status', ['pending', 'quote_requested']); // Show both pending and quote_requested
+        .eq('status', 'pending'); // Always filter for pending requests
 
       // Apply date filters
       if (filters.dateFrom) {
