@@ -346,10 +346,13 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string | null
+          email_verified: boolean | null
           id: string
+          is_verified: boolean | null
           last_violation_at: string | null
           name: string | null
           phone: string | null
+          profile_complete: boolean | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
           violation_flags: number | null
@@ -357,10 +360,13 @@ export type Database = {
         Insert: {
           created_at?: string | null
           email?: string | null
+          email_verified?: boolean | null
           id: string
+          is_verified?: boolean | null
           last_violation_at?: string | null
           name?: string | null
           phone?: string | null
+          profile_complete?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
           violation_flags?: number | null
@@ -368,10 +374,13 @@ export type Database = {
         Update: {
           created_at?: string | null
           email?: string | null
+          email_verified?: boolean | null
           id?: string
+          is_verified?: boolean | null
           last_violation_at?: string | null
           name?: string | null
           phone?: string | null
+          profile_complete?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
           violation_flags?: number | null
@@ -1120,6 +1129,10 @@ export type Database = {
         }
         Returns: Json
       }
+      pro_can_quote_request: {
+        Args: { _pro_id: string; _request_id: string }
+        Returns: boolean
+      }
       promote_user_to_admin: { Args: { user_email: string }; Returns: Json }
       release_expired_job_locks: { Args: never; Returns: number }
       schedule_appointment: {
@@ -1133,6 +1146,14 @@ export type Database = {
       update_request_status: {
         Args: { new_status: string; request_id: string }
         Returns: Json
+      }
+      user_is_quote_pro: {
+        Args: { _quote_pro_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_owns_request: {
+        Args: { _request_id: string; _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
