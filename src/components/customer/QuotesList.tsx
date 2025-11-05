@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, CheckCircle, XCircle } from "lucide-react";
+import { DollarSign, CheckCircle, XCircle, Info } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ProfessionalDetailModal } from "@/components/admin/ProfessionalDetailModal";
 
 interface Quote {
   id: string;
@@ -49,6 +50,8 @@ interface QuotesListProps {
 export function QuotesList({ requestId }: QuotesListProps) {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProId, setSelectedProId] = useState<string | null>(null);
+  const [showProModal, setShowProModal] = useState(false);
 
   useEffect(() => {
     fetchQuotes();
@@ -327,8 +330,15 @@ export function QuotesList({ requestId }: QuotesListProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {quotes.map((quote) => (
+    <>
+      <ProfessionalDetailModal
+        proId={selectedProId}
+        open={showProModal}
+        onOpenChange={setShowProModal}
+      />
+      
+      <div className="space-y-4">
+        {quotes.map((quote) => (
         <Card key={quote.id}>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -363,7 +373,20 @@ export function QuotesList({ requestId }: QuotesListProps) {
                   </p>
                 )}
               </div>
-              {getStatusBadge(quote.status, quote.is_revised)}
+              <div className="flex flex-col gap-2 items-end">
+                {getStatusBadge(quote.status, quote.is_revised)}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedProId(quote.pro_id);
+                    setShowProModal(true);
+                  }}
+                >
+                  <Info className="h-4 w-4 mr-2" />
+                  View Details
+                </Button>
+              </div>
             </div>
             <CardDescription>
               Submitted {new Date(quote.created_at).toLocaleDateString()}
@@ -498,7 +521,8 @@ export function QuotesList({ requestId }: QuotesListProps) {
             </CardFooter>
           )}
         </Card>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 }
