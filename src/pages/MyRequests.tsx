@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
 import { Car, MapPin, Calendar, Package, Home, Building2, Edit, Trash2, Eye, RotateCcw, Download, X, CheckCircle } from 'lucide-react';
 import { 
@@ -58,6 +59,9 @@ const MyRequests = () => {
   const [serviceTypeFilter, setServiceTypeFilter] = useState<string>('all');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 10;
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -65,11 +69,8 @@ const MyRequests = () => {
     if (user && isCustomer) {
       fetchRequests();
     }
-  }, [user, isCustomer]);
+  }, [user, isCustomer, currentPage, statusFilter, serviceTypeFilter]);
 
-  useEffect(() => {
-    applyFilters();
-  }, [requests, statusFilter, serviceTypeFilter]);
 
   if (!authLoading && !roleLoading && (!user || !isCustomer)) {
     return <Navigate to="/" replace />;
@@ -79,16 +80,34 @@ const MyRequests = () => {
     if (!user?.id) return;
     
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      
+      // Build base query
+      let query = supabase
         .from('service_requests')
         .select(`
           *,
           service_categories (
             name
           )
-        `)
-        .eq('customer_id', user.id)
-        .order('created_at', { ascending: false });
+        `, { count: 'exact' })
+        .eq('customer_id', user.id);
+
+      // Apply filters
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+      if (serviceTypeFilter !== 'all') {
+        query = query.eq('appointment_type', serviceTypeFilter);
+      }
+
+      // Apply pagination
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+      
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (error) {
         console.error('Error fetching requests:', error);
@@ -101,6 +120,8 @@ const MyRequests = () => {
       }
 
       setRequests(data || []);
+      setFilteredRequests(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -108,19 +129,6 @@ const MyRequests = () => {
     }
   };
 
-  const applyFilters = () => {
-    let filtered = [...requests];
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(req => req.status === statusFilter);
-    }
-
-    if (serviceTypeFilter !== 'all') {
-      filtered = filtered.filter(req => req.appointment_type === serviceTypeFilter);
-    }
-
-    setFilteredRequests(filtered);
-  };
 
   const handleCancelRequest = async (requestId: string) => {
     try {
@@ -297,6 +305,7 @@ const MyRequests = () => {
                   onClick={() => {
                     setStatusFilter('all');
                     setServiceTypeFilter('all');
+                    setCurrentPage(1);
                   }}
                   className="w-full"
                 >
@@ -530,6 +539,54 @@ const MyRequests = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalCount > itemsPerPage && (
+          <div className="mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: Math.ceil(totalCount / itemsPerPage) }, (_, i) => i + 1).map((page) => {
+                  const totalPages = Math.ceil(totalCount / itemsPerPage);
+                  // Show first page, last page, current page, and pages around current
+                  if (
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  ) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  } else if (page === currentPage - 2 || page === currentPage + 2) {
+                    return <PaginationItem key={page}><span className="px-4">...</span></PaginationItem>;
+                  }
+                  return null;
+                })}
+
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalCount / itemsPerPage), prev + 1))}
+                    className={currentPage === Math.ceil(totalCount / itemsPerPage) ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         )}
 
