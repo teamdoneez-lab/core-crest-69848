@@ -93,7 +93,7 @@ export default function ServiceRequests() {
       fetchPendingQuotes();
       fetchServiceRequests();
     }
-  }, [user]);
+  }, [user, currentPage, filters]);
 
   const fetchServiceRequests = async () => {
     try {
