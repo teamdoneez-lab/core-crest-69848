@@ -298,6 +298,47 @@ export type Database = {
         }
         Relationships: []
       }
+      pro_reviews: {
+        Row: {
+          appointment_id: string | null
+          comment: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          pro_id: string
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          pro_id: string
+          rating: number
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          pro_id?: string
+          rating?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pro_reviews_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pro_service_areas: {
         Row: {
           created_at: string | null

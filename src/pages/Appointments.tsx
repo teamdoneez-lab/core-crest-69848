@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Calendar, MapPin, Phone, Mail, Car, Clock, User, CheckCircle, Trash2, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ChatBox } from '@/components/chat/ChatBox';
+import { ReviewModal } from '@/components/customer/ReviewModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -55,6 +56,8 @@ const Appointments = () => {
   const { isCustomer, loading: roleLoading } = useRole();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<{ id: string; proId: string; proName: string } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -200,7 +203,7 @@ const Appointments = () => {
     }
   };
 
-  const handleCompleteJob = async (appointmentId: string, proId: string) => {
+  const handleCompleteJob = async (appointmentId: string, proId: string, proName: string) => {
     try {
       // Update appointment status to completed
       const { error: appointmentError } = await supabase
@@ -230,9 +233,13 @@ const Appointments = () => {
         console.error('Error notifying professional:', notifyError);
       }
 
+      // Open review modal
+      setSelectedAppointment({ id: appointmentId, proId, proName });
+      setReviewModalOpen(true);
+
       toast({
         title: "Job Completed",
-        description: "The professional has been notified. Thank you!",
+        description: "Please leave a review for the professional",
       });
 
       fetchAppointments();
@@ -321,6 +328,7 @@ const Appointments = () => {
   );
 
   return (
+    <>
     <div className="min-h-screen bg-background">
       <Navigation />
       <div className="mx-auto max-w-6xl p-6">
@@ -432,7 +440,7 @@ const Appointments = () => {
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleCompleteJob(appointment.id, appointment.pro_id)}>
+                                    <AlertDialogAction onClick={() => handleCompleteJob(appointment.id, appointment.pro_id, appointment.profiles.name)}>
                                       Confirm
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
@@ -548,7 +556,7 @@ const Appointments = () => {
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleCompleteJob(appointment.id, appointment.pro_id)}>
+                                  <AlertDialogAction onClick={() => handleCompleteJob(appointment.id, appointment.pro_id, appointment.profiles.name)}>
                                     Confirm
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -716,7 +724,7 @@ const Appointments = () => {
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleCompleteJob(appointment.id, appointment.pro_id)}>
+                                  <AlertDialogAction onClick={() => handleCompleteJob(appointment.id, appointment.pro_id, appointment.profiles.name)}>
                                     Confirm
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -734,6 +742,22 @@ const Appointments = () => {
         )}
       </div>
     </div>
+
+    {/* Review Modal */}
+    {selectedAppointment && (
+      <ReviewModal
+        open={reviewModalOpen}
+        onOpenChange={setReviewModalOpen}
+        appointmentId={selectedAppointment.id}
+        proId={selectedAppointment.proId}
+        proName={selectedAppointment.proName}
+        onReviewSubmitted={() => {
+          setReviewModalOpen(false);
+          setSelectedAppointment(null);
+        }}
+      />
+    )}
+    </>
   );
 };
 

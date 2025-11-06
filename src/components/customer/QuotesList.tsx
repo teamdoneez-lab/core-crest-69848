@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ProDetailWithReviewsModal } from '@/components/customer/ProDetailWithReviewsModal';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, CheckCircle, XCircle } from "lucide-react";
+import { DollarSign, CheckCircle, XCircle, User } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +50,8 @@ interface QuotesListProps {
 export function QuotesList({ requestId }: QuotesListProps) {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [proDetailModalOpen, setProDetailModalOpen] = useState(false);
+  const [selectedProId, setSelectedProId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchQuotes();
@@ -327,15 +330,30 @@ export function QuotesList({ requestId }: QuotesListProps) {
   }
 
   return (
+    <>
     <div className="space-y-4">
       {quotes.map((quote) => (
         <Card key={quote.id}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <CardTitle className="text-lg">
-                  {quote.pro_profiles?.business_name || "Unknown Professional"}
-                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">
+                    {quote.pro_profiles?.business_name || "Unknown Professional"}
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedProId(quote.pro_id);
+                      setProDetailModalOpen(true);
+                    }}
+                    className="h-8 px-2"
+                  >
+                    <User className="h-4 w-4 mr-1" />
+                    View Profile
+                  </Button>
+                </div>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {quote.pro_profiles?.is_verified && (
                     <Badge variant="secondary" className="text-xs">
@@ -500,5 +518,13 @@ export function QuotesList({ requestId }: QuotesListProps) {
         </Card>
       ))}
     </div>
+    {selectedProId && (
+      <ProDetailWithReviewsModal
+        open={proDetailModalOpen}
+        onOpenChange={setProDetailModalOpen}
+        proId={selectedProId}
+      />
+    )}
+    </>
   );
 }
