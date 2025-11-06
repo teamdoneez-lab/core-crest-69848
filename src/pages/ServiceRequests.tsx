@@ -70,7 +70,7 @@ export default function ServiceRequests() {
   // Filters
   const [filters, setFilters] = useState({
     location: '',
-    status: 'pending',
+    status: 'all',
     dateFrom: '',
     dateTo: ''
   });
@@ -115,7 +115,7 @@ export default function ServiceRequests() {
         console.error('Error fetching pro profile:', proError);
       }
 
-      // Build query with filters - only show pending requests
+      // Build query with filters
       let query = supabase
         .from('service_requests')
         .select(`
@@ -128,8 +128,12 @@ export default function ServiceRequests() {
             status,
             pro_id
           )
-        `, { count: 'exact' })
-        .eq('status', 'pending'); // Always filter for pending requests
+        `, { count: 'exact' });
+
+      // Apply status filter
+      if (filters.status && filters.status !== 'all') {
+        query = query.eq('status', filters.status);
+      }
 
       // Apply date filters
       if (filters.dateFrom) {
@@ -200,7 +204,7 @@ export default function ServiceRequests() {
   const clearFilters = () => {
     setFilters({
       location: '',
-      status: 'pending',
+      status: 'all',
       dateFrom: '',
       dateTo: ''
     });
