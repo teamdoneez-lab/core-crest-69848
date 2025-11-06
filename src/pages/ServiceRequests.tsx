@@ -146,23 +146,24 @@ export default function ServiceRequests() {
         query = query.lte('created_at', endDate.toISOString());
       }
 
-      // Fetch all results
-      const { data: allData, error, count } = await query
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching service requests:', error);
-        setLoading(false);
-        return;
-      }
-
-      let filteredData = allData || [];
-
-      // Apply radius filtering if pro has location and location filter is provided
+      // If location filter is active, fetch all results for client-side distance filtering
+      // Otherwise use server-side pagination
       if (filters.location && proProfile?.latitude && proProfile?.longitude) {
+        // Fetch all results with a high limit for location filtering
+        const { data: allData, error, count } = await query
+          .order('created_at', { ascending: false })
+          .limit(10000); // Fetch up to 10,000 results
+
+        if (error) {
+          console.error('Error fetching service requests:', error);
+          setLoading(false);
+          return;
+        }
+
         const radiusMiles = 100;
         
-        filteredData = filteredData.filter(request => {
+        // Apply radius filtering
+        const filteredData = (allData || []).filter(request => {
           if (!request.latitude || !request.longitude) return false;
           
           // Calculate distance using Haversine formula
@@ -179,16 +180,33 @@ export default function ServiceRequests() {
           
           return distance <= radiusMiles;
         });
+
+        // Apply pagination to filtered results
+        const totalFiltered = filteredData.length;
+        const from = (currentPage - 1) * itemsPerPage;
+        const to = from + itemsPerPage;
+        const paginatedData = filteredData.slice(from, to);
+
+        setRequests(paginatedData);
+        setTotalCount(totalFiltered);
+      } else {
+        // Use server-side pagination when no location filtering
+        const from = (currentPage - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+        
+        const { data, error, count } = await query
+          .order('created_at', { ascending: false })
+          .range(from, to);
+
+        if (error) {
+          console.error('Error fetching service requests:', error);
+          setLoading(false);
+          return;
+        }
+
+        setRequests(data || []);
+        setTotalCount(count || 0);
       }
-
-      // Apply pagination to filtered results
-      const totalFiltered = filteredData.length;
-      const from = (currentPage - 1) * itemsPerPage;
-      const to = from + itemsPerPage;
-      const paginatedData = filteredData.slice(from, to);
-
-      setRequests(paginatedData);
-      setTotalCount(totalFiltered);
     } catch (error) {
       console.error('Error fetching service requests:', error);
     } finally {
