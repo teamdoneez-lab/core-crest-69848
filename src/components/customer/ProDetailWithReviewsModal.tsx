@@ -186,21 +186,21 @@ export function ProDetailWithReviewsModal({
           ) : (
             <div>
               {/* Cover Photo / Banner */}
-              <div className="relative h-32 bg-gradient-to-br from-primary via-primary/80 to-primary/60 overflow-hidden">
+              <div className="relative h-40 bg-gradient-to-br from-primary via-primary/80 to-primary/60 overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIgb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-20" />
               </div>
 
               {/* Header Section */}
               <div className="px-6 pb-6">
                 {/* Logo & Basic Info */}
-                <div className="flex flex-col items-center mb-6 -mt-16">
-                  <div className="w-32 h-32 rounded-full bg-card border-4 border-background shadow-xl flex items-center justify-center text-4xl font-bold text-primary hover:scale-105 transition-transform duration-300 mb-4">
+                <div className="flex items-start gap-6 mb-6 -mt-16">
+                  <div className="w-32 h-32 rounded-full bg-card border-4 border-background shadow-xl flex items-center justify-center text-4xl font-bold text-primary hover:scale-105 transition-transform duration-300 flex-shrink-0">
                     {(proDetail.business_name || proDetail.name).charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex-1 w-full text-center">
-                    <div className="flex flex-col items-center gap-4">
+                  <div className="flex-1 pt-14">
+                    <div className="flex flex-col gap-4">
                       <div className="space-y-3">
-                        <div className="flex items-center justify-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-3 flex-wrap">
                           <h2 className="text-3xl font-bold">{proDetail.business_name || proDetail.name}</h2>
                           {proDetail.is_verified && (
                             <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20 hover:bg-green-500/20 transition-colors">
