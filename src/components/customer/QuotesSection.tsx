@@ -20,7 +20,7 @@ export function QuotesSection({ requestId, initialOpen = true }: QuotesSectionPr
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mb-4">
       <div className="flex items-center justify-between mb-3">
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="p-0 hover:bg-transparent">
+          <Button variant="ghost" className="p-0 hover:bg-transparent hover:text-foreground">
             <h4 className="font-semibold flex items-center gap-2">
               Quotes Received
               {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
