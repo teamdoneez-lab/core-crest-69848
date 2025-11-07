@@ -192,7 +192,7 @@ export function ProDetailWithReviewsModal({
               </div>
 
               {/* Header Section */}
-              <div className="px-6 pb-6 -mt-16">
+              <div className="px-6 pb-6 -mt-12">
                 {/* Logo & Basic Info */}
                 <div className="flex items-start gap-6 mb-6">
                   <div className="w-32 h-32 rounded-full bg-card border-4 border-background shadow-xl flex items-center justify-center text-4xl font-bold text-primary hover:scale-105 transition-transform duration-300">
