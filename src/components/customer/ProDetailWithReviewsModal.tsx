@@ -116,7 +116,7 @@ export function ProDetailWithReviewsModal({
           rating,
           comment,
           created_at,
-          profiles!pro_reviews_customer_id_fkey (
+          customer:profiles!customer_id (
             name
           )
         `)
@@ -130,7 +130,7 @@ export function ProDetailWithReviewsModal({
         rating: review.rating,
         comment: review.comment,
         created_at: review.created_at,
-        customer_name: review.profiles?.name || 'Anonymous',
+        customer_name: review.customer?.name || 'Anonymous',
       })) || [];
 
       setReviews(formattedReviews);
