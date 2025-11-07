@@ -58,7 +58,7 @@ const Appointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<{ id: string; proId: string; proName: string } | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<{ id: string | null; proId: string; proName: string } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -208,16 +208,21 @@ const Appointments = () => {
 
   const handleCompleteJob = async (appointmentId: string, proId: string, proName: string) => {
     try {
-      // Update appointment status to completed
-      const { error: appointmentError } = await supabase
-        .from('appointments')
-        .update({ status: 'completed' })
-        .eq('id', appointmentId);
+      const appointment = appointments.find(a => a.id === appointmentId);
+      
+      // Only update appointment if it's a real appointment ID (not a request ID)
+      const isRealAppointment = appointment?.starts_at !== null;
+      
+      if (isRealAppointment) {
+        const { error: appointmentError } = await supabase
+          .from('appointments')
+          .update({ status: 'completed' })
+          .eq('id', appointmentId);
 
-      if (appointmentError) throw appointmentError;
+        if (appointmentError) throw appointmentError;
+      }
 
       // Update service request status to completed
-      const appointment = appointments.find(a => a.id === appointmentId);
       if (appointment) {
         const { error: requestError } = await supabase
           .from('service_requests')
@@ -229,15 +234,19 @@ const Appointments = () => {
 
       // Notify the professional
       const { error: notifyError } = await supabase.functions.invoke('notify-job-completed', {
-        body: { appointment_id: appointmentId, pro_id: proId }
+        body: { appointment_id: isRealAppointment ? appointmentId : null, pro_id: proId }
       });
 
       if (notifyError) {
         console.error('Error notifying professional:', notifyError);
       }
 
-      // Open review modal
-      setSelectedAppointment({ id: appointmentId, proId, proName });
+      // Open review modal with real appointment ID or null
+      setSelectedAppointment({ 
+        id: isRealAppointment ? appointmentId : null, 
+        proId, 
+        proName 
+      });
       setReviewModalOpen(true);
 
       toast({

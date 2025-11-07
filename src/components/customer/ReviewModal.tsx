@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 interface ReviewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appointmentId: string;
+  appointmentId: string | null;
   proId: string;
   proName: string;
   onReviewSubmitted?: () => void;
@@ -49,7 +49,7 @@ export function ReviewModal({
         .insert({
           customer_id: user.id,
           pro_id: proId,
-          appointment_id: appointmentId,
+          appointment_id: appointmentId || null,
           rating: rating,
           comment: comment.trim() || null,
         });
