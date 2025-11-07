@@ -42,6 +42,7 @@ interface Appointment {
     contact_email: string;
     contact_phone: string;
     status: string;
+    accepted_pro_id?: string;
     service_categories: {
       name: string;
     };
@@ -89,6 +90,7 @@ const Appointments = () => {
           contact_email,
           contact_phone,
           status,
+          accepted_pro_id,
           service_categories (
             name
           )
@@ -176,7 +178,7 @@ const Appointments = () => {
             starts_at: appointment?.starts_at || null,
             notes: appointment?.notes,
             status: appointment?.status || 'pending_scheduling',
-            pro_id: appointment?.pro_id,
+            pro_id: appointment?.pro_id || req.accepted_pro_id,
             service_requests: {
               id: req.id,
               vehicle_make: req.vehicle_make,
@@ -188,6 +190,7 @@ const Appointments = () => {
               contact_email: req.contact_email,
               contact_phone: req.contact_phone,
               status: req.status,
+              accepted_pro_id: req.accepted_pro_id,
               service_categories: req.service_categories
             },
             profiles: appointment?.profiles || { name: 'Professional' }
