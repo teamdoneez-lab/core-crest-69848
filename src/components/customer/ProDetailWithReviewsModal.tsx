@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Star, MapPin, Phone, Globe, Calendar, Briefcase } from 'lucide-react';
+import { Star, Globe, Calendar, Briefcase } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 
@@ -192,14 +192,14 @@ export function ProDetailWithReviewsModal({
 
               <Separator />
 
-              {/* Contact & Location */}
+              {/* Contact Information */}
               <div className="grid gap-4 md:grid-cols-2">
-                {proDetail.phone && (
+                {proDetail.name && (
                   <div className="flex items-start gap-3">
-                    <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <Briefcase className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-semibold">Phone</p>
-                      <p className="text-sm text-muted-foreground">{proDetail.phone}</p>
+                      <p className="text-sm font-semibold">Contact Name</p>
+                      <p className="text-sm text-muted-foreground">{proDetail.name}</p>
                     </div>
                   </div>
                 )}
@@ -216,19 +216,6 @@ export function ProDetailWithReviewsModal({
                       >
                         {proDetail.website}
                       </a>
-                    </div>
-                  </div>
-                )}
-                {(proDetail.address || proDetail.city) && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold">Location</p>
-                      <p className="text-sm text-muted-foreground">
-                        {proDetail.address && `${proDetail.address}, `}
-                        {proDetail.city && `${proDetail.city}, `}
-                        {proDetail.state} {proDetail.zip_code}
-                      </p>
                     </div>
                   </div>
                 )}
