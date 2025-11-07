@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Star, Globe, Calendar, Briefcase } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Star, Calendar, Briefcase, MapPin, Shield, MessageSquare, Heart, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 
@@ -27,6 +28,8 @@ interface ProDetail {
   website?: string;
   is_verified: boolean;
   service_categories?: string[];
+  latitude?: number;
+  longitude?: number;
 }
 
 interface Review {
@@ -99,6 +102,8 @@ export function ProDetailWithReviewsModal({
         website: proProfile.website,
         is_verified: proProfile.is_verified,
         service_categories: serviceCategories,
+        latitude: proProfile.latitude,
+        longitude: proProfile.longitude,
       });
     } catch (error) {
       console.error('Error fetching pro details:', error);
@@ -160,13 +165,16 @@ export function ProDetailWithReviewsModal({
     );
   };
 
+  const truncateDescription = (text: string | undefined, maxLength: number = 250) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>Professional Details</DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="max-h-[calc(90vh-100px)]">
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+        <ScrollArea className="max-h-[90vh]">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-muted-foreground">Loading...</div>
@@ -176,118 +184,164 @@ export function ProDetailWithReviewsModal({
               <div className="text-muted-foreground">No information found</div>
             </div>
           ) : (
-            <div className="space-y-6 pr-4">
-              {/* Header */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">{proDetail.business_name || proDetail.name}</h2>
-                  {proDetail.is_verified && (
-                    <Badge className="bg-green-100 text-green-800">✓ Verified</Badge>
-                  )}
-                </div>
-                {proDetail.description && (
-                  <p className="text-muted-foreground">{proDetail.description}</p>
-                )}
+            <div>
+              {/* Cover Photo / Banner */}
+              <div className="relative h-32 bg-gradient-to-r from-primary/10 via-primary/5 to-background">
+                <div className="absolute inset-0 bg-grid-pattern opacity-5" />
               </div>
 
-              <Separator />
+              {/* Header Section */}
+              <div className="px-6 pb-6 -mt-12">
+                {/* Logo & Basic Info */}
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-24 h-24 rounded-2xl bg-card border-4 border-background shadow-lg flex items-center justify-center text-3xl font-bold text-primary">
+                    {(proDetail.business_name || proDetail.name).charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 pt-12">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="text-2xl font-bold">{proDetail.business_name || proDetail.name}</h2>
+                          {proDetail.is_verified && (
+                            <Badge className="bg-green-100 text-green-800 border-green-200">
+                              <Shield className="h-3 w-3 mr-1" />
+                              Verified
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        {/* Rating Summary */}
+                        {reviews.length > 0 && (
+                          <div className="flex items-center gap-2 mt-2">
+                            {renderStars(Math.round(averageRating))}
+                            <span className="text-sm font-semibold">
+                              {averageRating.toFixed(1)}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
+                            </span>
+                          </div>
+                        )}
 
-              {/* Contact Information */}
-              <div className="grid gap-4 md:grid-cols-2">
-                {proDetail.name && (
-                  <div className="flex items-start gap-3">
-                    <Briefcase className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold">Contact Name</p>
-                      <p className="text-sm text-muted-foreground">{proDetail.name}</p>
+                        {/* Location */}
+                        {(proDetail.city || proDetail.zip_code) && (
+                          <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            <span>
+                              {proDetail.city && `${proDetail.city}, `}
+                              {proDetail.state} {proDetail.zip_code}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                )}
-                {proDetail.website && (
-                  <div className="flex items-start gap-3">
-                    <Globe className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold">Website</p>
-                      <a
-                        href={proDetail.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline"
-                      >
-                        {proDetail.website}
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Service Categories */}
-              {proDetail.service_categories && proDetail.service_categories.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Briefcase className="h-5 w-5 text-muted-foreground" />
-                      <h3 className="font-semibold">Services Offered</h3>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {proDetail.service_categories.map((category, idx) => (
-                        <Badge key={idx} variant="outline">
-                          {category}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <Separator />
-
-              {/* Reviews Section */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Customer Reviews</h3>
-                  {reviews.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      {renderStars(Math.round(averageRating))}
-                      <span className="text-sm font-semibold">
-                        {averageRating.toFixed(1)} ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
-                      </span>
-                    </div>
-                  )}
                 </div>
 
-                {reviews.length === 0 ? (
-                  <Card>
-                    <CardContent className="py-8 text-center text-muted-foreground">
-                      No reviews yet
+                <Separator className="my-6" />
+
+                {/* Body Content */}
+                <div className="space-y-6">
+                  {/* Business Description */}
+                  {proDetail.description && (
+                    <div>
+                      <h3 className="font-semibold mb-2 flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                        About
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {truncateDescription(proDetail.description, 250)}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Services Offered */}
+                  {proDetail.service_categories && proDetail.service_categories.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                        Services Offered
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {proDetail.service_categories.map((category, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {category}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Privacy-Protected Information */}
+                  <Card className="bg-muted/30 border-dashed">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-3">
+                        <Lock className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm mb-2">Contact Details Available After Booking</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Full address, phone number, and contact information will be provided once you book an appointment.
+                          </p>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {reviews.map((review) => (
-                      <Card key={review.id}>
-                        <CardContent className="pt-6">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <p className="font-semibold">{review.customer_name}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                {renderStars(review.rating)}
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {format(new Date(review.created_at), 'MMM d, yyyy')}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          {review.comment && (
-                            <p className="text-sm text-muted-foreground mt-3">{review.comment}</p>
-                          )}
+
+                  <Separator />
+
+                  {/* Reviews Section */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Customer Reviews</h3>
+
+                    {reviews.length === 0 ? (
+                      <Card>
+                        <CardContent className="py-8 text-center text-muted-foreground">
+                          No reviews yet
                         </CardContent>
                       </Card>
-                    ))}
+                    ) : (
+                      <div className="space-y-4">
+                        {reviews.slice(0, 5).map((review) => (
+                          <Card key={review.id}>
+                            <CardContent className="pt-6">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <p className="font-semibold">{review.customer_name}</p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {renderStars(review.rating)}
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      {format(new Date(review.created_at), 'MMM d, yyyy')}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              {review.comment && (
+                                <p className="text-sm text-muted-foreground mt-3">{review.comment}</p>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                        {reviews.length > 5 && (
+                          <p className="text-sm text-center text-muted-foreground">
+                            Showing 5 of {reviews.length} reviews
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+
+                {/* Footer Actions */}
+                <div className="sticky bottom-0 mt-6 pt-4 pb-2 bg-background border-t flex gap-3">
+                  <Button className="flex-1" size="lg">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Message Provider
+                  </Button>
+                  <Button variant="outline" size="lg">
+                    <Heart className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           )}

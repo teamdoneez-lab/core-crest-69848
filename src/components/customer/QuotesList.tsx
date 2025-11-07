@@ -329,125 +329,98 @@ export function QuotesList({ requestId }: QuotesListProps) {
     );
   }
 
+  const getCompactStatusBadge = (status: string) => {
+    if (status === 'pending') return <Badge variant="secondary" className="text-xs">✓ Available</Badge>;
+    if (status === 'pending_confirmation') return <Badge className="bg-orange-100 text-orange-800 text-xs">⏳ Pending</Badge>;
+    if (status === 'confirmed') return <Badge className="bg-green-100 text-green-800 text-xs">✓ Confirmed</Badge>;
+    if (status === 'declined') return <Badge variant="outline" className="text-gray-500 text-xs">✗ Declined</Badge>;
+    if (status === 'expired') return <Badge variant="outline" className="text-red-500 text-xs">⏰ Expired</Badge>;
+    return <Badge variant="outline" className="text-xs">{status}</Badge>;
+  };
+
   return (
     <>
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {quotes.map((quote) => (
-        <Card key={quote.id}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-lg">
-                    {quote.pro_profiles?.business_name || "Unknown Professional"}
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedProId(quote.pro_id);
-                      setProDetailModalOpen(true);
-                    }}
-                    className="h-8 px-2"
-                  >
-                    <User className="h-4 w-4 mr-1" />
-                    View Profile
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {quote.pro_profiles?.is_verified && (
-                    <Badge variant="secondary" className="text-xs">
-                      ✓ Verified
-                    </Badge>
-                  )}
-                  {quote.pro_service_categories && quote.pro_service_categories.length > 0 && (
-                    <>
-                      {quote.pro_service_categories.slice(0, 2).map((cat, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
-                          {cat.service_categories.name}
-                        </Badge>
-                      ))}
-                      {quote.pro_service_categories.length > 2 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{quote.pro_service_categories.length - 2} more
-                        </Badge>
-                      )}
-                    </>
-                  )}
-                </div>
-                {quote.pro_profiles?.description && (
-                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                    {quote.pro_profiles.description}
-                  </p>
-                )}
+        <Card key={quote.id} className="flex flex-col hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between mb-2">
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-lg font-bold text-primary">
+                {(quote.pro_profiles?.business_name || "U").charAt(0).toUpperCase()}
               </div>
-              {getStatusBadge(quote.status, quote.is_revised)}
+              {getCompactStatusBadge(quote.status)}
             </div>
-            <CardDescription>
-              Submitted {new Date(quote.created_at).toLocaleDateString()}
-              {quote.status === "pending_confirmation" && quote.confirmation_timer_expires_at && (
-                <>
-                  {getTimeRemaining(quote.confirmation_timer_expires_at) !== "Expired" ? (
-                    <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded">
-                      <span className="text-orange-700 font-semibold">
-                        ⏱ {getTimeRemaining(quote.confirmation_timer_expires_at)}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                      <span className="text-red-700 font-semibold">
-                        ⏰ Expired - Professional didn't confirm in time
-                      </span>
-                    </div>
-                  )}
-                </>
+            <CardTitle className="text-base line-clamp-1">
+              {quote.pro_profiles?.business_name || "Unknown Professional"}
+            </CardTitle>
+            <div className="flex items-center gap-2 mt-1">
+              {quote.pro_profiles?.is_verified && (
+                <Badge variant="secondary" className="text-xs">
+                  ✓ Verified
+                </Badge>
               )}
-              {quote.status === "expired" && (
-                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                  <span className="text-red-700">
-                    ⏰ Professional didn't confirm in time. Please choose another quote.
-                  </span>
-                </div>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="flex-1 pb-3">
+            <div className="space-y-3">
+              {/* Price */}
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-primary">
+                  ${quote.estimated_price.toFixed(0)}
+                </span>
+                <span className="text-sm text-muted-foreground">.{(quote.estimated_price % 1).toFixed(2).slice(2)}</span>
+              </div>
+
+              {/* Short Description */}
+              {quote.pro_profiles?.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {quote.pro_profiles.description}
+                </p>
               )}
-              {quote.status === "declined" && (
-                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                  <span className="text-red-700">
-                    ❌ Professional declined. Please choose another available quote.
+
+              {/* Service Description */}
+              <div className="text-xs text-muted-foreground line-clamp-3 bg-muted/30 p-2 rounded">
+                {quote.description}
+              </div>
+
+              {/* Status Messages */}
+              {quote.status === "pending_confirmation" && quote.confirmation_timer_expires_at && 
+                getTimeRemaining(quote.confirmation_timer_expires_at) !== "Expired" && (
+                <div className="text-xs p-2 bg-orange-50 border border-orange-200 rounded">
+                  <span className="text-orange-700 font-semibold">
+                    ⏱ {getTimeRemaining(quote.confirmation_timer_expires_at)}
                   </span>
                 </div>
               )}
               {quote.status === "confirmed" && (
-                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
-                  <span className="text-green-700 font-semibold">
-                    ✅ Appointment confirmed! Check your appointments for mechanic details.
-                  </span>
+                <div className="text-xs p-2 bg-green-50 border border-green-200 rounded">
+                  <span className="text-green-700 font-semibold">✅ Confirmed</span>
                 </div>
               )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2 text-2xl font-bold text-primary">
-              <DollarSign className="h-6 w-6" />
-              {quote.estimated_price.toFixed(2)}
             </div>
-            <div>
-              <h4 className="font-semibold mb-1">Service Description:</h4>
-              <p className="text-sm text-muted-foreground">{quote.description}</p>
-            </div>
-            {quote.notes && (
-              <div>
-                <h4 className="font-semibold mb-1">Additional Notes:</h4>
-                <p className="text-sm text-muted-foreground">{quote.notes}</p>
-              </div>
-            )}
           </CardContent>
-          {quote.status === "pending" && (
-            <CardFooter className="gap-2">
+
+          <CardFooter className="flex flex-col gap-2 pt-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                setSelectedProId(quote.pro_id);
+                setProDetailModalOpen(true);
+              }}
+            >
+              <User className="h-3 w-3 mr-1" />
+              View Profile
+            </Button>
+            
+            {quote.status === "pending" && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="flex-1">
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Select Quote
+                  <Button size="sm" className="w-full">
+                    <CheckCircle className="mr-1 h-3 w-3" />
+                    Book Now
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -465,56 +438,21 @@ export function QuotesList({ requestId }: QuotesListProps) {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </CardFooter>
-          )}
-          {(quote.status === "expired" || quote.status === "declined") && (
-            <CardFooter>
-              <div className="w-full text-center">
-                <p className="text-sm text-muted-foreground mb-3">
-                  This quote is no longer available. Select another quote or submit a new request.
-                </p>
-              </div>
-            </CardFooter>
-          )}
-          {quote.status === "pending_confirmation" && (
-            <CardFooter className="flex-col gap-2">
-              {getTimeRemaining(quote.confirmation_timer_expires_at) !== "Expired" ? (
-                <div className="w-full">
-                  <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                    <p className="text-sm font-semibold text-orange-700">
-                      ⏳ Awaiting confirmation from professional...
-                    </p>
-                    <p className="text-xs text-orange-600 mt-1">
-                      You'll be notified once they confirm or if they decline.
-                    </p>
-                  </div>
-                </div>
-              ) : null}
+            )}
+
+            {quote.status === "pending_confirmation" && 
+              getTimeRemaining(quote.confirmation_timer_expires_at) !== "Expired" && (
               <Button 
                 variant="destructive" 
                 size="sm" 
                 className="w-full"
                 onClick={() => handleCancelQuote(quote.id)}
               >
-                <XCircle className="mr-2 h-4 w-4" />
-                Cancel Quote
+                <XCircle className="mr-1 h-3 w-3" />
+                Cancel
               </Button>
-            </CardFooter>
-          )}
-          {quote.status === "confirmed" && (
-            <CardFooter>
-              <div className="w-full">
-                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                  <p className="text-sm font-semibold text-green-700">
-                    ✅ Appointment Confirmed!
-                  </p>
-                  <p className="text-xs text-green-600 mt-1">
-                    Mechanic contact details and appointment info available in your appointments.
-                  </p>
-                </div>
-              </div>
-            </CardFooter>
-          )}
+            )}
+          </CardFooter>
         </Card>
       ))}
     </div>

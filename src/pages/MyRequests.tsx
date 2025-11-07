@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger 
 } from '@/components/ui/alert-dialog';
-import { QuotesList } from '@/components/customer/QuotesList';
+import { QuotesSection } from '@/components/customer/QuotesSection';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getServiceNamesByIds } from '@/utils/serviceHelpers';
@@ -464,10 +464,7 @@ const MyRequests = () => {
                   )}
 
                   {/* Quotes Section */}
-                  <div className="mb-4">
-                    <h4 className="font-semibold mb-3">Quotes Received</h4>
-                    <QuotesList requestId={request.id} />
-                  </div>
+                  <QuotesSection requestId={request.id} />
 
                   {/* Actions */}
                   <div className="flex flex-wrap gap-2 pt-4 border-t">
