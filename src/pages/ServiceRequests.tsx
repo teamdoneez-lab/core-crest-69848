@@ -791,19 +791,21 @@ export default function ServiceRequests() {
 
           {/* Quote Modal */}
           <Dialog open={isQuoteModalOpen} onOpenChange={setIsQuoteModalOpen}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
+            <DialogContent className="max-w-[550px] max-h-[85vh] flex flex-col p-0">
+              <DialogHeader className="px-6 pt-6 pb-4 border-b sticky top-0 bg-background z-10">
                 <DialogTitle>Submit Quote</DialogTitle>
                 <DialogDescription>
                   Send your quote to the customer
                 </DialogDescription>
               </DialogHeader>
-              {selectedRequestId && (
-                <QuoteForm 
-                  requestId={selectedRequestId} 
-                  onSuccess={handleQuoteSuccess}
-                />
-              )}
+              <div className="px-6 py-4 overflow-y-auto flex-1">
+                {selectedRequestId && (
+                  <QuoteForm 
+                    requestId={selectedRequestId} 
+                    onSuccess={handleQuoteSuccess}
+                  />
+                )}
+              </div>
             </DialogContent>
           </Dialog>
 

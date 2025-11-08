@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, Info } from "lucide-react";
+import { DollarSign, Info, Plus } from "lucide-react";
 import { z } from "zod";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const quoteSchema = z.object({
   estimated_price: z.number().min(1, "Price must be at least $1").max(999999, "Price cannot exceed $999,999"),
@@ -63,6 +63,7 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestDetails, setRequestDetails] = useState<ServiceRequestDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showNotes, setShowNotes] = useState(false);
 
   useEffect(() => {
     fetchRequestDetails();
@@ -200,42 +201,33 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
   };
 
   if (loading) {
-    return <div className="text-center py-4 text-muted-foreground">Loading request details...</div>;
+    return <div className="text-center py-3 text-sm text-muted-foreground">Loading...</div>;
   }
 
   if (!requestDetails) {
-    return <div className="text-center py-4 text-destructive">Failed to load request details</div>;
+    return <div className="text-center py-3 text-sm text-destructive">Failed to load details</div>;
   }
 
   const customerFirstName = requestDetails.profiles?.name?.split(" ")[0] || "Customer";
   const serviceName = requestDetails.service_categories?.name || "Service Request";
-  const vehicleInfo = `${requestDetails.year} ${requestDetails.vehicle_make} ${requestDetails.model}${requestDetails.trim ? ` ${requestDetails.trim}` : ""}`;
-  const location = requestDetails.address || `ZIP: ${requestDetails.zip}`;
+  const vehicleInfo = `${requestDetails.year} ${requestDetails.vehicle_make} ${requestDetails.model}`;
+  const cityState = requestDetails.address?.split(",").slice(-2).join(",").trim() || requestDetails.zip;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Service Context Section */}
-      <div className="bg-muted/30 rounded-lg p-4 space-y-2">
-        <div className="grid grid-cols-[100px_1fr] gap-2 text-sm">
-          <span className="font-semibold text-foreground">Customer:</span>
-          <span className="text-muted-foreground">{customerFirstName}</span>
-          
-          <span className="font-semibold text-foreground">Service Request:</span>
-          <span className="text-muted-foreground">{serviceName}</span>
-          
-          <span className="font-semibold text-foreground">Vehicle:</span>
-          <span className="text-muted-foreground">{vehicleInfo}</span>
-          
-          <span className="font-semibold text-foreground">Location:</span>
-          <span className="text-muted-foreground">{location}</span>
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Compact Service Context */}
+      <div className="bg-muted/30 rounded-md p-3">
+        <p className="text-sm font-medium leading-tight">
+          {serviceName} – {vehicleInfo}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {customerFirstName} • {cityState}
+        </p>
       </div>
 
-      <Separator />
-
       {/* Estimated Price */}
-      <div className="space-y-2">
-        <Label htmlFor="estimatedPrice">Estimated Price ($)</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="estimatedPrice" className="text-sm">Estimated Price ($)</Label>
         <div className="relative">
           <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -251,100 +243,102 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          Enter your estimated total for labor and parts.
+          Enter your total for labor and parts.
         </p>
         
-        {/* Dynamic Referral Fee Preview */}
+        {/* Inline Referral Fee Preview */}
         {priceNum > 0 && (
-          <div className="bg-accent/50 rounded-md p-3 space-y-1 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">💰 Referral Fee:</span>
-              <span className="font-semibold">~${referralFee.toFixed(2)} ({feePercentage}%)</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">You'll receive:</span>
-              <span className="font-semibold text-primary">~${youReceive.toFixed(2)}</span>
-            </div>
-            <p className="text-xs text-muted-foreground pt-1">
-              (Rounded for clarity. Fee applies only if appointment confirmed.)
-            </p>
-            
-            {/* View Fee Tiers Popover */}
-            <div className="pt-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-primary hover:underline">
-                    <Info className="h-3 w-3 mr-1" />
-                    View Fee Tiers
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm">Referral Fee Structure</h4>
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2 text-sm font-medium border-b pb-2">
-                        <span>Job Total</span>
-                        <span>Fee</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <span className="text-muted-foreground">Under $1,000</span>
-                        <span>5% (min $5)</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <span className="text-muted-foreground">$1,000–$4,999</span>
-                        <span>3%</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <span className="text-muted-foreground">$5,000–$9,999</span>
-                        <span>2%</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <span className="text-muted-foreground">$10,000+</span>
-                        <span>1%</span>
-                      </div>
+          <div className="flex items-center justify-between text-xs bg-accent/50 rounded px-3 py-2 mt-2">
+            <span className="text-muted-foreground">
+              💰 Fee: ~${referralFee.toFixed(2)} ({feePercentage}%)
+            </span>
+            <span className="font-semibold text-primary">
+              You get ~${youReceive.toFixed(2)}
+            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-auto p-0 ml-2 text-xs text-primary hover:underline">
+                  <Info className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72" side="top">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-xs">Referral Fee Tiers</h4>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Under $1,000</span>
+                      <span className="font-medium">5% (min $5)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">$1,000–$4,999</span>
+                      <span className="font-medium">3%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">$5,000–$9,999</span>
+                      <span className="font-medium">2%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">$10,000+</span>
+                      <span className="font-medium">1%</span>
                     </div>
                   </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+                  <p className="text-xs text-muted-foreground pt-1 border-t">
+                    Fee applies only if appointment confirmed.
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
       </div>
 
       {/* Service Description */}
-      <div className="space-y-2">
-        <Label htmlFor="description">Service Description *</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="description" className="text-sm">Service Description *</Label>
         <Textarea
           id="description"
           placeholder="Describe the work to be performed..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           required
-          rows={4}
-          className="resize-none"
+          rows={3}
+          className="resize-none text-sm"
         />
       </div>
 
-      {/* Additional Notes */}
-      <div className="space-y-2">
-        <Label htmlFor="notes">Additional Notes (Optional)</Label>
-        <Textarea
-          id="notes"
-          placeholder="Any additional information..."
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={2}
-          className="resize-none"
-        />
-      </div>
+      {/* Collapsible Additional Notes */}
+      <Collapsible open={showNotes} onOpenChange={setShowNotes}>
+        <CollapsibleTrigger asChild>
+          <Button 
+            type="button" 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs text-muted-foreground hover:text-foreground p-0 h-auto"
+          >
+            <Plus className={`h-3 w-3 mr-1 transition-transform ${showNotes ? "rotate-45" : ""}`} />
+            {showNotes ? "Hide" : "Add"} Notes
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-1.5 pt-2">
+          <Label htmlFor="notes" className="text-sm">Additional Notes</Label>
+          <Textarea
+            id="notes"
+            placeholder="Any additional information..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="resize-none text-sm"
+          />
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Submit Button */}
-      <div className="space-y-2 pt-2">
+      <div className="space-y-1.5 pt-2">
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? "Submitting..." : "Submit Quote"}
         </Button>
         <p className="text-xs text-center text-muted-foreground">
-          Customer will be notified once your quote is sent.
+          Customer will be notified once sent.
         </p>
       </div>
     </form>
