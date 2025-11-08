@@ -9,6 +9,7 @@ import { DollarSign, Info, Plus } from "lucide-react";
 import { z } from "zod";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { getServiceNames } from "@/utils/serviceCodeLookup";
 
 const quoteSchema = z.object({
   estimated_price: z.number().min(1, "Price must be at least $1").max(999999, "Price cannot exceed $999,999"),
@@ -218,18 +219,26 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
     return <div className="text-center py-3 text-sm text-destructive">Failed to load details</div>;
   }
 
-  // Get specific service name (prioritize description, then service_category array, finally category name)
-  const getServiceName = () => {
+  // Get specific service name (prioritize description, then service_category codes, finally category name)
+  const getServiceDisplayName = () => {
+    // First, check if customer provided a custom description
     if (requestDetails.description && requestDetails.description.trim()) {
       return requestDetails.description;
     }
+    
+    // Second, try to map service codes to actual service names
     if (requestDetails.service_category && requestDetails.service_category.length > 0) {
-      return requestDetails.service_category[0];
+      const mappedNames = getServiceNames(requestDetails.service_category);
+      if (mappedNames) {
+        return mappedNames;
+      }
     }
+    
+    // Finally, fallback to generic category name
     return requestDetails.service_categories?.name || "Service Request";
   };
 
-  const serviceName = getServiceName();
+  const serviceName = getServiceDisplayName();
   const vehicleInfo = `${requestDetails.year} ${requestDetails.vehicle_make} ${requestDetails.model}`;
   const mileageInfo = requestDetails.mileage ? ` – ${requestDetails.mileage.toLocaleString()} miles` : "";
   const cityState = requestDetails.address?.split(",").slice(-2).join(",").trim() || `ZIP ${requestDetails.zip}`;
