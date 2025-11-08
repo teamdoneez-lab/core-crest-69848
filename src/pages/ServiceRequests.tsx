@@ -38,6 +38,7 @@ interface ServiceRequest {
   trim?: string;
   mileage?: number;
   appointment_pref: string;
+  urgency?: string;
   address: string;
   zip: string;
   contact_email: string;
@@ -249,6 +250,21 @@ export default function ServiceRequests() {
       case 'scheduled': return 'Scheduled';
       case 'flexible': return 'Flexible';
       default: return pref;
+    }
+  };
+
+  const getUrgencyConfig = (urgency?: string) => {
+    switch (urgency) {
+      case 'asap':
+        return { label: 'ASAP', variant: 'destructive' as const };
+      case 'within_week':
+        return { label: 'Within 1 week', variant: 'default' as const };
+      case 'within_month':
+        return { label: 'Within 1 month', variant: 'secondary' as const };
+      case 'flexible':
+        return { label: 'Flexible', variant: 'outline' as const };
+      default:
+        return { label: 'Not specified', variant: 'outline' as const };
     }
   };
 
@@ -514,91 +530,134 @@ export default function ServiceRequests() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-6">
+            <div className="space-y-5">
               {requests.map((request) => {
                 // Check if the current pro has already sent a quote for this request
                 const hasQuote = request.quotes?.some(q => q.pro_id === user?.id);
+                const urgencyConfig = getUrgencyConfig(request.urgency);
                 
                 return (
                   <Card 
                     key={request.id} 
-                    className="cursor-pointer transition-shadow hover:shadow-md"
+                    className="bg-card border-border/50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
                     onClick={() => handleCardClick(request)}
                   >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-lg">
-                            {request.vehicle_make} {request.model} {request.year}
-                            {request.trim && ` ${request.trim}`}
-                          </CardTitle>
-                          <CardDescription>
-                            {request.service_categories.name} • {request.zip}
-                          </CardDescription>
-                        </div>
-                        <div className="flex gap-2">
-                          <Badge className={hasQuote ? '' : getStatusColor(request.status)} variant={hasQuote ? 'default' : undefined}>
-                            {hasQuote ? 'Sent Quote' : request.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <h4 className="font-medium mb-2">Vehicle Details</h4>
-                          <div className="space-y-1 text-sm text-muted-foreground">
-                            {request.mileage && <p>Mileage: {request.mileage.toLocaleString()}</p>}
-                            <p>Contact: {request.contact_email}</p>
-                            <p>Phone: {request.contact_phone}</p>
+                    <div className="p-6">
+                      {/* Header Section with Title and CTA */}
+                      <div className="flex items-start justify-between gap-4 mb-5">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 flex-wrap mb-2">
+                            <h3 className="text-xl font-bold text-foreground">
+                              {request.vehicle_make} {request.model} {request.year}
+                              {request.trim && ` ${request.trim}`}
+                            </h3>
+                            <Badge variant={urgencyConfig.variant} className="font-semibold">
+                              {urgencyConfig.label}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {request.service_categories.name}
+                            </span>
+                            <span className="text-muted-foreground">•</span>
+                            <span className="text-sm text-muted-foreground">{request.zip}</span>
+                            <Badge 
+                              variant={hasQuote ? 'default' : 'outline'} 
+                              className={hasQuote ? '' : 'text-xs'}
+                            >
+                              {hasQuote ? '✓ Quote Sent' : request.status}
+                            </Badge>
                           </div>
                         </div>
-                        <div>
-                          <h4 className="font-medium mb-2">Location</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {request.address}
-                          </p>
+                        
+                        {/* CTA Button - Consistent Top Right Position */}
+                        {!hasQuote && (
+                          <Button 
+                            onClick={(e) => handleQuoteClick(request.id, e)}
+                            className="flex-shrink-0"
+                            size="default"
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Send Quote
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Key Information Grid */}
+                      <div className="grid md:grid-cols-2 gap-6 py-4 border-t border-border/50">
+                        {/* Left Column - Vehicle & Contact */}
+                        <div className="space-y-3">
+                          {request.mileage && (
+                            <div>
+                              <span className="text-sm font-semibold text-foreground">Mileage:</span>
+                              <span className="text-sm text-muted-foreground ml-2">
+                                {request.mileage.toLocaleString()} miles
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-sm font-semibold text-foreground">Contact:</span>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              {request.contact_email}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-semibold text-foreground">Phone:</span>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              {request.contact_phone}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Right Column - Location & Timing */}
+                        <div className="space-y-3">
+                          <div>
+                            <span className="text-sm font-semibold text-foreground block mb-1">Location:</span>
+                            <span className="text-sm text-muted-foreground">
+                              {request.address}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-semibold text-foreground">Preference:</span>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              {getAppointmentPrefLabel(request.appointment_pref)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       
+                      {/* Additional Notes */}
                       {request.notes && (
-                        <div className="mt-4">
-                          <h4 className="font-medium mb-2">Additional Notes</h4>
-                          <p className="text-sm text-muted-foreground">{request.notes}</p>
+                        <div className="mt-4 pt-4 border-t border-border/50">
+                          <h4 className="text-sm font-semibold text-foreground mb-2">Additional Notes:</h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{request.notes}</p>
                         </div>
                       )}
 
+                      {/* Image */}
                       {request.image_url && (
-                        <div className="mt-4">
-                          <h4 className="font-medium mb-2">Uploaded Image</h4>
+                        <div className="mt-4 pt-4 border-t border-border/50">
+                          <h4 className="text-sm font-semibold text-foreground mb-3">Uploaded Image:</h4>
                           <img 
                             src={request.image_url} 
                             alt="Vehicle issue" 
-                            className="w-full max-w-sm rounded-lg border shadow-sm object-contain max-h-48 cursor-pointer hover:opacity-80 transition-opacity"
+                            className="w-full max-w-md rounded-lg border border-border shadow-sm object-contain max-h-48 cursor-pointer hover:opacity-90 hover:scale-[1.02] transition-all"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleImageClick(request.image_url!);
                             }}
                           />
-                          <p className="text-xs text-muted-foreground mt-1">Click to enlarge</p>
+                          <p className="text-xs text-muted-foreground mt-2 italic">Click to enlarge</p>
                         </div>
                       )}
 
-                      <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                      {/* Footer Timestamp */}
+                      <div className="mt-4 pt-3 border-t border-border/50">
                         <p className="text-xs text-muted-foreground">
-                          Submitted {new Date(request.created_at).toLocaleDateString()} at {new Date(request.created_at).toLocaleTimeString()}
+                          Submitted on {new Date(request.created_at).toLocaleDateString()} at {new Date(request.created_at).toLocaleTimeString()}
                         </p>
-                        {!hasQuote && (
-                          <Button 
-                            onClick={(e) => handleQuoteClick(request.id, e)}
-                            className="flex items-center gap-2"
-                          >
-                            <FileText className="h-4 w-4" />
-                            Send Quote
-                          </Button>
-                        )}
                       </div>
-                    </CardContent>
+                    </div>
                   </Card>
                 );
               })}
