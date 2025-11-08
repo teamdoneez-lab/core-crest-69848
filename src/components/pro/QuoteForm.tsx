@@ -26,8 +26,11 @@ interface ServiceRequestDetails {
   model: string;
   year: number;
   trim?: string;
+  mileage?: number;
   zip: string;
   address: string;
+  description?: string;
+  service_category?: string[];
   service_categories: {
     name: string;
   };
@@ -78,29 +81,36 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
           model,
           year,
           trim,
+          mileage,
           zip,
           address,
+          description,
+          service_category,
           customer_id,
           category_id
         `)
         .eq("id", requestId)
-        .single();
+        .maybeSingle();
 
       if (requestError) throw requestError;
+      
+      if (!requestData) {
+        throw new Error("Request not found");
+      }
 
       // Fetch customer name
       const { data: customerData } = await supabase
         .from("profiles")
         .select("name")
         .eq("id", requestData.customer_id)
-        .single();
+        .maybeSingle();
 
       // Fetch service category name
       const { data: categoryData } = await supabase
         .from("service_categories")
         .select("name")
         .eq("id", requestData.category_id)
-        .single();
+        .maybeSingle();
 
       setRequestDetails({
         ...requestData,
@@ -208,20 +218,34 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
     return <div className="text-center py-3 text-sm text-destructive">Failed to load details</div>;
   }
 
-  const customerFirstName = requestDetails.profiles?.name?.split(" ")[0] || "Customer";
-  const serviceName = requestDetails.service_categories?.name || "Service Request";
+  // Get specific service name (prioritize description, then service_category array, finally category name)
+  const getServiceName = () => {
+    if (requestDetails.description && requestDetails.description.trim()) {
+      return requestDetails.description;
+    }
+    if (requestDetails.service_category && requestDetails.service_category.length > 0) {
+      return requestDetails.service_category[0];
+    }
+    return requestDetails.service_categories?.name || "Service Request";
+  };
+
+  const serviceName = getServiceName();
   const vehicleInfo = `${requestDetails.year} ${requestDetails.vehicle_make} ${requestDetails.model}`;
-  const cityState = requestDetails.address?.split(",").slice(-2).join(",").trim() || requestDetails.zip;
+  const mileageInfo = requestDetails.mileage ? ` – ${requestDetails.mileage.toLocaleString()} miles` : "";
+  const cityState = requestDetails.address?.split(",").slice(-2).join(",").trim() || `ZIP ${requestDetails.zip}`;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Compact Service Context */}
-      <div className="bg-muted/30 rounded-md p-3">
-        <p className="text-sm font-medium leading-tight">
-          {serviceName} – {vehicleInfo}
+      <div className="bg-muted/30 rounded-md p-3 space-y-1">
+        <p className="text-sm font-semibold leading-tight text-foreground">
+          {serviceName}
         </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {customerFirstName} • {cityState}
+        <p className="text-xs text-muted-foreground">
+          {vehicleInfo}{mileageInfo}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {cityState}
         </p>
       </div>
 
