@@ -10,8 +10,9 @@ import { z } from "zod";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { getServiceNames } from "@/utils/serviceCodeLookup";
-import { FileText } from "lucide-react";
+import { FileText, Camera, X } from "lucide-react";
 
 const quoteSchema = z.object({
   estimated_price: z.number().min(1, "Price must be at least $1").max(999999, "Price cannot exceed $999,999"),
@@ -73,6 +74,26 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
   const [loading, setLoading] = useState(true);
   const [showNotes, setShowNotes] = useState(false);
   const [showRequestDetails, setShowRequestDetails] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [showPhotoRequestDialog, setShowPhotoRequestDialog] = useState(false);
+
+  // Demo placeholder images for testing (replace with actual customer photos)
+  const demoPhotos = [
+    "/images/demo-bumper-damage-1.jpg",
+    "/images/demo-bumper-damage-2.jpg",
+    "/images/demo-bumper-damage-3.jpg",
+    "/images/demo-bumper-damage-4.jpg"
+  ];
+
+  // Use demo photos if no image_url exists, or combine them
+  const getPhotoUrls = () => {
+    if (requestDetails?.image_url) {
+      return [requestDetails.image_url, ...demoPhotos];
+    }
+    return demoPhotos;
+  };
+
+  const photoUrls = requestDetails ? getPhotoUrls() : [];
 
   useEffect(() => {
     fetchRequestDetails();
@@ -312,18 +333,40 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
               )}
               
               {/* Uploaded Photos */}
-              {requestDetails.image_url && (
+              {photoUrls.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Photos</h3>
-                  <div className="rounded-lg overflow-hidden border border-border">
-                    <img 
-                      src={requestDetails.image_url} 
-                      alt="Service request" 
-                      className="w-full h-auto object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => window.open(requestDetails.image_url, '_blank')}
-                    />
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">Photos ({photoUrls.length})</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowPhotoRequestDialog(true)}
+                      className="h-7 text-xs"
+                    >
+                      <Camera className="h-3 w-3 mr-1" />
+                      Request More Photos
+                    </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Click to view full size</p>
+                  
+                  {/* Photo Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {photoUrls.map((url, index) => (
+                      <div 
+                        key={index}
+                        className="aspect-square rounded-lg overflow-hidden border border-border cursor-pointer hover:ring-2 hover:ring-primary transition-all group relative"
+                        onClick={() => setLightboxImage(url)}
+                      >
+                        <img 
+                          src={url} 
+                          alt={`Damage photo ${index + 1}`} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">Click any photo to view full size</p>
                 </div>
               )}
             </div>
@@ -437,6 +480,53 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
           />
         </CollapsibleContent>
       </Collapsible>
+
+      {/* Lightbox for Full-Size Photos */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 text-white hover:bg-white/20"
+            onClick={() => setLightboxImage(null)}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+          <img 
+            src={lightboxImage} 
+            alt="Full size preview" 
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {/* Request More Photos Confirmation Dialog */}
+      <AlertDialog open={showPhotoRequestDialog} onOpenChange={setShowPhotoRequestDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Request More Photos</AlertDialogTitle>
+            <AlertDialogDescription>
+              We'll notify the customer to upload more photos of the damaged area. 
+              This will help you provide a more accurate quote.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => {
+              setShowPhotoRequestDialog(false);
+              toast({
+                title: "Request Sent",
+                description: "Customer will be notified to upload additional photos.",
+              });
+            }}>
+              Send Request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Submit Button */}
       <div className="space-y-1.5 pt-2">
