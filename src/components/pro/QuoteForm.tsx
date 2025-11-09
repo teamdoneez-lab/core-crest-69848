@@ -9,7 +9,9 @@ import { DollarSign, Info, Plus } from "lucide-react";
 import { z } from "zod";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { getServiceNames } from "@/utils/serviceCodeLookup";
+import { FileText } from "lucide-react";
 
 const quoteSchema = z.object({
   estimated_price: z.number().min(1, "Price must be at least $1").max(999999, "Price cannot exceed $999,999"),
@@ -32,6 +34,8 @@ interface ServiceRequestDetails {
   address: string;
   description?: string;
   service_category?: string[];
+  image_url?: string;
+  notes?: string;
   service_categories: {
     name: string;
   };
@@ -68,6 +72,7 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
   const [requestDetails, setRequestDetails] = useState<ServiceRequestDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [showNotes, setShowNotes] = useState(false);
+  const [showRequestDetails, setShowRequestDetails] = useState(false);
 
   useEffect(() => {
     fetchRequestDetails();
@@ -88,7 +93,9 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
           description,
           service_category,
           customer_id,
-          category_id
+          category_id,
+          image_url,
+          notes
         `)
         .eq("id", requestId)
         .maybeSingle();
@@ -246,7 +253,7 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Compact Service Context */}
-      <div className="bg-muted/30 rounded-md p-3 space-y-1">
+      <div className="bg-muted/30 rounded-md p-3 space-y-1.5">
         <p className="text-sm font-semibold leading-tight text-foreground">
           {serviceName}
         </p>
@@ -256,6 +263,72 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
         <p className="text-xs text-muted-foreground">
           {cityState}
         </p>
+        
+        {/* View Request Details Button */}
+        <Sheet open={showRequestDetails} onOpenChange={setShowRequestDetails}>
+          <SheetTrigger asChild>
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs text-primary hover:text-primary/80 p-0 h-auto mt-1"
+            >
+              <FileText className="h-3 w-3 mr-1" />
+              View Request Details
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Request Details</SheetTitle>
+            </SheetHeader>
+            
+            <div className="mt-6 space-y-4">
+              {/* Service Title */}
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Service</h3>
+                <p className="text-base font-semibold text-foreground">{serviceName}</p>
+              </div>
+              
+              {/* Vehicle Info */}
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Vehicle</h3>
+                <p className="text-sm text-foreground">{vehicleInfo}{mileageInfo}</p>
+                {requestDetails.trim && (
+                  <p className="text-xs text-muted-foreground mt-0.5">Trim: {requestDetails.trim}</p>
+                )}
+              </div>
+              
+              {/* Customer Notes */}
+              {(requestDetails.description || requestDetails.notes) && (
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Customer Notes</h3>
+                  {requestDetails.description && (
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{requestDetails.description}</p>
+                  )}
+                  {requestDetails.notes && (
+                    <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{requestDetails.notes}</p>
+                  )}
+                </div>
+              )}
+              
+              {/* Uploaded Photos */}
+              {requestDetails.image_url && (
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Photos</h3>
+                  <div className="rounded-lg overflow-hidden border border-border">
+                    <img 
+                      src={requestDetails.image_url} 
+                      alt="Service request" 
+                      className="w-full h-auto object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => window.open(requestDetails.image_url, '_blank')}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Click to view full size</p>
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Estimated Price */}
