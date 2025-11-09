@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
-import { CheckCircle, XCircle, Eye, Building2, Package, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Building2, Package, AlertCircle, Filter } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Supplier {
   id: string;
@@ -41,14 +42,19 @@ interface SupplierProduct {
   suppliers: {
     business_name: string;
     stripe_onboarding_complete: boolean;
+    is_platform_seller: boolean;
   };
 }
+
+type ProductFilter = 'all' | 'platform' | 'vendors';
 
 export function SuppliersTab() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<SupplierProduct[]>([]);
+  const [allProducts, setAllProducts] = useState<SupplierProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(true);
+  const [allProductsLoading, setAllProductsLoading] = useState(true);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<SupplierProduct | null>(null);
   const [verificationNotes, setVerificationNotes] = useState('');
@@ -56,10 +62,12 @@ export function SuppliersTab() {
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [productActionType, setProductActionType] = useState<'approve' | 'reject' | null>(null);
+  const [productFilter, setProductFilter] = useState<ProductFilter>('all');
 
   useEffect(() => {
     fetchSuppliers();
     fetchPendingProducts();
+    fetchAllProducts();
   }, []);
 
   const fetchSuppliers = async () => {
@@ -87,7 +95,8 @@ export function SuppliersTab() {
           *,
           suppliers (
             business_name,
-            stripe_onboarding_complete
+            stripe_onboarding_complete,
+            is_platform_seller
           )
         `)
         .eq('admin_approved', false)
@@ -102,6 +111,43 @@ export function SuppliersTab() {
       setProductsLoading(false);
     }
   };
+
+  const fetchAllProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('supplier_products')
+        .select(`
+          *,
+          suppliers (
+            business_name,
+            stripe_onboarding_complete,
+            is_platform_seller
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAllProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching all products:', error);
+      toast({ title: 'Error', description: 'Failed to load all products', variant: 'destructive' });
+    } finally {
+      setAllProductsLoading(false);
+    }
+  };
+
+  const getFilteredProducts = () => {
+    switch (productFilter) {
+      case 'platform':
+        return allProducts.filter(p => p.suppliers.is_platform_seller);
+      case 'vendors':
+        return allProducts.filter(p => !p.suppliers.is_platform_seller);
+      default:
+        return allProducts;
+    }
+  };
+
+  const filteredProducts = getFilteredProducts();
 
   const openDialog = (supplier: Supplier, action: 'approve' | 'reject') => {
     setSelectedSupplier(supplier);
@@ -472,6 +518,106 @@ export function SuppliersTab() {
       </Dialog>
 
       {/* Product Approval Dialog */}
+      {/* All Products Section with Filter */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Package className="h-6 w-6 text-primary" />
+              <div>
+                <CardTitle>All Products Inventory</CardTitle>
+                <CardDescription>
+                  View and filter all products from DoneEZ and vendors
+                </CardDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Tabs value={productFilter} onValueChange={(v) => setProductFilter(v as ProductFilter)}>
+                <TabsList>
+                  <TabsTrigger value="all">All Listings</TabsTrigger>
+                  <TabsTrigger value="platform">DoneEZ Only</TabsTrigger>
+                  <TabsTrigger value="vendors">Vendors Only</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {allProductsLoading ? (
+            <div>Loading all products...</div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No products found for the selected filter
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Seller</TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Part Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Condition</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProducts.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium flex items-center gap-2">
+                            {product.suppliers.business_name}
+                            {product.suppliers.is_platform_seller && (
+                              <Badge variant="default" className="text-xs">Platform</Badge>
+                            )}
+                          </div>
+                          {!product.suppliers.stripe_onboarding_complete && !product.suppliers.is_platform_seller && (
+                            <div className="flex items-center gap-1 text-xs text-orange-600">
+                              <AlertCircle className="h-3 w-3" />
+                              Stripe not connected
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">{product.sku}</TableCell>
+                      <TableCell>{product.part_name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{product.category}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{product.condition}</Badge>
+                      </TableCell>
+                      <TableCell>${product.price.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <span className={product.quantity === 0 ? 'text-destructive' : ''}>
+                          {product.quantity}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {product.admin_approved ? (
+                          product.is_active ? (
+                            <Badge variant="default">Active</Badge>
+                          ) : (
+                            <Badge variant="outline">Inactive</Badge>
+                          )
+                        ) : (
+                          <Badge variant="secondary">Pending</Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
         <DialogContent>
           <DialogHeader>

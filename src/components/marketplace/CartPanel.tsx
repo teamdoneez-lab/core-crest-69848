@@ -12,7 +12,16 @@ export function CartPanel() {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleCheckout = () => {
-    // Placeholder for checkout integration
+    // TODO: Implement marketplace checkout with Stripe
+    // IMPORTANT: Payment routing logic for platform vs vendor products:
+    // - For platform products (seller.isPlatformSeller === true):
+    //   Route funds to main platform Stripe account (no connected account)
+    // - For vendor products:
+    //   Route funds to vendor's Stripe Connect account (seller.stripeAccountId)
+    // 
+    // Example edge function logic:
+    // const seller = await getSellerInfo(product.sellerId);
+    // const stripeAccountId = seller.isPlatformSeller ? null : seller.stripeAccountId;
     alert('Checkout functionality will be integrated with your e-commerce backend.');
     setIsOpen(false);
   };
