@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
+import { usePhotoNotifications } from '@/hooks/usePhotoNotifications';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,6 +56,7 @@ interface ServiceRequest {
 const MyRequests = () => {
   const { user, loading: authLoading } = useAuth();
   const { isCustomer, loading: roleLoading } = useRole();
+  const { clearNotification, addNotification } = usePhotoNotifications();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -296,6 +298,9 @@ const MyRequests = () => {
 
       if (updateError) throw updateError;
 
+      // Add notification for pro
+      addNotification(requestId, 'photos_uploaded');
+      
       toast({
         title: "Photos Uploaded",
         description: "Your photos have been sent to the service professional.",

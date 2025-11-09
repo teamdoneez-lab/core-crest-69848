@@ -93,6 +93,7 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
         title: "Photo Request Sent",
         description: "The customer will be notified to upload additional photos.",
       });
+      
       setShowPhotoRequestDialog(false);
     } catch (error) {
       console.error('Error requesting photos:', error);

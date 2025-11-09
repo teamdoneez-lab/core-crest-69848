@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { usePhotoNotifications } from '@/hooks/usePhotoNotifications';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -16,6 +17,7 @@ export function Navigation() {
   const { user, signOut } = useAuth();
   const { profile, isCustomer, isPro, isAdmin } = useRole();
   const unreadCount = useUnreadMessages();
+  const { hasNewPhotos, hasPhotoRequests } = usePhotoNotifications();
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -73,11 +75,14 @@ export function Navigation() {
             to="/my-requests" 
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap relative flex items-center gap-1",
               isActive('/my-requests') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
-            My Requests
+            <span>My Requests</span>
+            {hasPhotoRequests && (
+              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+            )}
           </Link>
           <Link 
             to="/appointments" 
@@ -147,11 +152,14 @@ export function Navigation() {
             to="/my-jobs" 
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap relative flex items-center gap-1",
               isActive('/my-jobs') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
-            Jobs
+            <span>Jobs</span>
+            {hasNewPhotos && (
+              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+            )}
           </Link>
           <Link 
             to="/earnings" 
