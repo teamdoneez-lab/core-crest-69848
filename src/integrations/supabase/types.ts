@@ -609,6 +609,7 @@ export type Database = {
         Row: {
           accept_expires_at: string | null
           accepted_pro_id: string | null
+          additional_photos_requested: boolean | null
           address: string
           appointment_pref: string
           appointment_type: string | null
@@ -626,6 +627,7 @@ export type Database = {
           mileage: number | null
           model: string
           notes: string | null
+          photos_requested_at: string | null
           preferred_time: string | null
           service_category: string[] | null
           status: string
@@ -639,6 +641,7 @@ export type Database = {
         Insert: {
           accept_expires_at?: string | null
           accepted_pro_id?: string | null
+          additional_photos_requested?: boolean | null
           address: string
           appointment_pref: string
           appointment_type?: string | null
@@ -656,6 +659,7 @@ export type Database = {
           mileage?: number | null
           model: string
           notes?: string | null
+          photos_requested_at?: string | null
           preferred_time?: string | null
           service_category?: string[] | null
           status?: string
@@ -669,6 +673,7 @@ export type Database = {
         Update: {
           accept_expires_at?: string | null
           accepted_pro_id?: string | null
+          additional_photos_requested?: boolean | null
           address?: string
           appointment_pref?: string
           appointment_type?: string | null
@@ -686,6 +691,7 @@ export type Database = {
           mileage?: number | null
           model?: string
           notes?: string | null
+          photos_requested_at?: string | null
           preferred_time?: string | null
           service_category?: string[] | null
           status?: string

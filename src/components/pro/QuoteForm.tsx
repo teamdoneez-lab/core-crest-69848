@@ -10,7 +10,7 @@ import { z } from "zod";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { getServiceNames } from "@/utils/serviceCodeLookup";
 import { FileText, Camera, X } from "lucide-react";
 
@@ -76,6 +76,33 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
   const [showRequestDetails, setShowRequestDetails] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [showPhotoRequestDialog, setShowPhotoRequestDialog] = useState(false);
+
+  const handleRequestMorePhotos = async () => {
+    try {
+      const { error } = await supabase
+        .from('service_requests')
+        .update({ 
+          additional_photos_requested: true,
+          photos_requested_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Photo Request Sent",
+        description: "The customer will be notified to upload additional photos.",
+      });
+      setShowPhotoRequestDialog(false);
+    } catch (error) {
+      console.error('Error requesting photos:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send photo request",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Demo placeholder images for testing (replace with actual customer photos)
   const demoPhotos = [
@@ -515,13 +542,8 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => {
-              setShowPhotoRequestDialog(false);
-              toast({
-                title: "Request Sent",
-                description: "Customer will be notified to upload additional photos.",
-              });
-            }}>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRequestMorePhotos}>
               Send Request
             </AlertDialogAction>
           </AlertDialogFooter>

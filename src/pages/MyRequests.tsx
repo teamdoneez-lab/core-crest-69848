@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
-import { Car, MapPin, Calendar, Package, Home, Building2, Edit, Trash2, Eye, RotateCcw, Download, X, CheckCircle } from 'lucide-react';
+import { Car, MapPin, Calendar, Package, Home, Building2, Edit, Trash2, Eye, RotateCcw, Download, X, CheckCircle, Camera, Upload, AlertCircle } from 'lucide-react';
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -25,6 +25,7 @@ import {
 import { QuotesSection } from '@/components/customer/QuotesSection';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getServiceNamesByIds } from '@/utils/serviceHelpers';
 
 interface ServiceRequest {
@@ -44,6 +45,8 @@ interface ServiceRequest {
   description?: string;
   image_url?: string;
   created_at: string;
+  additional_photos_requested?: boolean;
+  photos_requested_at?: string;
   service_categories?: {
     name: string;
   };
@@ -61,6 +64,8 @@ const MyRequests = () => {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [uploadingPhotos, setUploadingPhotos] = useState<Record<string, boolean>>({});
+  const [newPhotos, setNewPhotos] = useState<Record<string, File[]>>({});
   const itemsPerPage = 10;
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -238,6 +243,82 @@ const MyRequests = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+  };
+
+  const handlePhotoSelection = (requestId: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    setNewPhotos(prev => ({ ...prev, [requestId]: fileArray }));
+  };
+
+  const handleSubmitPhotos = async (requestId: string, currentImageUrl?: string) => {
+    const files = newPhotos[requestId];
+    if (!files || files.length === 0) return;
+
+    setUploadingPhotos(prev => ({ ...prev, [requestId]: true }));
+
+    try {
+      // Upload each file to storage
+      const uploadPromises = files.map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${requestId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from('service-images')
+          .upload(fileName, file);
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('service-images')
+          .getPublicUrl(fileName);
+
+        return publicUrl;
+      });
+
+      const newUrls = await Promise.all(uploadPromises);
+      
+      // Combine with existing image_url if it exists
+      const allUrls = currentImageUrl 
+        ? [currentImageUrl, ...newUrls].join(',')
+        : newUrls.join(',');
+
+      // Update service request with new photos and clear photo request flag
+      const { error: updateError } = await supabase
+        .from('service_requests')
+        .update({ 
+          image_url: allUrls,
+          additional_photos_requested: false,
+          photos_requested_at: null
+        })
+        .eq('id', requestId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Photos Uploaded",
+        description: "Your photos have been sent to the service professional.",
+      });
+
+      // Clear the file selection
+      setNewPhotos(prev => {
+        const updated = { ...prev };
+        delete updated[requestId];
+        return updated;
+      });
+
+      // Refresh the requests
+      fetchRequests();
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload photos. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingPhotos(prev => ({ ...prev, [requestId]: false }));
     }
   };
 
@@ -439,6 +520,60 @@ const MyRequests = () => {
                         {format(new Date(request.preferred_time), 'PPP p')}
                       </p>
                     </div>
+                  )}
+
+                  {/* Additional Photos Request Banner */}
+                  {request.additional_photos_requested && (
+                    <Alert className="mb-4 border-yellow-500 bg-yellow-50">
+                      <AlertCircle className="h-4 w-4 text-yellow-600" />
+                      <AlertDescription className="text-yellow-800">
+                        <div className="font-semibold mb-2">🟡 Additional Photos Requested</div>
+                        <p className="text-sm mb-3">
+                          Your service professional has asked for more photos to help prepare an accurate estimate. 
+                          Please upload 2–3 more images of the damaged area.
+                        </p>
+                        
+                        {/* Upload Interface */}
+                        <div className="mt-3 p-4 bg-white rounded-lg border border-yellow-200">
+                          <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                            <Camera className="h-4 w-4" />
+                            Upload More Photos
+                          </h4>
+                          
+                          <div className="space-y-3">
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={(e) => handlePhotoSelection(request.id, e.target.files)}
+                                className="hidden"
+                                id={`photo-upload-${request.id}`}
+                              />
+                              <label htmlFor={`photo-upload-${request.id}`} className="cursor-pointer">
+                                <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                                <p className="text-sm text-gray-600">
+                                  {newPhotos[request.id]?.length 
+                                    ? `${newPhotos[request.id].length} photo(s) selected` 
+                                    : 'Click to select photos or drag and drop'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB each</p>
+                              </label>
+                            </div>
+                            
+                            {newPhotos[request.id] && newPhotos[request.id].length > 0 && (
+                              <Button 
+                                onClick={() => handleSubmitPhotos(request.id, request.image_url)}
+                                disabled={uploadingPhotos[request.id]}
+                                className="w-full"
+                              >
+                                {uploadingPhotos[request.id] ? 'Uploading...' : 'Submit Photos'}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
                   )}
 
                   {/* Notes */}
