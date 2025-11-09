@@ -25,11 +25,6 @@ export function PublicNavigation() {
                 FAQ
               </Button>
             </Link>
-            <Link to="/supplier-signup">
-              <Button variant="ghost" className="text-sm lg:text-base">
-                Become a Supplier
-              </Button>
-            </Link>
             <Link to="/auth">
               <Button variant="outline" className="border-primary/20 bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-300 text-sm lg:text-base px-3 lg:px-4">
                 Sign In
@@ -73,11 +68,6 @@ export function PublicNavigation() {
             <Link to="/faq" className="block">
               <Button variant="ghost" className="w-full justify-start">
                 FAQ
-              </Button>
-            </Link>
-            <Link to="/supplier-signup" className="block">
-              <Button variant="ghost" className="w-full justify-start">
-                Become a Supplier
               </Button>
             </Link>
             <Link to="/auth" className="block">
