@@ -1,18 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, Info, Plus } from "lucide-react";
 import { z } from "zod";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { getServiceNames } from "@/utils/serviceCodeLookup";
-import { FileText, Camera, X } from "lucide-react";
+import { JobSummaryPanel } from "./JobSummaryPanel";
+import { QuoteFormFields } from "./QuoteFormFields";
 
 const quoteSchema = z.object({
   estimated_price: z.number().min(1, "Price must be at least $1").max(999999, "Price cannot exceed $999,999"),
@@ -45,25 +38,6 @@ interface ServiceRequestDetails {
   };
 }
 
-// Calculate referral fee based on tiered pricing
-const calculateReferralFee = (jobTotal: number): number => {
-  if (jobTotal < 1000) {
-    return Math.max(5.00, jobTotal * 0.05);
-  } else if (jobTotal < 5000) {
-    return jobTotal * 0.03;
-  } else if (jobTotal < 10000) {
-    return jobTotal * 0.02;
-  } else {
-    return jobTotal * 0.01;
-  }
-};
-
-const getFeePercentage = (jobTotal: number): number => {
-  if (jobTotal < 1000) return 5;
-  if (jobTotal < 5000) return 3;
-  if (jobTotal < 10000) return 2;
-  return 1;
-};
 
 export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
   const [estimatedPrice, setEstimatedPrice] = useState("");
@@ -72,9 +46,6 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestDetails, setRequestDetails] = useState<ServiceRequestDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showNotes, setShowNotes] = useState(false);
-  const [showRequestDetails, setShowRequestDetails] = useState(false);
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [showPhotoRequestDialog, setShowPhotoRequestDialog] = useState(false);
 
   const handleRequestMorePhotos = async () => {
@@ -186,11 +157,6 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
     }
   };
 
-  const priceNum = parseFloat(estimatedPrice) || 0;
-  const referralFee = calculateReferralFee(priceNum);
-  const feePercentage = getFeePercentage(priceNum);
-  const youReceive = priceNum - referralFee;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -296,241 +262,38 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
 
   const serviceName = getServiceDisplayName();
   const vehicleInfo = `${requestDetails.year} ${requestDetails.vehicle_make} ${requestDetails.model}`;
-  const mileageInfo = requestDetails.mileage ? ` – ${requestDetails.mileage.toLocaleString()} miles` : "";
-  const cityState = requestDetails.address?.split(",").slice(-2).join(",").trim() || `ZIP ${requestDetails.zip}`;
+  const mileageInfo = requestDetails.mileage ? `${requestDetails.mileage.toLocaleString()} miles` : "";
+  const location = requestDetails.address?.split(",").slice(-2).join(",").trim() || `ZIP ${requestDetails.zip}`;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Compact Service Context */}
-      <div className="bg-muted/30 rounded-md p-3 space-y-1.5">
-        <p className="text-sm font-semibold leading-tight text-foreground">
-          {serviceName}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {vehicleInfo}{mileageInfo}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {cityState}
-        </p>
-        
-        {/* View Request Details Button */}
-        <Sheet open={showRequestDetails} onOpenChange={setShowRequestDetails}>
-          <SheetTrigger asChild>
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs text-primary hover:text-primary/80 p-0 h-auto mt-1"
-            >
-              <FileText className="h-3 w-3 mr-1" />
-              View Request Details
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Request Details</SheetTitle>
-            </SheetHeader>
-            
-            <div className="mt-6 space-y-4">
-              {/* Service Title */}
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Service</h3>
-                <p className="text-base font-semibold text-foreground">{serviceName}</p>
-              </div>
-              
-              {/* Vehicle Info */}
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Vehicle</h3>
-                <p className="text-sm text-foreground">{vehicleInfo}{mileageInfo}</p>
-                {requestDetails.trim && (
-                  <p className="text-xs text-muted-foreground mt-0.5">Trim: {requestDetails.trim}</p>
-                )}
-              </div>
-              
-              {/* Customer Notes */}
-              {(requestDetails.description || requestDetails.notes) && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Customer Notes</h3>
-                  {requestDetails.description && (
-                    <p className="text-sm text-foreground whitespace-pre-wrap">{requestDetails.description}</p>
-                  )}
-                  {requestDetails.notes && (
-                    <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{requestDetails.notes}</p>
-                  )}
-                </div>
-              )}
-              
-              {/* Uploaded Photos */}
-              {photoUrls.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">Photos ({photoUrls.length})</h3>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowPhotoRequestDialog(true)}
-                      className="h-7 text-xs"
-                    >
-                      <Camera className="h-3 w-3 mr-1" />
-                      Request More Photos
-                    </Button>
-                  </div>
-                  
-                  {/* Photo Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {photoUrls.map((url, index) => (
-                      <div 
-                        key={index}
-                        className="aspect-square rounded-lg overflow-hidden border border-border cursor-pointer hover:ring-2 hover:ring-primary transition-all group relative"
-                        onClick={() => setLightboxImage(url)}
-                      >
-                        <img 
-                          src={url} 
-                          alt={`Damage photo ${index + 1}`} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">Click any photo to view full size</p>
-                </div>
-              )}
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-
-      {/* Estimated Price */}
-      <div className="space-y-1.5">
-        <Label htmlFor="estimatedPrice" className="text-sm">Estimated Price ($)</Label>
-        <div className="relative">
-          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="estimatedPrice"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            value={estimatedPrice}
-            onChange={(e) => setEstimatedPrice(e.target.value)}
-            required
-            className="pl-10"
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Enter your total for labor and parts.
-        </p>
-        
-        {/* Inline Referral Fee Preview */}
-        {priceNum > 0 && (
-          <div className="flex items-center justify-between text-xs bg-accent/50 rounded px-3 py-2 mt-2">
-            <span className="text-muted-foreground">
-              💰 Fee: ~${referralFee.toFixed(2)} ({feePercentage}%)
-            </span>
-            <span className="font-semibold text-primary">
-              You get ~${youReceive.toFixed(2)}
-            </span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-auto p-0 ml-2 text-xs text-primary hover:underline">
-                  <Info className="h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72" side="top">
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-xs">Referral Fee Tiers</h4>
-                  <div className="space-y-1.5 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Under $1,000</span>
-                      <span className="font-medium">5% (min $5)</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">$1,000–$4,999</span>
-                      <span className="font-medium">3%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">$5,000–$9,999</span>
-                      <span className="font-medium">2%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">$10,000+</span>
-                      <span className="font-medium">1%</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground pt-1 border-t">
-                    Fee applies only if appointment confirmed.
-                  </p>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        )}
-      </div>
-
-      {/* Service Description */}
-      <div className="space-y-1.5">
-        <Label htmlFor="description" className="text-sm">Service Description *</Label>
-        <Textarea
-          id="description"
-          placeholder="Describe the work to be performed..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-          rows={3}
-          className="resize-none text-sm"
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-1">
+      {/* Left Panel: Job Summary */}
+      <div className="lg:pr-4 lg:border-r border-border">
+        <JobSummaryPanel
+          serviceName={serviceName}
+          vehicleInfo={vehicleInfo}
+          mileageInfo={mileageInfo}
+          location={location}
+          photoUrls={photoUrls}
+          customerNotes={requestDetails.notes}
+          serviceDescription={requestDetails.description}
         />
       </div>
 
-      {/* Collapsible Additional Notes */}
-      <Collapsible open={showNotes} onOpenChange={setShowNotes}>
-        <CollapsibleTrigger asChild>
-          <Button 
-            type="button" 
-            variant="ghost" 
-            size="sm" 
-            className="text-xs text-muted-foreground hover:text-foreground p-0 h-auto"
-          >
-            <Plus className={`h-3 w-3 mr-1 transition-transform ${showNotes ? "rotate-45" : ""}`} />
-            {showNotes ? "Hide" : "Add"} Notes
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-1.5 pt-2">
-          <Label htmlFor="notes" className="text-sm">Additional Notes</Label>
-          <Textarea
-            id="notes"
-            placeholder="Any additional information..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={2}
-            className="resize-none text-sm"
-          />
-        </CollapsibleContent>
-      </Collapsible>
-
-      {/* Lightbox for Full-Size Photos */}
-      {lightboxImage && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setLightboxImage(null)}
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 text-white hover:bg-white/20"
-            onClick={() => setLightboxImage(null)}
-          >
-            <X className="h-6 w-6" />
-          </Button>
-          <img 
-            src={lightboxImage} 
-            alt="Full size preview" 
-            className="max-w-full max-h-full object-contain rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+      {/* Right Panel: Quote Form */}
+      <div className="lg:pl-2">
+        <QuoteFormFields
+          estimatedPrice={estimatedPrice}
+          setEstimatedPrice={setEstimatedPrice}
+          description={description}
+          setDescription={setDescription}
+          notes={notes}
+          setNotes={setNotes}
+          isSubmitting={isSubmitting}
+          onSubmit={handleSubmit}
+          onRequestPhotos={() => setShowPhotoRequestDialog(true)}
+        />
+      </div>
 
       {/* Request More Photos Confirmation Dialog */}
       <AlertDialog open={showPhotoRequestDialog} onOpenChange={setShowPhotoRequestDialog}>
@@ -550,16 +313,6 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Submit Button */}
-      <div className="space-y-1.5 pt-2">
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? "Submitting..." : "Submit Quote"}
-        </Button>
-        <p className="text-xs text-center text-muted-foreground">
-          Customer will be notified once sent.
-        </p>
-      </div>
-    </form>
+    </div>
   );
 }
