@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -32,56 +32,68 @@ export default function SupplierProductUpload() {
   const [platformSupplierId, setPlatformSupplierId] = useState<string | null>(null);
 
   useEffect(() => {
-    checkAdminStatus();
-    fetchPlatformSupplier();
+    const initializeData = async () => {
+      await checkAdminStatus();
+      await fetchPlatformSupplier();
+    };
+    
+    initializeData();
   }, []);
 
   const checkAdminStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
 
-    setIsAdmin(profile?.role === 'admin');
+      setIsAdmin(profile?.role === 'admin');
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
   };
 
   const fetchPlatformSupplier = async () => {
-    const { data, error } = await supabase
-      .from('suppliers')
-      .select('id')
-      .eq('is_platform_seller', true)
-      .maybeSingle();
-
-    if (!error && data) {
-      setPlatformSupplierId(data.id);
-    } else if (!error && !data) {
-      // Create platform supplier if it doesn't exist
-      const { data: newSupplier, error: insertError } = await supabase
+    try {
+      const { data, error } = await supabase
         .from('suppliers')
-        .insert({
-          user_id: null,
-          business_name: 'DoneEZ',
-          contact_name: 'DoneEZ Platform',
-          email: 'platform@doneez.com',
-          phone: '1-800-DONEEZ',
-          business_address: 'Platform Address',
-          city: 'Platform City',
-          state: 'CA',
-          zip: '00000',
-          status: 'approved',
-          is_platform_seller: true,
-          stripe_onboarding_complete: true,
-        })
         .select('id')
-        .single();
+        .eq('is_platform_seller', true)
+        .maybeSingle();
 
-      if (!insertError && newSupplier) {
-        setPlatformSupplierId(newSupplier.id);
+      if (!error && data) {
+        setPlatformSupplierId(data.id);
+      } else if (!error && !data) {
+        // Create platform supplier if it doesn't exist
+        const { data: newSupplier, error: insertError } = await supabase
+          .from('suppliers')
+          .insert({
+            user_id: null,
+            business_name: 'DoneEZ',
+            contact_name: 'DoneEZ Platform',
+            email: 'platform@doneez.com',
+            phone: '1-800-DONEEZ',
+            business_address: 'Platform Address',
+            city: 'Platform City',
+            state: 'CA',
+            zip: '00000',
+            status: 'approved',
+            is_platform_seller: true,
+            stripe_onboarding_complete: true,
+          })
+          .select('id')
+          .single();
+
+        if (!insertError && newSupplier) {
+          setPlatformSupplierId(newSupplier.id);
+        }
       }
+    } catch (error) {
+      console.error('Error fetching platform supplier:', error);
     }
   };
 
