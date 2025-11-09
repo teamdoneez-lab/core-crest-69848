@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Product } from '@/contexts/CartContext';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Store } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -53,6 +53,16 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
           {product.description}
         </p>
+        
+        {product.sellerName && (
+          <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground">
+            <Store className="h-3.5 w-3.5" />
+            <span>
+              Sold by <span className="font-medium text-foreground">{product.sellerName}</span>
+            </span>
+          </div>
+        )}
+        
         <p className="text-2xl font-bold text-primary">
           ${product.price.toFixed(2)}
         </p>

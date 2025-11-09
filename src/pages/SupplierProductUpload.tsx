@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
 import { Upload, FileSpreadsheet, Download } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import Papa from 'papaparse';
 
 interface ProductRow {
@@ -25,6 +27,63 @@ export default function SupplierProductUpload() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [soldByPlatform, setSoldByPlatform] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [platformSupplierId, setPlatformSupplierId] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkAdminStatus();
+    fetchPlatformSupplier();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    setIsAdmin(profile?.role === 'admin');
+  };
+
+  const fetchPlatformSupplier = async () => {
+    const { data, error } = await supabase
+      .from('suppliers')
+      .select('id')
+      .eq('is_platform_seller', true)
+      .maybeSingle();
+
+    if (!error && data) {
+      setPlatformSupplierId(data.id);
+    } else if (!error && !data) {
+      // Create platform supplier if it doesn't exist
+      const { data: newSupplier, error: insertError } = await supabase
+        .from('suppliers')
+        .insert({
+          user_id: null,
+          business_name: 'DoneEZ',
+          contact_name: 'DoneEZ Platform',
+          email: 'platform@doneez.com',
+          phone: '1-800-DONEEZ',
+          business_address: 'Platform Address',
+          city: 'Platform City',
+          state: 'CA',
+          zip: '00000',
+          status: 'approved',
+          is_platform_seller: true,
+          stripe_onboarding_complete: true,
+        })
+        .select('id')
+        .single();
+
+      if (!insertError && newSupplier) {
+        setPlatformSupplierId(newSupplier.id);
+      }
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -56,23 +115,30 @@ export default function SupplierProductUpload() {
     setLoading(true);
     try {
       // Get supplier ID
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      let supplierId: string;
+      
+      if (soldByPlatform && platformSupplierId) {
+        supplierId = platformSupplierId;
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
 
-      const { data: supplier, error: supplierError } = await supabase
-        .from('suppliers')
-        .select('id, status')
-        .eq('user_id', user.id)
-        .single();
+        const { data: supplier, error: supplierError } = await supabase
+          .from('suppliers')
+          .select('id, status')
+          .eq('user_id', user.id)
+          .single();
 
-      if (supplierError) throw supplierError;
-      if (supplier.status !== 'approved') {
-        toast({ 
-          title: 'Error', 
-          description: 'Your supplier account must be approved first', 
-          variant: 'destructive' 
-        });
-        return;
+        if (supplierError) throw supplierError;
+        if (supplier.status !== 'approved') {
+          toast({ 
+            title: 'Error', 
+            description: 'Your supplier account must be approved first', 
+            variant: 'destructive' 
+          });
+          return;
+        }
+        supplierId = supplier.id;
       }
 
       // Parse CSV
@@ -89,7 +155,7 @@ export default function SupplierProductUpload() {
 
           // Validate and insert products
           const productsToInsert = products.map(product => ({
-            supplier_id: supplier.id,
+            supplier_id: supplierId,
             sku: product.sku,
             part_name: product.part_name,
             oem_cross_ref: product.oem_cross_ref || null,
@@ -146,6 +212,24 @@ export default function SupplierProductUpload() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
+            {isAdmin && platformSupplierId && (
+              <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <Switch
+                  id="platform-seller"
+                  checked={soldByPlatform}
+                  onCheckedChange={setSoldByPlatform}
+                />
+                <div className="flex-1">
+                  <Label htmlFor="platform-seller" className="text-base font-semibold cursor-pointer">
+                    Sold by Platform (DoneEZ)
+                  </Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Enable this to list products under the platform's name. No Stripe Connect setup required.
+                  </p>
+                </div>
+              </div>
+            )}
+            
             <div className="flex items-center gap-4">
               <Button variant="outline" onClick={downloadTemplate}>
                 <Download className="mr-2 h-4 w-4" />

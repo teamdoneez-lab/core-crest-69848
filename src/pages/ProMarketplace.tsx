@@ -43,7 +43,13 @@ export default function ProMarketplace() {
       setProductsLoading(true);
       const { data, error } = await supabase
         .from('supplier_products')
-        .select('*')
+        .select(`
+          *,
+          suppliers:supplier_id (
+            business_name,
+            is_platform_seller
+          )
+        `)
         .eq('admin_approved', true)
         .eq('is_active', true);
 
@@ -62,19 +68,24 @@ export default function ProMarketplace() {
       };
 
       // Map database products to Product interface
-      const mappedProducts: Product[] = (data || []).map(product => ({
-        id: product.id,
-        name: product.part_name,
-        price: Number(product.price),
-        category: product.category,
-        image: isValidImageUrl(product.image_url) ? product.image_url : fallbackImage,
-        description: product.description || '',
-        inStock: (product.quantity || 0) > 0,
-        sku: product.sku,
-        condition: product.condition,
-        quantity: product.quantity || 0,
-        supplierId: product.supplier_id,
-      }));
+      const mappedProducts: Product[] = (data || []).map(product => {
+        const supplier = Array.isArray(product.suppliers) ? product.suppliers[0] : product.suppliers;
+        return {
+          id: product.id,
+          name: product.part_name,
+          price: Number(product.price),
+          category: product.category,
+          image: isValidImageUrl(product.image_url) ? product.image_url : fallbackImage,
+          description: product.description || '',
+          inStock: (product.quantity || 0) > 0,
+          sku: product.sku,
+          condition: product.condition,
+          quantity: product.quantity || 0,
+          supplierId: product.supplier_id,
+          sellerName: supplier?.is_platform_seller ? 'DoneEZ' : supplier?.business_name || 'Unknown',
+          isPlatformSeller: supplier?.is_platform_seller || false,
+        };
+      });
 
       setProducts(mappedProducts);
       console.log(`Loaded ${mappedProducts.length} products with validated images`);

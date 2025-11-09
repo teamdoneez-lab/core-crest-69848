@@ -18,6 +18,7 @@ interface SupplierData {
   fulfilled_orders: number;
   acceptance_rate: number;
   stripe_onboarding_complete: boolean;
+  is_platform_seller?: boolean;
 }
 
 interface SupplierProduct {
@@ -301,7 +302,7 @@ export default function SupplierDashboard() {
         </Card>
       )}
 
-      {supplier.status === 'approved' && !supplier.stripe_onboarding_complete && (
+      {supplier.status === 'approved' && !supplier.stripe_onboarding_complete && !supplier.is_platform_seller && (
         <Card className="mb-6 border-blue-500">
           <CardHeader>
             <div className="flex items-center gap-2">

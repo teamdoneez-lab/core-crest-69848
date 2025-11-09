@@ -997,6 +997,7 @@ export type Database = {
           email: string
           fulfilled_orders: number | null
           id: string
+          is_platform_seller: boolean
           on_time_rate: number | null
           phone: string
           pickup_available: boolean | null
@@ -1007,7 +1008,7 @@ export type Database = {
           stripe_onboarding_complete: boolean | null
           total_orders: number | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
           verification_notes: string | null
           verified_at: string | null
           verified_by: string | null
@@ -1025,6 +1026,7 @@ export type Database = {
           email: string
           fulfilled_orders?: number | null
           id?: string
+          is_platform_seller?: boolean
           on_time_rate?: number | null
           phone: string
           pickup_available?: boolean | null
@@ -1035,7 +1037,7 @@ export type Database = {
           stripe_onboarding_complete?: boolean | null
           total_orders?: number | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
           verification_notes?: string | null
           verified_at?: string | null
           verified_by?: string | null
@@ -1053,6 +1055,7 @@ export type Database = {
           email?: string
           fulfilled_orders?: number | null
           id?: string
+          is_platform_seller?: boolean
           on_time_rate?: number | null
           phone?: string
           pickup_available?: boolean | null
@@ -1063,7 +1066,7 @@ export type Database = {
           stripe_onboarding_complete?: boolean | null
           total_orders?: number | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
           verification_notes?: string | null
           verified_at?: string | null
           verified_by?: string | null

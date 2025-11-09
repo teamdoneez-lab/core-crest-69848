@@ -13,6 +13,8 @@ export interface Product {
   condition?: string;
   quantity?: number;
   supplierId?: string;
+  sellerName?: string;
+  isPlatformSeller?: boolean;
 }
 
 export interface CartItem extends Product {

@@ -51,7 +51,13 @@ export default function ProductDetailPage() {
       setImageError(false);
       const { data, error } = await supabase
         .from('supplier_products')
-        .select('*')
+        .select(`
+          *,
+          suppliers:supplier_id (
+            business_name,
+            is_platform_seller
+          )
+        `)
         .eq('id', productHandle)
         .eq('admin_approved', true)
         .eq('is_active', true)
@@ -78,6 +84,8 @@ export default function ProductDetailPage() {
         // Support for multiple images - currently single image, structured for future expansion
         const productImages = [productImageUrl];
 
+        const supplier = Array.isArray(data.suppliers) ? data.suppliers[0] : data.suppliers;
+        
         const mappedProduct: Product = {
           id: data.id,
           name: data.part_name,
@@ -91,6 +99,8 @@ export default function ProductDetailPage() {
           condition: data.condition,
           quantity: data.quantity || 0,
           supplierId: data.supplier_id,
+          sellerName: supplier?.is_platform_seller ? 'DoneEZ' : supplier?.business_name || 'Unknown',
+          isPlatformSeller: supplier?.is_platform_seller || false,
         };
         setProduct(mappedProduct);
         
@@ -272,9 +282,19 @@ export default function ProductDetailPage() {
           {/* Product Info */}
           <div className="space-y-6">
             <div>
-              <Badge variant="secondary" className="mb-3">
-                {product.category}
-              </Badge>
+              <div className="flex items-center gap-2 mb-3">
+                <Badge variant="secondary">
+                  {product.category}
+                </Badge>
+                {product.sellerName && (
+                  <Badge 
+                    variant="outline" 
+                    className={product.isPlatformSeller ? 'bg-primary/10 text-primary border-primary/20' : ''}
+                  >
+                    Sold by {product.sellerName}
+                  </Badge>
+                )}
+              </div>
               <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
               
               <div className="flex flex-wrap gap-4 text-sm">
