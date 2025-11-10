@@ -85,6 +85,8 @@ const App = () => (
             <Route path="/supplier/upload-products" element={<SupplierProductUpload />} />
             <Route path="/success" element={<CheckoutSuccess />} />
             <Route path="/cancel" element={<CheckoutCancel />} />
+            <Route path="/checkout/success" element={<CheckoutSuccess />} />
+            <Route path="/checkout/cancel" element={<CheckoutCancel />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
             </Routes>

@@ -16,11 +16,19 @@ interface CartItem {
 }
 
 serve(async (req) => {
+  console.log("=== Marketplace Checkout Request Started ===");
+  console.log("Method:", req.method);
+  console.log("URL:", req.url);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Get origin for redirect URLs
+    const origin = req.headers.get("origin") || "https://d055c5e3-dbb3-4500-9756-62e77f9413ae.lovableproject.com";
+    console.log("Origin:", origin);
+    
     // Authenticate user
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -29,6 +37,7 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      console.error("No authorization header");
       throw new Error("No authorization header");
     }
 
@@ -36,11 +45,15 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
 
     if (authError || !user) {
+      console.error("Auth error:", authError);
       throw new Error("Unauthorized");
     }
 
+    console.log("Authenticated user:", user.id, user.email);
+
     // Parse cart items
     const { cartItems } = await req.json();
+    console.log("Cart items received:", cartItems?.length || 0);
     
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
       throw new Error("Cart is empty");
@@ -49,8 +62,11 @@ serve(async (req) => {
     // Initialize Stripe
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
+      console.error("Stripe secret key not found");
       throw new Error("Stripe is not connected. Please contact support.");
     }
+
+    console.log("Using Stripe key:", stripeKey.substring(0, 10) + "...");
 
     const stripe = new Stripe(stripeKey, {
       apiVersion: "2025-08-27.basil",
@@ -102,18 +118,23 @@ serve(async (req) => {
     }
 
     // Create Stripe checkout session
+    console.log("Creating Stripe checkout session...");
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email!,
       line_items: lineItems,
       mode: "payment",
-      success_url: `https://www.doneez.com/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `https://www.doneez.com/cancel`,
+      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/checkout/cancel`,
       metadata: {
         order_id: order.id,
         user_id: user.id,
+        user_email: user.email!,
       },
     });
+
+    console.log("✅ Stripe session created:", session.id);
+    console.log("Checkout URL:", session.url);
 
     // Update order with session ID
     await adminClient
@@ -121,6 +142,8 @@ serve(async (req) => {
       .update({ stripe_session_id: session.id })
       .eq("id", order.id);
 
+    console.log("=== Checkout Success - Returning URL ===");
+    
     return new Response(
       JSON.stringify({ url: session.url, sessionId: session.id }),
       {
@@ -129,7 +152,8 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Checkout error:", error);
+    console.error("=== Checkout Error ===");
+    console.error("Error details:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: errorMessage }),
