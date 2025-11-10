@@ -94,19 +94,32 @@ serve(async (req) => {
       // Try to create it if it doesn't exist - use tiered calculation
       console.log("[REFERRAL-CHECKOUT] No fee found, calculating tiered fee...");
       
-      // Calculate tiered referral fee
-      let calculatedFee;
+      // Calculate tiered referral fee with min/max caps
+      let calculatedFee: number;
+      let minFee: number;
+      let maxFee: number;
       const estimatedPrice = quote.estimated_price;
       
       if (estimatedPrice < 1000) {
-        calculatedFee = Math.max(5.00, estimatedPrice * 0.05);
+        calculatedFee = estimatedPrice * 0.05;
+        minFee = 5.00;
+        maxFee = 50.00;
       } else if (estimatedPrice < 5000) {
         calculatedFee = estimatedPrice * 0.03;
+        minFee = 50.00;
+        maxFee = 150.00;
       } else if (estimatedPrice < 10000) {
         calculatedFee = estimatedPrice * 0.02;
+        minFee = 150.00;
+        maxFee = 200.00;
       } else {
         calculatedFee = estimatedPrice * 0.01;
+        minFee = 200.00;
+        maxFee = 300.00;
       }
+      
+      // Apply min/max caps
+      calculatedFee = Math.min(Math.max(calculatedFee, minFee), maxFee);
       
       // Round to 2 decimal places
       calculatedFee = Math.round(calculatedFee * 100) / 100;

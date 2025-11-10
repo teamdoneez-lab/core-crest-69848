@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 import { DollarSign, Info, Plus, Camera } from "lucide-react";
 
 interface QuoteFormFieldsProps {
@@ -19,23 +20,53 @@ interface QuoteFormFieldsProps {
   onRequestPhotos: () => void;
 }
 
+// Calculate the referral fee with min/max caps
 const calculateReferralFee = (jobTotal: number): number => {
+  let calculatedFee: number;
+  let minFee: number;
+  let maxFee: number;
+  
   if (jobTotal < 1000) {
-    return Math.max(5.00, jobTotal * 0.05);
+    calculatedFee = jobTotal * 0.05;
+    minFee = 5.00;
+    maxFee = 50.00;
   } else if (jobTotal < 5000) {
-    return jobTotal * 0.03;
+    calculatedFee = jobTotal * 0.03;
+    minFee = 50.00;
+    maxFee = 150.00;
   } else if (jobTotal < 10000) {
-    return jobTotal * 0.02;
+    calculatedFee = jobTotal * 0.02;
+    minFee = 150.00;
+    maxFee = 200.00;
   } else {
-    return jobTotal * 0.01;
+    calculatedFee = jobTotal * 0.01;
+    minFee = 200.00;
+    maxFee = 300.00;
   }
+  
+  // Apply min/max caps: fee is the highest of (calculated, min) but capped at max
+  return Math.min(Math.max(calculatedFee, minFee), maxFee);
 };
 
+// Get the fee percentage for display
 const getFeePercentage = (jobTotal: number): number => {
   if (jobTotal < 1000) return 5;
   if (jobTotal < 5000) return 3;
   if (jobTotal < 10000) return 2;
   return 1;
+};
+
+// Get tier info for display
+const getTierInfo = (jobTotal: number): { range: string; percentage: number; minFee: number; maxFee: number } => {
+  if (jobTotal < 1000) {
+    return { range: '$0.01 - $999', percentage: 5, minFee: 5.00, maxFee: 50.00 };
+  } else if (jobTotal < 5000) {
+    return { range: '$1,000 - $4,999', percentage: 3, minFee: 50.00, maxFee: 150.00 };
+  } else if (jobTotal < 10000) {
+    return { range: '$5,000 - $9,999', percentage: 2, minFee: 150.00, maxFee: 200.00 };
+  } else {
+    return { range: '$10,000+', percentage: 1, minFee: 200.00, maxFee: 300.00 };
+  }
 };
 
 export function QuoteFormFields({
@@ -54,6 +85,7 @@ export function QuoteFormFields({
   const priceNum = parseFloat(estimatedPrice) || 0;
   const referralFee = calculateReferralFee(priceNum);
   const feePercentage = getFeePercentage(priceNum);
+  const tierInfo = priceNum > 0 ? getTierInfo(priceNum) : null;
   const youReceive = priceNum - referralFee;
 
   return (
@@ -103,26 +135,52 @@ export function QuoteFormFields({
               </PopoverTrigger>
               <PopoverContent className="w-72" side="top">
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-xs">Fee Structure</h4>
+                  <h4 className="font-semibold text-xs">Tiered Fee Structure</h4>
                   <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Under $1,000</span>
-                      <span className="font-medium">5% (min $5)</span>
+                      <span className="text-muted-foreground">$0.01 - $999</span>
+                      <span className="font-medium">5% (min $5, max $50)</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">$1,000 – $4,999</span>
-                      <span className="font-medium">3%</span>
+                      <span className="text-muted-foreground">$1,000 - $4,999</span>
+                      <span className="font-medium">3% (min $50, max $150)</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">$5,000 – $9,999</span>
-                      <span className="font-medium">2%</span>
+                      <span className="text-muted-foreground">$5,000 - $9,999</span>
+                      <span className="font-medium">2% (min $150, max $200)</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">$10,000+</span>
-                      <span className="font-medium">1%</span>
+                      <span className="font-medium">1% (min $200, max $300)</span>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground pt-1 border-t">
+                  {tierInfo && (
+                    <>
+                      <Separator className="my-2" />
+                      <div className="space-y-1 text-xs">
+                        <div className="font-semibold">Your Current Quote:</div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Tier:</span>
+                          <span className="font-medium">{tierInfo.range}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Calculation:</span>
+                          <span className="font-medium">
+                            {tierInfo.percentage}% of ${priceNum.toFixed(2)} = ${(priceNum * tierInfo.percentage / 100).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Final Fee:</span>
+                          <span className="font-semibold text-destructive">${referralFee.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between pt-1 border-t">
+                          <span className="font-medium">You Receive:</span>
+                          <span className="font-bold text-primary">${youReceive.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  <p className="text-xs text-muted-foreground pt-2 border-t">
                     Fee applies only after customer confirms appointment.
                   </p>
                 </div>

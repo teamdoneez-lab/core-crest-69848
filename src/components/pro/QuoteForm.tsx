@@ -6,6 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { getServiceNames } from "@/utils/serviceCodeLookup";
 import { JobSummaryPanel } from "./JobSummaryPanel";
 import { QuoteFormFields } from "./QuoteFormFields";
+import { getMRQForServices, isQuoteUnrealisticallyLow } from "@/data/minimumRealisticQuotes";
 
 const quoteSchema = z.object({
   estimated_price: z.number().min(1, "Price must be at least $1").max(999999, "Price cannot exceed $999,999"),
@@ -47,6 +48,8 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
   const [requestDetails, setRequestDetails] = useState<ServiceRequestDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPhotoRequestDialog, setShowPhotoRequestDialog] = useState(false);
+  const [showValidationDialog, setShowValidationDialog] = useState(false);
+  const [validationMessage, setValidationMessage] = useState({ title: "", description: "" });
 
   const handleRequestMorePhotos = async () => {
     try {
@@ -181,6 +184,34 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
         return;
       }
 
+      // VALIDATION CHECK 1: Negative Payout Check (Quote < $5.01)
+      if (priceNum < 5.01) {
+        setValidationMessage({
+          title: "🛑 Heads Up! Our Minimum Fee Check!",
+          description: `Your quote is less than $5.01. Since our absolute minimum referral fee is $5.00, submitting this quote would result in a negative balance for you. Please ensure your quote is at least $5.01 to cover the platform's minimum fee. We want to make sure you get paid for your work!`
+        });
+        setShowValidationDialog(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // VALIDATION CHECK 2: Unrealistically Low Quote Check
+      const serviceIds = requestDetails?.service_category || [];
+      if (serviceIds.length > 0) {
+        const mrq = getMRQForServices(serviceIds);
+        
+        if (mrq && priceNum < mrq * 0.5) {
+          const serviceName = getServiceDisplayName();
+          setValidationMessage({
+            title: "🛠️ Oops! Just a Quick Double-Check on Your Quote!",
+            description: `Quote Submitted: $${priceNum.toFixed(2)}\n\nWe noticed this is very low for "${serviceName}", which typically starts around $${mrq.toFixed(2)}.\n\nRemember: Our referral fee is calculated on the true final job value. Please confirm or adjust your quote to reflect the actual expected price.`
+          });
+          setShowValidationDialog(true);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
@@ -310,6 +341,21 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
             <AlertDialogAction onClick={handleRequestMorePhotos}>
               Send Request
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Quote Validation Dialog */}
+      <AlertDialog open={showValidationDialog} onOpenChange={setShowValidationDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{validationMessage.title}</AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-line">
+              {validationMessage.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go Back and Adjust</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
