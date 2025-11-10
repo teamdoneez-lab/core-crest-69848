@@ -6,24 +6,49 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCart } from '@/contexts/CartContext';
 import { ShoppingCart, X, Plus, Minus } from 'lucide-react';
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function CartPanel() {
   const { cart, totalItems, subtotal, removeFromCart, updateQuantity } = useCart();
   const [isOpen, setIsOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleCheckout = () => {
-    // TODO: Implement marketplace checkout with Stripe
-    // IMPORTANT: Payment routing logic for platform vs vendor products:
-    // - For platform products (seller.isPlatformSeller === true):
-    //   Route funds to main platform Stripe account (no connected account)
-    // - For vendor products:
-    //   Route funds to vendor's Stripe Connect account (seller.stripeAccountId)
-    // 
-    // Example edge function logic:
-    // const seller = await getSellerInfo(product.sellerId);
-    // const stripeAccountId = seller.isPlatformSeller ? null : seller.stripeAccountId;
-    alert('Checkout functionality will be integrated with your e-commerce backend.');
-    setIsOpen(false);
+  const handleCheckout = async () => {
+    setIsProcessing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Please log in to complete checkout");
+        setIsProcessing(false);
+        return;
+      }
+
+      // Call edge function to create Stripe checkout session
+      const { data, error } = await supabase.functions.invoke('create-marketplace-checkout', {
+        body: { cartItems: cart }
+      });
+
+      if (error) {
+        console.error("Checkout error:", error);
+        toast.error(error.message || "Checkout failed. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
+
+      if (data?.url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      } else {
+        toast.error("Failed to create checkout session");
+        setIsProcessing(false);
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error("An error occurred during checkout");
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -130,8 +155,9 @@ export function CartPanel() {
                 onClick={handleCheckout}
                 className="w-full"
                 size="lg"
+                disabled={isProcessing}
               >
-                Proceed to Checkout
+                {isProcessing ? "Processing..." : "Proceed to Checkout"}
               </Button>
               <p className="text-xs text-center text-muted-foreground">
                 Taxes and shipping calculated at checkout

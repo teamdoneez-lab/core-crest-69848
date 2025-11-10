@@ -56,3 +56,9 @@ verify_jwt = true
 
 [functions.send-appointment-status-email]
 verify_jwt = true
+
+[functions.create-marketplace-checkout]
+verify_jwt = true
+
+[functions.verify-marketplace-payment]
+verify_jwt = false

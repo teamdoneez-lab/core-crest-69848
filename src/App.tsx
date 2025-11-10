@@ -37,6 +37,8 @@ import SupplierDashboard from "./pages/SupplierDashboard";
 import SupplierProductUpload from "./pages/SupplierProductUpload";
 import SupplierSignup from "./pages/SupplierSignup";
 import SupplierLogin from "./pages/SupplierLogin";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import CheckoutCancel from "./pages/CheckoutCancel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,6 +83,8 @@ const App = () => (
             <Route path="/supplier-onboarding" element={<SupplierOnboarding />} />
             <Route path="/supplier-dashboard" element={<SupplierDashboard />} />
             <Route path="/supplier/upload-products" element={<SupplierProductUpload />} />
+            <Route path="/success" element={<CheckoutSuccess />} />
+            <Route path="/cancel" element={<CheckoutCancel />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
             </Routes>

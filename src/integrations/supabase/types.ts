@@ -264,6 +264,42 @@ export type Database = {
           },
         ]
       }
+      orders: {
+        Row: {
+          cart_items: Json
+          created_at: string | null
+          id: string
+          payment_status: string
+          stripe_payment_intent: string | null
+          stripe_session_id: string | null
+          total_amount: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cart_items: Json
+          created_at?: string | null
+          id?: string
+          payment_status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          total_amount: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cart_items?: Json
+          created_at?: string | null
+          id?: string
+          payment_status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          total_amount?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           created_at: string
