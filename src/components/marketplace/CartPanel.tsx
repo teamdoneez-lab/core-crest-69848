@@ -26,22 +26,32 @@ export function CartPanel() {
       }
 
       // Call edge function to create Stripe checkout session
-      const { data, error } = await supabase.functions.invoke('create-marketplace-checkout', {
-        body: { cartItems: cart }
-      });
+      const res = await fetch(
+        'https://cxraykdmlshcntqjumpc.supabase.co/functions/v1/create-marketplace-checkout',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ cartItems: cart }),
+        }
+      );
 
-      if (error) {
-        console.error("Checkout error:", error);
-        toast.error(error.message || "Checkout failed. Please try again.");
+      const data = await res.json();
+
+      if (data.error) {
+        console.error("Checkout error:", data.error);
+        toast.error(data.error || "Checkout failed. Please try again.");
         setIsProcessing(false);
         return;
       }
 
-      if (data?.url) {
+      if (data.url) {
         // Redirect to Stripe checkout
         window.location.href = data.url;
       } else {
-        toast.error("Failed to create checkout session");
+        toast.error("Checkout failed. Please try again.");
         setIsProcessing(false);
       }
     } catch (error) {
