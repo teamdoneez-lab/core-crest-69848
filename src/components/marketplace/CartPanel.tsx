@@ -42,7 +42,7 @@ export function CartPanel() {
 
       console.log("Response status:", res.status);
       const data = await res.json();
-      console.log("Response data:", data);
+      console.log("Full Stripe session response:", data);
 
       if (data.error) {
         console.error("Checkout error:", data.error);
@@ -58,29 +58,37 @@ export function CartPanel() {
         return;
       }
 
-      console.log("Redirecting to Stripe checkout:", data.url);
+      // Validate that the URL is a legitimate Stripe checkout URL
+      if (!data.url.startsWith('https://checkout.stripe.com/')) {
+        console.error("Invalid Stripe checkout URL:", data.url);
+        toast.error("Invalid checkout URL received. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
+
+      console.log("Valid Stripe checkout URL confirmed:", data.url);
       
-      // Detect if running in iframe and redirect at top level to avoid Stripe iframe restrictions
+      // Always open in new tab when in iframe to avoid security restrictions
       const isInIframe = window.top !== window.self;
       console.log("Running in iframe:", isInIframe);
       
-      try {
-        if (isInIframe) {
-          window.top!.location.href = data.url;
+      if (isInIframe) {
+        console.log("Opening checkout in new tab (iframe detected)...");
+        const newWindow = window.open(data.url, '_blank');
+        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+          // Popup was blocked
+          toast.error("Popup blocked. Please allow popups and try again.");
         } else {
-          window.location.href = data.url;
+          toast.success("Opening Stripe checkout in new tab...");
         }
-      } catch (redirectError) {
-        console.error("Redirect error (likely SecurityError in iframe):", redirectError);
-        // Fallback: open in new tab if iframe redirect fails
-        console.log("Opening checkout in new tab as fallback...");
-        window.open(data.url, '_blank');
-        toast.info("Opening checkout in a new tab...");
         setIsProcessing(false);
+      } else {
+        console.log("Redirecting to Stripe checkout...");
+        window.location.href = data.url;
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      toast.error("An error occurred during checkout");
+      toast.error("An error occurred during checkout. Please try again.");
       setIsProcessing(false);
     }
   };
