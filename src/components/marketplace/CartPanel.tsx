@@ -51,20 +51,31 @@ export function CartPanel() {
         return;
       }
 
-      if (data.url) {
-        console.log("Redirecting to Stripe checkout:", data.url);
-        // Detect if running in iframe and redirect at top level to avoid Stripe iframe restrictions
-        const isInIframe = window.top !== window.self;
-        console.log("Running in iframe:", isInIframe);
-        
+      if (!data.url) {
+        console.error("No checkout URL returned from backend:", data);
+        toast.error("An error occurred: no checkout URL received.");
+        setIsProcessing(false);
+        return;
+      }
+
+      console.log("Redirecting to Stripe checkout:", data.url);
+      
+      // Detect if running in iframe and redirect at top level to avoid Stripe iframe restrictions
+      const isInIframe = window.top !== window.self;
+      console.log("Running in iframe:", isInIframe);
+      
+      try {
         if (isInIframe) {
           window.top!.location.href = data.url;
         } else {
           window.location.href = data.url;
         }
-      } else {
-        console.error("No URL in response:", data);
-        toast.error("Checkout failed. Please try again.");
+      } catch (redirectError) {
+        console.error("Redirect error (likely SecurityError in iframe):", redirectError);
+        // Fallback: open in new tab if iframe redirect fails
+        console.log("Opening checkout in new tab as fallback...");
+        window.open(data.url, '_blank');
+        toast.info("Opening checkout in a new tab...");
         setIsProcessing(false);
       }
     } catch (error) {
