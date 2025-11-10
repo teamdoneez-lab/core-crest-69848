@@ -14,9 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_state_transitions: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          from_status: string | null
+          id: string
+          metadata: Json | null
+          to_status: string
+          transition_reason: string | null
+          transitioned_by: string | null
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          metadata?: Json | null
+          to_status: string
+          transition_reason?: string | null
+          transitioned_by?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          metadata?: Json | null
+          to_status?: string
+          transition_reason?: string | null
+          transitioned_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_state_transitions_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
+          cancelled_at: string | null
+          completed_at: string | null
+          confirmation_expires_at: string | null
+          confirmed_at: string | null
           created_at: string
+          declined_at: string | null
+          expired_at: string | null
           final_price: number | null
           id: string
           inspection_date: string | null
@@ -28,7 +75,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          confirmation_expires_at?: string | null
+          confirmed_at?: string | null
           created_at?: string
+          declined_at?: string | null
+          expired_at?: string | null
           final_price?: number | null
           id?: string
           inspection_date?: string | null
@@ -40,7 +93,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          confirmation_expires_at?: string | null
+          confirmed_at?: string | null
           created_at?: string
+          declined_at?: string | null
+          expired_at?: string | null
           final_price?: number | null
           id?: string
           inspection_date?: string | null
@@ -1115,15 +1174,32 @@ export type Database = {
         }
         Returns: Json
       }
+      complete_appointment: {
+        Args: { appointment_id_input: string }
+        Returns: Json
+      }
+      confirm_appointment: {
+        Args: { appointment_id_input: string }
+        Returns: Json
+      }
       create_admin_user: {
         Args: { admin_email: string; admin_password?: string }
+        Returns: Json
+      }
+      create_appointment_from_quote: {
+        Args: { quote_id_input: string }
         Returns: Json
       }
       current_user_has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
+      decline_appointment: {
+        Args: { appointment_id_input: string; decline_reason?: string }
+        Returns: Json
+      }
       ensure_admin_user: { Args: never; Returns: undefined }
+      expire_pending_confirmations: { Args: never; Returns: number }
       expire_timed_out_quotes: { Args: never; Returns: number }
       generate_leads_for_request: {
         Args: { p_request_id: string }
@@ -1228,6 +1304,17 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "pro" | "admin" | "supplier"
+      appointment_status:
+        | "quote_requested"
+        | "pending_confirmation"
+        | "confirmed"
+        | "declined"
+        | "expired"
+        | "cancelled_by_customer"
+        | "cancelled_after_requote"
+        | "cancelled_off_platform"
+        | "no_show"
+        | "completed"
       lead_status: "new" | "accepted" | "declined"
       order_status: "pending" | "confirmed" | "fulfilled" | "cancelled" | "paid"
       payout_status: "pending" | "processing" | "completed" | "failed"
@@ -1361,6 +1448,18 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "pro", "admin", "supplier"],
+      appointment_status: [
+        "quote_requested",
+        "pending_confirmation",
+        "confirmed",
+        "declined",
+        "expired",
+        "cancelled_by_customer",
+        "cancelled_after_requote",
+        "cancelled_off_platform",
+        "no_show",
+        "completed",
+      ],
       lead_status: ["new", "accepted", "declined"],
       order_status: ["pending", "confirmed", "fulfilled", "cancelled", "paid"],
       payout_status: ["pending", "processing", "completed", "failed"],
