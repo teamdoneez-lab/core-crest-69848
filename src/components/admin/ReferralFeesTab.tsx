@@ -16,9 +16,12 @@ interface ReferralFee {
   status: string;
   created_at: string;
   paid_at?: string;
+  updated_at?: string;
   stripe_session_id?: string;
   stripe_payment_intent?: string;
+  stripe_refund_id?: string;
   refundable?: boolean;
+  cancellation_reason?: string;
   service_requests: {
     id: string;
     vehicle_make: string;
@@ -33,6 +36,7 @@ interface ReferralFee {
 export const ReferralFeesTab = () => {
   const [fees, setFees] = useState<ReferralFee[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState<'all' | 'refunds'>('all');
   const [statusFilter, setStatusFilter] = useState('paid');
   const [currentPage, setCurrentPage] = useState(1);
   const feesPerPage = 10;
@@ -121,7 +125,8 @@ export const ReferralFeesTab = () => {
   };
 
   const exportToCSV = () => {
-    const csvData = fees.map(fee => ({
+    const dataToExport = activeView === 'refunds' ? refundedFees : filteredFees;
+    const csvData = dataToExport.map(fee => ({
       'Pro Name': fee.profiles?.name || 'N/A',
       'Vehicle': fee.service_requests 
         ? `${fee.service_requests.year} ${fee.service_requests.vehicle_make} ${fee.service_requests.model}`
@@ -130,7 +135,9 @@ export const ReferralFeesTab = () => {
       'Status': fee.status,
       'Created': format(new Date(fee.created_at), 'yyyy-MM-dd HH:mm'),
       'Paid Date': fee.paid_at ? format(new Date(fee.paid_at), 'yyyy-MM-dd HH:mm') : 'N/A',
-      'Stripe Session': fee.stripe_session_id || 'N/A'
+      'Refunded Date': (fee.status === 'refunded' && fee.updated_at) ? format(new Date(fee.updated_at), 'yyyy-MM-dd HH:mm') : 'N/A',
+      'Cancellation Reason': fee.cancellation_reason || 'N/A',
+      'Stripe Refund ID': fee.stripe_refund_id || 'N/A'
     }));
 
     const headers = Object.keys(csvData[0]).join(',');
@@ -141,19 +148,33 @@ export const ReferralFeesTab = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `referral_fees_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.download = `referral_fees_${activeView}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
     link.click();
+  };
+
+  const getCancellationReasonLabel = (reason?: string) => {
+    if (!reason) return 'N/A';
+    const labels: Record<string, string> = {
+      'cancelled_by_customer': 'Cancelled by Customer',
+      'cancelled_after_requote': 'Cancelled After Requote',
+      'no_show': 'Customer No-Show',
+      'cancelled_off_platform': 'Off-Platform Cancellation'
+    };
+    return labels[reason] || reason;
   };
 
   const filteredFees = statusFilter === 'all' 
     ? fees 
     : fees.filter(fee => fee.status === statusFilter);
 
+  const refundedFees = fees.filter(fee => fee.status === 'refunded');
+
   // Pagination
-  const totalPages = Math.ceil(filteredFees.length / feesPerPage);
+  const dataToDisplay = activeView === 'refunds' ? refundedFees : filteredFees;
+  const totalPages = Math.ceil(dataToDisplay.length / feesPerPage);
   const startIndex = (currentPage - 1) * feesPerPage;
   const endIndex = startIndex + feesPerPage;
-  const paginatedFees = filteredFees.slice(startIndex, endIndex);
+  const paginatedFees = dataToDisplay.slice(startIndex, endIndex);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -171,20 +192,46 @@ export const ReferralFeesTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* View Tabs */}
+      <div className="flex gap-2 border-b">
+        <Button
+          variant={activeView === 'all' ? 'default' : 'ghost'}
+          onClick={() => {
+            setActiveView('all');
+            setCurrentPage(1);
+          }}
+          className="rounded-b-none"
+        >
+          All Fees
+        </Button>
+        <Button
+          variant={activeView === 'refunds' ? 'default' : 'ghost'}
+          onClick={() => {
+            setActiveView('refunds');
+            setCurrentPage(1);
+          }}
+          className="rounded-b-none"
+        >
+          <RefreshCcw className="h-4 w-4 mr-2" />
+          Refund History ({refundedFees.length})
+        </Button>
+      </div>
+
       {/* Filters and Export */}
       <div className="flex justify-between items-center">
         <div className="flex gap-2">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              {/* <SelectItem value="owed">Owed</SelectItem> */}
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="canceled">Canceled</SelectItem>
-            </SelectContent>
-          </Select>
+          {activeView === 'all' && (
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="canceled">Canceled</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <Button variant="outline" onClick={exportToCSV}>
           <Download className="h-4 w-4 mr-2" />
@@ -222,14 +269,38 @@ export const ReferralFeesTab = () => {
                   </div>
 
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Date:</span>{' '}
-                    {fee.paid_at ? format(new Date(fee.paid_at), 'PPP p') : format(new Date(fee.created_at), 'PPP p')}
+                    <span className="text-muted-foreground">
+                      {fee.status === 'refunded' ? 'Refunded:' : 'Date:'}
+                    </span>{' '}
+                    {fee.status === 'refunded' && fee.updated_at 
+                      ? format(new Date(fee.updated_at), 'PPP p')
+                      : fee.paid_at 
+                        ? format(new Date(fee.paid_at), 'PPP p') 
+                        : format(new Date(fee.created_at), 'PPP p')}
                   </div>
+
+                  {fee.status === 'refunded' && fee.cancellation_reason && (
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Reason:</span>{' '}
+                      <span className="font-medium text-blue-600">
+                        {getCancellationReasonLabel(fee.cancellation_reason)}
+                      </span>
+                    </div>
+                  )}
 
                   {fee.stripe_payment_intent && (
                     <div className="text-sm">
-                      <span className="text-muted-foreground">Transaction ID:</span>{' '}
+                      <span className="text-muted-foreground">
+                        {fee.status === 'refunded' ? 'Payment ID:' : 'Transaction ID:'}
+                      </span>{' '}
                       <span className="font-mono text-xs">{fee.stripe_payment_intent}</span>
+                    </div>
+                  )}
+
+                  {fee.stripe_refund_id && (
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Refund ID:</span>{' '}
+                      <span className="font-mono text-xs text-blue-600">{fee.stripe_refund_id}</span>
                     </div>
                   )}
 
@@ -247,7 +318,7 @@ export const ReferralFeesTab = () => {
 
                 
 
-                {fee.status === 'paid' && fee.refundable && (
+                {fee.status === 'paid' && fee.refundable && activeView === 'all' && (
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button size="sm" variant="outline">
@@ -289,10 +360,12 @@ export const ReferralFeesTab = () => {
           </Card>
         ))}
 
-        {filteredFees.length === 0 && (
+        {paginatedFees.length === 0 && (
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
-              No fees found
+              {activeView === 'refunds' 
+                ? 'No refunded fees yet' 
+                : 'No fees found'}
             </CardContent>
           </Card>
         )}
