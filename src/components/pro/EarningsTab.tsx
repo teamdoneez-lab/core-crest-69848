@@ -65,8 +65,10 @@ export const EarningsTab = () => {
 
       // Calculate summary
       const paidFees = (feesData || []).filter(f => f.status === 'paid');
+      const refundedFees = (feesData || []).filter(f => f.status === 'refunded');
       const owedFees = (feesData || []).filter(f => f.status === 'owed');
       const totalFeesPaid = paidFees.reduce((sum, f) => sum + f.amount, 0);
+      const totalFeesRefunded = refundedFees.reduce((sum, f) => sum + f.amount, 0);
       const totalFeesOwed = owedFees.reduce((sum, f) => sum + f.amount, 0);
 
       // Fetch job stats
@@ -81,9 +83,9 @@ export const EarningsTab = () => {
       setSummary({
         totalJobs: jobsData?.length || 0,
         completedJobs,
-        totalFeesPaid,
+        totalFeesPaid: totalFeesPaid - totalFeesRefunded, // Net fees after refunds
         totalFeesOwed,
-        netEarnings: estimatedEarnings - totalFeesPaid - totalFeesOwed
+        netEarnings: estimatedEarnings - (totalFeesPaid - totalFeesRefunded) - totalFeesOwed
       });
     } catch (error) {
       console.error('Error fetching earnings:', error);
@@ -115,9 +117,22 @@ export const EarningsTab = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'paid': return 'bg-green-100 text-green-800';
+      case 'refunded': return 'bg-blue-100 text-blue-800';
       case 'owed': return 'bg-yellow-100 text-yellow-800';
-      case 'canceled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'declined': return 'bg-gray-100 text-gray-800';
+      case 'expired': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-red-100 text-red-800';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'paid': return 'Paid';
+      case 'refunded': return 'Refunded';
+      case 'owed': return 'Not Refunded';
+      case 'declined': return 'Declined';
+      case 'expired': return 'Expired';
+      default: return status;
     }
   };
 
@@ -208,12 +223,13 @@ export const EarningsTab = () => {
                         : 'Service Request'}
                     </span>
                     <Badge className={getStatusColor(fee.status)}>
-                      {fee.status}
+                      {getStatusLabel(fee.status)}
                     </Badge>
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Created: {format(new Date(fee.created_at), 'PPP')}
                     {fee.paid_at && ` • Paid: ${format(new Date(fee.paid_at), 'PPP')}`}
+                    {fee.status === 'refunded' && <span className="text-blue-600"> • Refund issued</span>}
                   </div>
                   {fee.stripe_session_id && fee.status === 'paid' && (
                     <a 
