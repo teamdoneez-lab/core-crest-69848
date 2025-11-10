@@ -53,8 +53,15 @@ export function CartPanel() {
 
       if (data.url) {
         console.log("Redirecting to Stripe checkout:", data.url);
-        // Redirect to Stripe checkout - use window.location.assign for better compatibility
-        window.location.assign(data.url);
+        // Detect if running in iframe and redirect at top level to avoid Stripe iframe restrictions
+        const isInIframe = window.top !== window.self;
+        console.log("Running in iframe:", isInIframe);
+        
+        if (isInIframe) {
+          window.top!.location.href = data.url;
+        } else {
+          window.location.href = data.url;
+        }
       } else {
         console.error("No URL in response:", data);
         toast.error("Checkout failed. Please try again.");
