@@ -28,6 +28,8 @@ import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getServiceNamesByIds } from '@/utils/serviceHelpers';
+import { AppointmentCountdownTimer } from '@/components/customer/AppointmentCountdownTimer';
+import { useAppointmentUpdates } from '@/hooks/useAppointmentUpdates';
 
 interface ServiceRequest {
   id: string;
@@ -51,6 +53,11 @@ interface ServiceRequest {
   service_categories?: {
     name: string;
   };
+  appointments?: Array<{
+    id: string;
+    status: string;
+    confirmation_expires_at: string;
+  }>;
 }
 
 const MyRequests = () => {
@@ -72,17 +79,6 @@ const MyRequests = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user && isCustomer) {
-      fetchRequests();
-    }
-  }, [user, isCustomer, currentPage, statusFilter, serviceTypeFilter]);
-
-
-  if (!authLoading && !roleLoading && (!user || !isCustomer)) {
-    return <Navigate to="/" replace />;
-  }
-
   const fetchRequests = async () => {
     if (!user?.id) return;
     
@@ -96,6 +92,11 @@ const MyRequests = () => {
           *,
           service_categories (
             name
+          ),
+          appointments (
+            id,
+            status,
+            confirmation_expires_at
           )
         `, { count: 'exact' })
         .eq('customer_id', user.id);
@@ -126,8 +127,8 @@ const MyRequests = () => {
         return;
       }
 
-      setRequests(data || []);
-      setFilteredRequests(data || []);
+      setRequests((data || []) as unknown as ServiceRequest[]);
+      setFilteredRequests((data || []) as unknown as ServiceRequest[]);
       setTotalCount(count || 0);
     } catch (error) {
       console.error('Error:', error);
@@ -136,6 +137,22 @@ const MyRequests = () => {
     }
   };
 
+  // Real-time appointment updates
+  useAppointmentUpdates({
+    userId: user?.id,
+    onUpdate: fetchRequests,
+  });
+
+  useEffect(() => {
+    if (user && isCustomer) {
+      fetchRequests();
+    }
+  }, [user, isCustomer, currentPage, statusFilter, serviceTypeFilter]);
+
+
+  if (!authLoading && !roleLoading && (!user || !isCustomer)) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleCancelRequest = async (requestId: string) => {
     try {
@@ -601,6 +618,21 @@ const MyRequests = () => {
                       />
                       <p className="text-xs text-muted-foreground mt-1">Click to enlarge</p>
                     </div>
+                  )}
+
+                  {/* Pending Confirmation Timer */}
+                  {request.appointments && request.appointments.length > 0 && request.appointments[0]?.status === 'pending_confirmation' && request.appointments[0]?.confirmation_expires_at && (
+                    <AppointmentCountdownTimer
+                      expiresAt={request.appointments[0].confirmation_expires_at}
+                      onExpired={async () => {
+                        // Auto-update appointment to expired
+                        await supabase
+                          .from('appointments')
+                          .update({ status: 'expired' })
+                          .eq('id', request.appointments![0].id);
+                        fetchRequests();
+                      }}
+                    />
                   )}
 
                   {/* Quotes Section */}
