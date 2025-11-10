@@ -25,6 +25,8 @@ export function CartPanel() {
         return;
       }
 
+      console.log("Starting checkout with cart:", cart);
+
       // Call edge function to create Stripe checkout session
       const res = await fetch(
         'https://cxraykdmlshcntqjumpc.supabase.co/functions/v1/create-marketplace-checkout',
@@ -38,7 +40,9 @@ export function CartPanel() {
         }
       );
 
+      console.log("Response status:", res.status);
       const data = await res.json();
+      console.log("Response data:", data);
 
       if (data.error) {
         console.error("Checkout error:", data.error);
@@ -48,9 +52,11 @@ export function CartPanel() {
       }
 
       if (data.url) {
-        // Redirect to Stripe checkout
-        window.location.href = data.url;
+        console.log("Redirecting to Stripe checkout:", data.url);
+        // Redirect to Stripe checkout - use window.location.assign for better compatibility
+        window.location.assign(data.url);
       } else {
+        console.error("No URL in response:", data);
         toast.error("Checkout failed. Please try again.");
         setIsProcessing(false);
       }
