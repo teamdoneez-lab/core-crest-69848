@@ -251,11 +251,10 @@ const ProInbox = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [paymentIssueData, setPaymentIssueData] = useState<{
-    show: boolean;
     amount: number;
     date: string;
     time: string;
-    vehicle: string;
+    jobTitle: string;
   } | null>(null);
 
   useEffect(() => {
@@ -301,64 +300,94 @@ const ProInbox = () => {
 
       if (error) throw error;
 
-      if (data?.paid) {
+      // Check if payment was received but appointment confirmation failed
+      if (data?.paid && !data?.appointment_confirmed) {
+        console.error('Payment succeeded but appointment confirmation failed:', data);
+        
+        // Fetch payment details for the friendly error message
+        const { data: feeData } = await supabase
+          .from('referral_fees')
+          .select('amount, paid_at')
+          .eq('request_id', requestId)
+          .single();
+
+        const { data: requestData } = await supabase
+          .from('service_requests')
+          .select('vehicle_make, model, year')
+          .eq('id', requestId)
+          .single();
+
+        if (feeData && requestData) {
+          const paidAt = new Date(feeData.paid_at);
+          const formattedDate = paidAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const formattedTime = paidAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+          const jobTitle = `${requestData.year} ${requestData.vehicle_make} ${requestData.model}`;
+
+          setPaymentIssueData({
+            amount: feeData.amount,
+            date: formattedDate,
+            time: formattedTime,
+            jobTitle: jobTitle
+          });
+        }
+        
+        // Don't show error toast, the dialog will handle it
+        return;
+      }
+
+      if (data?.paid && data?.appointment_confirmed) {
         toast({
           title: "✅ Payment Successful!",
           description: "Your appointment is confirmed. Customer has been notified.",
         });
+        
+        // Refresh leads to show updated data
+        fetchLeads();
       }
-
-      // Refresh leads to show updated data
-      fetchLeads();
     } catch (error) {
       console.error("Error verifying referral payment:", error);
       
-      // Fetch payment details for compassionate error message
+      // Try to fetch payment details even on error to see if payment went through
       try {
         const { data: feeData } = await supabase
           .from('referral_fees')
-          .select(`
-            amount,
-            paid_at,
-            quotes!inner(
-              service_requests!inner(
-                vehicle_make,
-                model,
-                year
-              )
-            )
-          `)
+          .select('amount, paid_at, status')
           .eq('request_id', requestId)
           .eq('stripe_session_id', sessionId)
           .single();
 
-        if (feeData) {
-          const paymentDate = feeData.paid_at ? new Date(feeData.paid_at) : new Date();
-          const formattedDate = paymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          const formattedTime = paymentDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-          const vehicleInfo = `${feeData.quotes.service_requests.year} ${feeData.quotes.service_requests.vehicle_make} ${feeData.quotes.service_requests.model}`;
-          
-          // Show detailed alert dialog
+        const { data: requestData } = await supabase
+          .from('service_requests')
+          .select('vehicle_make, model, year')
+          .eq('id', requestId)
+          .single();
+
+        if (feeData && feeData.status === 'paid' && requestData) {
+          // Payment went through but confirmation failed
+          const paidAt = new Date(feeData.paid_at);
+          const formattedDate = paidAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const formattedTime = paidAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+          const jobTitle = `${requestData.year} ${requestData.vehicle_make} ${requestData.model}`;
+
           setPaymentIssueData({
-            show: true,
             amount: feeData.amount,
             date: formattedDate,
             time: formattedTime,
-            vehicle: vehicleInfo,
+            jobTitle: jobTitle
           });
         } else {
-          // Fallback if we can't get payment details
+          // Payment likely didn't go through
           toast({
-            title: "Payment Processing Issue",
-            description: "Payment was successful but there was an issue confirming the appointment. Our team has been notified and will contact you within 30 minutes.",
+            title: "Verification failed",
+            description: "Please contact support if you were charged.",
             variant: "destructive",
           });
         }
-      } catch (detailError) {
-        console.error("Error fetching payment details:", detailError);
+      } catch (fetchError) {
+        console.error('Error fetching payment details:', fetchError);
         toast({
-          title: "Payment Processing Issue",
-          description: "Payment was successful but there was an issue confirming the appointment. Our team has been notified and will contact you within 30 minutes.",
+          title: "Verification failed",
+          description: "Please contact support if you were charged.",
           variant: "destructive",
         });
       }
@@ -939,7 +968,7 @@ const ProInbox = () => {
 
       {/* Payment Issue Alert Dialog */}
       {paymentIssueData && (
-        <AlertDialog open={paymentIssueData.show} onOpenChange={(open) => !open && setPaymentIssueData(null)}>
+        <AlertDialog open={true} onOpenChange={(open) => !open && setPaymentIssueData(null)}>
           <AlertDialogContent className="max-w-2xl">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-xl flex items-center gap-2">
@@ -955,7 +984,7 @@ const ProInbox = () => {
                     We can see your <span className="font-semibold text-primary">${paymentIssueData.amount.toFixed(2)}</span> referral fee was successfully charged on{' '}
                     <span className="font-semibold">{paymentIssueData.date}</span> at{' '}
                     <span className="font-semibold">{paymentIssueData.time}</span> for the{' '}
-                    <span className="font-semibold">{paymentIssueData.vehicle}</span> appointment.
+                    <span className="font-semibold">{paymentIssueData.jobTitle}</span> appointment.
                   </p>
                   <p className="text-primary font-medium">Your payment is secure. ✓</p>
                 </div>
