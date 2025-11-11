@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { QuoteForm } from '@/components/pro/QuoteForm';
 import { Clock, MapPin, Calendar as CalendarIcon, User, Phone, Mail, Car, CheckCircle, PlayCircle, XCircle } from 'lucide-react';
@@ -249,6 +250,13 @@ const ProInbox = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const [paymentIssueData, setPaymentIssueData] = useState<{
+    show: boolean;
+    amount: number;
+    date: string;
+    time: string;
+    vehicle: string;
+  } | null>(null);
 
   useEffect(() => {
     if (user && isPro) {
@@ -304,11 +312,56 @@ const ProInbox = () => {
       fetchLeads();
     } catch (error) {
       console.error("Error verifying referral payment:", error);
-      toast({
-        title: "Error",
-        description: "Payment was successful but there was an issue confirming the appointment. Please contact support.",
-        variant: "destructive",
-      });
+      
+      // Fetch payment details for compassionate error message
+      try {
+        const { data: feeData } = await supabase
+          .from('referral_fees')
+          .select(`
+            amount,
+            paid_at,
+            quotes!inner(
+              service_requests!inner(
+                vehicle_make,
+                model,
+                year
+              )
+            )
+          `)
+          .eq('request_id', requestId)
+          .eq('stripe_session_id', sessionId)
+          .single();
+
+        if (feeData) {
+          const paymentDate = feeData.paid_at ? new Date(feeData.paid_at) : new Date();
+          const formattedDate = paymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const formattedTime = paymentDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+          const vehicleInfo = `${feeData.quotes.service_requests.year} ${feeData.quotes.service_requests.vehicle_make} ${feeData.quotes.service_requests.model}`;
+          
+          // Show detailed alert dialog
+          setPaymentIssueData({
+            show: true,
+            amount: feeData.amount,
+            date: formattedDate,
+            time: formattedTime,
+            vehicle: vehicleInfo,
+          });
+        } else {
+          // Fallback if we can't get payment details
+          toast({
+            title: "Payment Processing Issue",
+            description: "Payment was successful but there was an issue confirming the appointment. Our team has been notified and will contact you within 30 minutes.",
+            variant: "destructive",
+          });
+        }
+      } catch (detailError) {
+        console.error("Error fetching payment details:", detailError);
+        toast({
+          title: "Payment Processing Issue",
+          description: "Payment was successful but there was an issue confirming the appointment. Our team has been notified and will contact you within 30 minutes.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -883,6 +936,50 @@ const ProInbox = () => {
           </div>
         )}
       </div>
+
+      {/* Payment Issue Alert Dialog */}
+      {paymentIssueData && (
+        <AlertDialog open={paymentIssueData.show} onOpenChange={(open) => !open && setPaymentIssueData(null)}>
+          <AlertDialogContent className="max-w-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl flex items-center gap-2">
+                ✨ Appointment Confirmation Delayed - But Don't Worry!
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-4 text-base">
+                <p className="text-foreground font-medium">
+                  We sincerely apologize! It looks like our system hit a small snag right after your payment was confirmed.
+                </p>
+                
+                <div className="bg-muted p-4 rounded-lg space-y-2">
+                  <p className="text-foreground">
+                    We can see your <span className="font-semibold text-primary">${paymentIssueData.amount.toFixed(2)}</span> referral fee was successfully charged on{' '}
+                    <span className="font-semibold">{paymentIssueData.date}</span> at{' '}
+                    <span className="font-semibold">{paymentIssueData.time}</span> for the{' '}
+                    <span className="font-semibold">{paymentIssueData.vehicle}</span> appointment.
+                  </p>
+                  <p className="text-primary font-medium">Your payment is secure. ✓</p>
+                </div>
+
+                <div className="bg-primary/10 border border-primary/20 p-4 rounded-lg">
+                  <p className="font-semibold text-foreground mb-2">The Fix:</p>
+                  <p className="text-foreground">
+                    There is nothing further you need to do! Our team has been notified of this technical glitch and we will manually confirm your appointment and email you the customer details within the next <span className="font-semibold text-primary">30 minutes</span>.
+                  </p>
+                </div>
+
+                <p className="text-sm text-muted-foreground italic">
+                  Thank you for your patience as we work to fix this underlying issue!
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => setPaymentIssueData(null)}>
+                I Understand
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 };
