@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { DollarSign, Download, ExternalLink, CheckCircle, RefreshCcw } from 'lucide-react';
+import { DollarSign, Download, ExternalLink, CheckCircle, RefreshCcw, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ReferralFee {
@@ -27,6 +28,10 @@ interface ReferralFee {
     vehicle_make: string;
     model: string;
     year: number;
+    appointments?: {
+      id: string;
+      status: string;
+    } | null;
   } | null;
   profiles: {
     name: string;
@@ -36,9 +41,11 @@ interface ReferralFee {
 export const ReferralFeesTab = () => {
   const [fees, setFees] = useState<ReferralFee[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'all' | 'refunds'>('all');
+  const [activeView, setActiveView] = useState<'all' | 'refunds' | 'failed'>('all');
   const [statusFilter, setStatusFilter] = useState('paid');
   const [currentPage, setCurrentPage] = useState(1);
+  const [adminNotes, setAdminNotes] = useState('');
+  const [confirmingFeeId, setConfirmingFeeId] = useState<string | null>(null);
   const feesPerPage = 10;
   const { toast } = useToast();
 
@@ -52,7 +59,13 @@ export const ReferralFeesTab = () => {
       .from('referral_fees')
       .select(`
         *,
-        service_requests (id, vehicle_make, model, year),
+        service_requests!inner (
+          id, 
+          vehicle_make, 
+          model, 
+          year,
+          appointments (id, status)
+        ),
         profiles (name)
       `)
       .order('created_at', { ascending: false });
@@ -65,7 +78,9 @@ export const ReferralFeesTab = () => {
         variant: 'destructive'
       });
     } else {
-      setFees(data || []);
+      // Cast the data to match our interface
+      const typedData = (data || []) as ReferralFee[];
+      setFees(typedData);
     }
     setLoading(false);
   };
@@ -95,6 +110,41 @@ export const ReferralFeesTab = () => {
         description: 'Failed to mark fee as paid',
         variant: 'destructive'
       });
+    }
+  };
+
+  const handleManualConfirm = async (feeId: string) => {
+    try {
+      setConfirmingFeeId(feeId);
+      const { data, error } = await supabase.rpc('admin_confirm_appointment', {
+        p_referral_fee_id: feeId,
+        p_admin_notes: adminNotes || null
+      });
+
+      if (error) throw error;
+
+      const result = data as { success: boolean; error?: string; message?: string };
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to confirm appointment');
+      }
+
+      toast({
+        title: '✨ Appointment Confirmed',
+        description: result.message || 'Appointment successfully confirmed manually'
+      });
+
+      setAdminNotes('');
+      fetchFees();
+    } catch (error) {
+      console.error('Error confirming appointment:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to confirm appointment',
+        variant: 'destructive'
+      });
+    } finally {
+      setConfirmingFeeId(null);
     }
   };
 
@@ -168,9 +218,16 @@ export const ReferralFeesTab = () => {
     : fees.filter(fee => fee.status === statusFilter);
 
   const refundedFees = fees.filter(fee => fee.status === 'refunded');
+  
+  // Failed confirmations: paid but no confirmed appointment
+  const failedConfirmations = fees.filter(fee => 
+    fee.status === 'paid' && 
+    (!fee.service_requests?.appointments || fee.service_requests.appointments.status !== 'confirmed')
+  );
 
   // Pagination
-  const dataToDisplay = activeView === 'refunds' ? refundedFees : filteredFees;
+  const dataToDisplay = activeView === 'refunds' ? refundedFees : 
+                        activeView === 'failed' ? failedConfirmations : filteredFees;
   const totalPages = Math.ceil(dataToDisplay.length / feesPerPage);
   const startIndex = (currentPage - 1) * feesPerPage;
   const endIndex = startIndex + feesPerPage;
@@ -205,6 +262,17 @@ export const ReferralFeesTab = () => {
           All Fees
         </Button>
         <Button
+          variant={activeView === 'failed' ? 'default' : 'ghost'}
+          onClick={() => {
+            setActiveView('failed');
+            setCurrentPage(1);
+          }}
+          className="rounded-b-none"
+        >
+          <AlertTriangle className="h-4 w-4 mr-2" />
+          Failed Confirmations ({failedConfirmations.length})
+        </Button>
+        <Button
           variant={activeView === 'refunds' ? 'default' : 'ghost'}
           onClick={() => {
             setActiveView('refunds');
@@ -231,6 +299,12 @@ export const ReferralFeesTab = () => {
                 <SelectItem value="canceled">Canceled</SelectItem>
               </SelectContent>
             </Select>
+          )}
+          {activeView === 'failed' && (
+            <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded-md border border-orange-200">
+              <AlertTriangle className="h-4 w-4" />
+              <span>Showing appointments needing manual confirmation</span>
+            </div>
           )}
         </div>
         <Button variant="outline" onClick={exportToCSV}>
@@ -316,10 +390,96 @@ export const ReferralFeesTab = () => {
                   )}
                 </div>
 
-                
+                <div className="flex gap-2">
+                  {activeView === 'failed' && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Confirm Appointment
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>✨ Manually Confirm Appointment</DialogTitle>
+                          <DialogDescription>
+                            This will confirm the appointment for the Pro and update all related records.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <p className="text-sm">
+                              <span className="font-semibold">Pro:</span> {fee.profiles?.name}
+                            </p>
+                            <p className="text-sm">
+                              <span className="font-semibold">Vehicle:</span>{' '}
+                              {fee.service_requests 
+                                ? `${fee.service_requests.year} ${fee.service_requests.vehicle_make} ${fee.service_requests.model}`
+                                : 'N/A'}
+                            </p>
+                            <p className="text-sm">
+                              <span className="font-semibold">Fee Amount:</span> ${fee.amount.toFixed(2)}
+                            </p>
+                            <p className="text-sm">
+                              <span className="font-semibold">Payment Date:</span>{' '}
+                              {fee.paid_at ? format(new Date(fee.paid_at), 'PPP p') : 'N/A'}
+                            </p>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="admin-notes">Admin Notes (Optional)</Label>
+                            <Textarea
+                              id="admin-notes"
+                              placeholder="e.g., Manually confirmed due to system error on Nov 11th"
+                              value={adminNotes}
+                              onChange={(e) => setAdminNotes(e.target.value)}
+                              rows={3}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              These notes will be added to the appointment record for tracking purposes.
+                            </p>
+                          </div>
 
-                {fee.status === 'paid' && fee.refundable && activeView === 'all' && (
-                  <Dialog>
+                          <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                            <p className="text-sm text-blue-800">
+                              <strong>What this does:</strong>
+                            </p>
+                            <ul className="text-xs text-blue-700 mt-2 space-y-1 ml-4 list-disc">
+                              <li>Confirms the appointment (status → "confirmed")</li>
+                              <li>Updates the quote and service request</li>
+                              <li>Logs the manual confirmation with your notes</li>
+                              <li>Sends customer details to the Pro</li>
+                            </ul>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setAdminNotes('')}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            onClick={() => handleManualConfirm(fee.id)}
+                            disabled={confirmingFeeId === fee.id}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            {confirmingFeeId === fee.id ? (
+                              <>Processing...</>
+                            ) : (
+                              <>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Confirm Appointment
+                              </>
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+
+                  {fee.status === 'paid' && fee.refundable && activeView === 'all' && (
+                    <Dialog>
                     <DialogTrigger asChild>
                       <Button size="sm" variant="outline">
                         <RefreshCcw className="h-4 w-4 mr-2" />
@@ -353,8 +513,9 @@ export const ReferralFeesTab = () => {
                         </Button>
                       </DialogFooter>
                     </DialogContent>
-                  </Dialog>
-                )}
+                    </Dialog>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -365,6 +526,8 @@ export const ReferralFeesTab = () => {
             <CardContent className="p-8 text-center text-muted-foreground">
               {activeView === 'refunds' 
                 ? 'No refunded fees yet' 
+                : activeView === 'failed'
+                ? '🎉 No failed confirmations! All payments have been properly confirmed.'
                 : 'No fees found'}
             </CardContent>
           </Card>

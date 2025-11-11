@@ -1203,6 +1203,10 @@ export type Database = {
         Args: { quote_id_input: string }
         Returns: Json
       }
+      admin_confirm_appointment: {
+        Args: { p_admin_notes?: string; p_referral_fee_id: string }
+        Returns: Json
+      }
       cancel_appointment_with_validation: {
         Args: {
           appointment_id_input: string
