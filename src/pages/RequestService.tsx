@@ -76,9 +76,13 @@ export default function RequestService() {
     setIsLoading(true);
 
     try {
+      // Normalize ZIP code to first 5 digits only
+      const normalizedZip = formData.zip.trim().substring(0, 5);
+      
       // Validate form data
       const validatedData = serviceRequestSchema.parse({
         ...formData,
+        zip: normalizedZip,
         year: Number(formData.year),
         mileage: formData.mileage ? Number(formData.mileage) : undefined
       });
