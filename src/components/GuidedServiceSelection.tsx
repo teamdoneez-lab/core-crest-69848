@@ -24,7 +24,7 @@ interface CategoryLevel {
 }
 
 // Guided service selection data structure
-const serviceFlow: Record<string, CategoryLevel> = {
+export const serviceFlow: Record<string, CategoryLevel> = {
   root: {
     question: "What type of auto service do you need?",
     options: [
