@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { Resend } from "npm:resend@4.0.0";
+import { Resend } from "https://esm.sh/resend@4.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,7 +34,7 @@ serve(async (req) => {
         status,
         starts_at,
         confirmation_expires_at,
-        service_requests (
+        service_requests!inner (
           id,
           vehicle_make,
           model,
@@ -54,11 +54,19 @@ serve(async (req) => {
       throw new Error('Appointment not found');
     }
 
+    // Extract single objects from relations
+    const serviceRequest = Array.isArray(appointment.service_requests) 
+      ? appointment.service_requests[0] 
+      : appointment.service_requests;
+    const pro = Array.isArray(appointment.profiles) 
+      ? appointment.profiles[0] 
+      : appointment.profiles;
+
     // Get customer info
     const { data: customer, error: custError } = await supabaseClient
       .from('profiles')
       .select('name, email')
-      .eq('id', appointment.service_requests.customer_id)
+      .eq('id', serviceRequest?.customer_id)
       .single();
 
     if (custError || !customer) {
@@ -87,12 +95,12 @@ serve(async (req) => {
       recipientName = customer.name;
 
       if (status === 'pending_confirmation') {
-        const timerMinutes = getTimerMinutes(appointment.service_requests.urgency);
+        const timerMinutes = getTimerMinutes(serviceRequest?.urgency);
         subject = `⏰ Appointment Confirmation Required - ${timerMinutes} min timer`;
         htmlContent = `
           <h2>Appointment Confirmation Pending</h2>
           <p>Hi ${customer.name},</p>
-          <p>A mechanic has been assigned to your service request for your <strong>${appointment.service_requests.year} ${appointment.service_requests.vehicle_make} ${appointment.service_requests.model}</strong>.</p>
+          <p>A mechanic has been assigned to your service request for your <strong>${serviceRequest?.year} ${serviceRequest?.vehicle_make} ${serviceRequest?.model}</strong>.</p>
           <p><strong>⏰ Action Required:</strong> The mechanic has ${timerMinutes} minutes to confirm this appointment and pay the referral fee.</p>
           <p>You will be notified once the mechanic confirms, or if the appointment expires.</p>
           <p>Thank you for using our service!</p>
@@ -102,8 +110,8 @@ serve(async (req) => {
         htmlContent = `
           <h2>Your Appointment is Confirmed!</h2>
           <p>Hi ${customer.name},</p>
-          <p>Great news! The mechanic has confirmed your appointment for your <strong>${appointment.service_requests.year} ${appointment.service_requests.vehicle_make} ${appointment.service_requests.model}</strong>.</p>
-          <p><strong>Professional:</strong> ${appointment.profiles.name}</p>
+          <p>Great news! The mechanic has confirmed your appointment for your <strong>${serviceRequest?.year} ${serviceRequest?.vehicle_make} ${serviceRequest?.model}</strong>.</p>
+          <p><strong>Professional:</strong> ${pro?.name}</p>
           ${appointment.starts_at ? `<p><strong>Scheduled Time:</strong> ${new Date(appointment.starts_at).toLocaleString()}</p>` : ''}
           <p>The mechanic will contact you shortly to finalize the details.</p>
           <p>Thank you for using our service!</p>
@@ -114,7 +122,7 @@ serve(async (req) => {
           <h2>Appointment Confirmation Expired</h2>
           <p>Hi ${customer.name},</p>
           <p>Unfortunately, the mechanic did not confirm your appointment within the required time period.</p>
-          <p><strong>Vehicle:</strong> ${appointment.service_requests.year} ${appointment.service_requests.vehicle_make} ${appointment.service_requests.model}</p>
+          <p><strong>Vehicle:</strong> ${serviceRequest?.year} ${serviceRequest?.vehicle_make} ${serviceRequest?.model}</p>
           <p>Please return to your dashboard to select another quote from the available mechanics.</p>
           <p><a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}/my-requests" style="display: inline-block; padding: 10px 20px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">View My Requests</a></p>
           <p>We apologize for the inconvenience.</p>
@@ -125,21 +133,21 @@ serve(async (req) => {
           <h2>Appointment Declined</h2>
           <p>Hi ${customer.name},</p>
           <p>The mechanic has declined your appointment request.</p>
-          <p><strong>Vehicle:</strong> ${appointment.service_requests.year} ${appointment.service_requests.vehicle_make} ${appointment.service_requests.model}</p>
+          <p><strong>Vehicle:</strong> ${serviceRequest?.year} ${serviceRequest?.vehicle_make} ${serviceRequest?.model}</p>
           <p>Please return to your dashboard to select another quote from the available mechanics.</p>
           <p><a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}/my-requests" style="display: inline-block; padding: 10px 20px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">View My Requests</a></p>
         `;
       }
     } else if (recipient_type === 'pro') {
-      recipientEmail = appointment.profiles.email;
-      recipientName = appointment.profiles.name;
+      recipientEmail = pro?.email;
+      recipientName = pro?.name;
 
       if (status === 'completed') {
         subject = `✅ Job Marked Complete by Customer`;
         htmlContent = `
           <h2>Job Completed</h2>
-          <p>Hi ${appointment.profiles.name},</p>
-          <p>The customer has marked the job as complete for the <strong>${appointment.service_requests.year} ${appointment.service_requests.vehicle_make} ${appointment.service_requests.model}</strong>.</p>
+          <p>Hi ${pro?.name},</p>
+          <p>The customer has marked the job as complete for the <strong>${serviceRequest?.year} ${serviceRequest?.vehicle_make} ${serviceRequest?.model}</strong>.</p>
           <p>Thank you for providing excellent service!</p>
         `;
       }

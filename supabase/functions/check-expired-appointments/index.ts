@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { Resend } from "npm:resend@4.0.0";
+import { Resend } from "https://esm.sh/resend@4.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,16 +102,24 @@ serve(async (req) => {
 
       for (const appointment of expiredAppointments) {
         try {
-          const customer = appointment.service_requests?.profiles;
-          const pro = appointment.profiles;
+          // Extract single objects from arrays (Supabase relations)
+          const serviceRequest = Array.isArray(appointment.service_requests) 
+            ? appointment.service_requests[0] 
+            : appointment.service_requests;
+          const customer = serviceRequest?.profiles 
+            ? (Array.isArray(serviceRequest.profiles) ? serviceRequest.profiles[0] : serviceRequest.profiles)
+            : null;
+          const pro = Array.isArray(appointment.profiles) 
+            ? appointment.profiles[0] 
+            : appointment.profiles;
 
           if (!customer?.email) {
             logStep("Skipping notification - no customer email", { appointmentId: appointment.id });
             continue;
           }
 
-          const serviceCategory = appointment.service_requests?.service_category?.[0] || "service";
-          const vehicle = `${appointment.service_requests?.vehicle_make} ${appointment.service_requests?.model} ${appointment.service_requests?.year}`;
+          const serviceCategory = serviceRequest?.service_category?.[0] || "service";
+          const vehicle = `${serviceRequest?.vehicle_make} ${serviceRequest?.model} ${serviceRequest?.year}`;
 
           // Send notification to customer
           await resend.emails.send({
