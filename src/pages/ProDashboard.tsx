@@ -139,6 +139,32 @@ export default function ProDashboard() {
     }
   }, [user, isPro]);
 
+  // Real-time subscription for new leads
+  useEffect(() => {
+    if (!user || !isPro) return;
+
+    const channel = supabase
+      .channel('leads-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'leads',
+          filter: `pro_id=eq.${user.id}`
+        },
+        () => {
+          console.log('New lead received, refreshing...');
+          fetchLeads();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, isPro]);
+
   // Check email verification
   const emailVerified = user?.email_confirmed_at !== null;
 

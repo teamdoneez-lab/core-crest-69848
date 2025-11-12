@@ -118,6 +118,24 @@ export default function RequestService() {
         return;
       }
 
+      // Generate leads for nearby pros
+      try {
+        const { error: leadsError } = await supabase.rpc('generate_leads_for_request', {
+          p_request_id: newRequest.id
+        });
+
+        if (leadsError) {
+          console.error('Failed to generate leads:', leadsError);
+          toast({
+            title: 'Warning',
+            description: 'Request created but pro matching may be delayed.',
+            variant: 'default'
+          });
+        }
+      } catch (leadsError) {
+        console.error('Lead generation failed:', leadsError);
+      }
+
       // Send confirmation email
       try {
         const { error: emailError } = await supabase.functions.invoke('send-request-confirmation', {
