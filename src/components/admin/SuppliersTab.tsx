@@ -75,6 +75,7 @@ export function SuppliersTab() {
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
+        .eq('is_platform_seller', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

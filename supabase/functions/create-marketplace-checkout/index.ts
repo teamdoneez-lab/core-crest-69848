@@ -13,6 +13,8 @@ interface CartItem {
   price: number;
   quantity: number;
   image?: string;
+  supplierId?: string;
+  isPlatformSeller?: boolean;
 }
 
 serve(async (req) => {
@@ -78,6 +80,51 @@ serve(async (req) => {
       0
     );
 
+    // Check if cart has mixed sellers (platform + vendors or multiple vendors)
+    const hasPlatformItems = cartItems.some((item: CartItem) => item.isPlatformSeller);
+    const hasVendorItems = cartItems.some((item: CartItem) => !item.isPlatformSeller);
+    
+    if (hasPlatformItems && hasVendorItems) {
+      throw new Error("Cannot checkout with items from both DoneEZ and vendors. Please checkout separately.");
+    }
+
+    // Get supplier info if vendor items
+    let stripeConnectAccountId: string | undefined;
+    let platformFeePercent = 0.15; // 15% platform fee for vendor sales
+    
+    if (hasVendorItems) {
+      const supplierId = cartItems[0].supplierId;
+      
+      // Verify all items are from same vendor
+      const allSameVendor = cartItems.every((item: CartItem) => item.supplierId === supplierId);
+      if (!allSameVendor) {
+        throw new Error("Cannot checkout with items from multiple vendors. Please checkout separately.");
+      }
+
+      // Fetch supplier's Stripe Connect account
+      const adminClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+
+      const { data: supplier, error: supplierError } = await adminClient
+        .from("suppliers")
+        .select("stripe_connect_account_id, stripe_onboarding_complete")
+        .eq("id", supplierId)
+        .single();
+
+      if (supplierError || !supplier) {
+        throw new Error("Supplier not found");
+      }
+
+      if (!supplier.stripe_onboarding_complete || !supplier.stripe_connect_account_id) {
+        throw new Error("Vendor has not completed Stripe setup. Please try another vendor.");
+      }
+
+      stripeConnectAccountId = supplier.stripe_connect_account_id;
+      console.log("Processing vendor payment to connected account:", stripeConnectAccountId);
+    }
+
     // Create line items for Stripe
     const lineItems = cartItems.map((item: CartItem) => ({
       price_data: {
@@ -119,7 +166,9 @@ serve(async (req) => {
 
     // Create Stripe checkout session
     console.log("Creating Stripe checkout session...");
-    const session = await stripe.checkout.sessions.create({
+    
+    // Base session configuration
+    const sessionConfig: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email!,
       line_items: lineItems,
@@ -131,7 +180,21 @@ serve(async (req) => {
         user_id: user.id,
         user_email: user.email!,
       },
-    });
+    };
+
+    // Add payment routing for vendor items
+    if (stripeConnectAccountId) {
+      const platformFeeAmount = Math.round(totalAmount * platformFeePercent * 100); // Convert to cents
+      sessionConfig.payment_intent_data = {
+        application_fee_amount: platformFeeAmount,
+        transfer_data: {
+          destination: stripeConnectAccountId,
+        },
+      };
+      console.log("Platform fee:", platformFeeAmount, "cents");
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     console.log("✅ Stripe session created:", session.id);
     console.log("Checkout URL:", session.url);
