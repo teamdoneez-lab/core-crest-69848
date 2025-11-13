@@ -40,6 +40,10 @@ import SupplierLogin from "./pages/SupplierLogin";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
 import NotFound from "./pages/NotFound";
+import AdminProductList from "./pages/admin/AdminProductList";
+import AdminProductForm from "./pages/admin/AdminProductForm";
+import AdminBulkUpload from "./pages/admin/AdminBulkUpload";
+import AdminCategories from "./pages/admin/AdminCategories";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +76,11 @@ const App = () => (
             <Route path="/partner-offers" element={<PartnerOffers />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/products" element={<AdminProductList />} />
+            <Route path="/admin/products/new" element={<AdminProductForm />} />
+            <Route path="/admin/products/edit/:productId" element={<AdminProductForm />} />
+            <Route path="/admin/products/bulk-upload" element={<AdminBulkUpload />} />
+            <Route path="/admin/categories" element={<AdminCategories />} />
             <Route path="/customer-profile" element={<CustomerProfile />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/faq" element={<FAQ />} />
