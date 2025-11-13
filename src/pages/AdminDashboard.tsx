@@ -849,6 +849,55 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
+        {/* DoneEZ Product Management Quick Links */}
+        <Card className="mb-6 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              DoneEZ Product Management
+            </CardTitle>
+            <CardDescription>
+              Manage platform-owned products sold under "DoneEZ"
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex flex-col gap-2"
+                onClick={() => window.location.href = '/admin/products'}
+              >
+                <FileText className="h-5 w-5" />
+                <span className="text-sm">Product List</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex flex-col gap-2"
+                onClick={() => window.location.href = '/admin/products/new'}
+              >
+                <CheckCircle className="h-5 w-5" />
+                <span className="text-sm">Add Product</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex flex-col gap-2"
+                onClick={() => window.location.href = '/admin/products/bulk-upload'}
+              >
+                <Download className="h-5 w-5" />
+                <span className="text-sm">Bulk Upload</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex flex-col gap-2"
+                onClick={() => window.location.href = '/admin/categories'}
+              >
+                <Users className="h-5 w-5" />
+                <span className="text-sm">Categories</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-5">
