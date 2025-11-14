@@ -37,33 +37,40 @@ export default function AdminBulkUpload() {
     setSupplierLoading(true);
     try {
       console.log('Fetching platform supplier...');
-      let { data, error } = await supabase
+      
+      // Fetch existing platform supplier
+      const { data, error } = await supabase
         .from('suppliers')
-        .select('id')
+        .select('id, business_name')
         .eq('is_platform_seller', true)
+        .order('created_at', { ascending: true })
+        .limit(1)
         .maybeSingle();
 
-      console.log('Query result:', { data, error });
+      console.log('Platform supplier query result:', { data, error });
 
       if (error) {
         console.error('Error querying suppliers:', error);
         throw error;
       }
       
-      // If platform supplier doesn't exist, show error - it should be created by migration
-      if (!data) {
-        toast({
-          title: 'Setup Required',
-          description: 'Platform supplier not found. Please contact support or run database migrations.',
-          variant: 'destructive',
-        });
+      // If platform supplier exists, use it
+      if (data) {
+        setPlatformSupplierId(data.id);
+        console.log('Platform supplier found:', data);
         return;
       }
       
-      setPlatformSupplierId(data.id);
-      console.log('Platform supplier ID set:', data.id);
+      // If no platform supplier found, show error - must be created via SQL
+      console.log('No platform supplier found');
+      toast({
+        title: 'Setup Required',
+        description: 'Platform supplier not found. Please run the SQL script from fix-platform-supplier.sql in your Supabase SQL editor.',
+        variant: 'destructive',
+      });
+      
     } catch (error: any) {
-      console.error('Error fetching platform supplier:', error);
+      console.error('Error in fetchPlatformSupplier:', error);
       toast({
         title: 'Error',
         description: error.message || 'Failed to initialize platform supplier',
@@ -115,16 +122,15 @@ export default function AdminBulkUpload() {
   };
 
   const handleUpload = async () => {
-    if (!platformSupplierId) {
-      toast({
-        title: 'Error',
-        description: 'Platform supplier not initialized. Please refresh the page.',
-        variant: 'destructive',
-      });
-      return;
-    }
+    console.log('Upload initiated', { 
+      hasFile: !!file, 
+      fileName: file?.name,
+      platformSupplierId,
+      supplierLoading 
+    });
     
     if (!file) {
+      console.error('No file selected');
       toast({
         title: 'Error',
         description: 'Please select a CSV file',
@@ -132,43 +138,84 @@ export default function AdminBulkUpload() {
       });
       return;
     }
+    
+    if (!platformSupplierId) {
+      console.error('No platform supplier ID');
+      toast({
+        title: 'Error',
+        description: 'Platform supplier not initialized. Please refresh the page.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setLoading(true);
+    console.log('Starting CSV parse...');
 
     Papa.parse<ProductRow>(file, {
       header: true,
       skipEmptyLines: true,
       complete: async (results) => {
+        console.log('CSV parsed successfully', { rowCount: results.data.length });
+        
         const errors: string[] = [];
         const products = results.data
           .map((row, index) => {
             // Validate required fields
             if (!row.sku || !row.part_name || !row.category || !row.price || !row.quantity) {
-              errors.push(`Row ${index + 2}: Missing required fields`);
+              errors.push(`Row ${index + 2}: Missing required fields (sku, part_name, category, price, quantity)`);
+              return null;
+            }
+
+            // Validate numeric fields
+            const price = Number(row.price);
+            const quantity = Number(row.quantity);
+            const warrantyMonths = Number(row.warranty_months) || 12;
+
+            if (isNaN(price) || price <= 0) {
+              errors.push(`Row ${index + 2}: Invalid price value`);
+              return null;
+            }
+
+            if (isNaN(quantity) || quantity < 0) {
+              errors.push(`Row ${index + 2}: Invalid quantity value`);
               return null;
             }
 
             return {
               supplier_id: platformSupplierId,
-              sku: row.sku,
-              part_name: row.part_name,
-              condition: row.condition || 'new',
-              warranty_months: Number(row.warranty_months) || 12,
-              price: Number(row.price),
-              quantity: Number(row.quantity),
-              category: row.category,
-              image_url: row.image_url || null,
-              description: row.description || null,
+              sku: row.sku.trim(),
+              part_name: row.part_name.trim(),
+              condition: row.condition?.toLowerCase() || 'new',
+              warranty_months: warrantyMonths,
+              price: price,
+              quantity: quantity,
+              category: row.category.trim(),
+              image_url: row.image_url?.trim() || null,
+              description: row.description?.trim() || null,
               admin_approved: true,
               is_active: true,
             };
           })
           .filter(Boolean);
 
+        console.log('Products validated', { validCount: products.length, errorCount: errors.length });
+
         if (errors.length > 0) {
+          console.error('Validation errors:', errors);
           toast({
             title: 'Validation Errors',
-            description: errors.join('\n'),
+            description: errors.slice(0, 3).join('\n') + (errors.length > 3 ? `\n...and ${errors.length - 3} more errors` : ''),
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (products.length === 0) {
+          toast({
+            title: 'Error',
+            description: 'No valid products found in CSV file',
             variant: 'destructive',
           });
           setLoading(false);
@@ -176,23 +223,38 @@ export default function AdminBulkUpload() {
         }
 
         try {
-          const { error } = await supabase
+          console.log('Inserting products into database...', { count: products.length });
+          
+          const { data, error } = await supabase
             .from('supplier_products')
-            .insert(products);
+            .insert(products)
+            .select();
 
-          if (error) throw error;
+          if (error) {
+            console.error('Database insertion error:', error);
+            throw error;
+          }
+
+          console.log('Products uploaded successfully:', data);
 
           toast({
             title: 'Success',
             description: `Successfully uploaded ${products.length} products`,
           });
 
-          navigate('/admin/products');
-        } catch (error) {
+          // Reset form
+          setFile(null);
+          
+          // Navigate to products page after short delay
+          setTimeout(() => {
+            navigate('/admin/products');
+          }, 1500);
+          
+        } catch (error: any) {
           console.error('Error uploading products:', error);
           toast({
-            title: 'Error',
-            description: 'Failed to upload products',
+            title: 'Upload Failed',
+            description: error.message || 'Failed to upload products to database',
             variant: 'destructive',
           });
         } finally {
@@ -202,8 +264,8 @@ export default function AdminBulkUpload() {
       error: (error) => {
         console.error('CSV parsing error:', error);
         toast({
-          title: 'Error',
-          description: 'Failed to parse CSV file',
+          title: 'Parse Error',
+          description: 'Failed to parse CSV file. Please check the file format.',
           variant: 'destructive',
         });
         setLoading(false);
