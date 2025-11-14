@@ -177,7 +177,7 @@ export default function AdminProductForm() {
         });
       }
 
-      navigate('/admin/products');
+      navigate('/admin/doneez/products');
     } catch (error) {
       console.error('Error saving product:', error);
       toast({
@@ -198,7 +198,7 @@ export default function AdminProductForm() {
         <div className="container mx-auto py-8 px-4 max-w-3xl">
           <Button
             variant="ghost"
-            onClick={() => navigate('/admin/products')}
+            onClick={() => navigate('/admin/doneez/products')}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -345,7 +345,7 @@ export default function AdminProductForm() {
                     <Save className="mr-2 h-4 w-4" />
                     {loading ? 'Saving...' : productId ? 'Update Product' : 'Create Product'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => navigate('/admin/products')}>
+                  <Button type="button" variant="outline" onClick={() => navigate('/admin/doneez/products')}>
                     Cancel
                   </Button>
                 </div>

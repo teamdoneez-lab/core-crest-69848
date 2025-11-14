@@ -76,11 +76,11 @@ const App = () => (
             <Route path="/partner-offers" element={<PartnerOffers />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/products" element={<AdminProductList />} />
-            <Route path="/admin/products/new" element={<AdminProductForm />} />
-            <Route path="/admin/products/edit/:productId" element={<AdminProductForm />} />
-            <Route path="/admin/products/bulk-upload" element={<AdminBulkUpload />} />
-            <Route path="/admin/categories" element={<AdminCategories />} />
+            <Route path="/admin/doneez/products" element={<AdminProductList />} />
+            <Route path="/admin/doneez/products/new" element={<AdminProductForm />} />
+            <Route path="/admin/doneez/products/edit/:productId" element={<AdminProductForm />} />
+            <Route path="/admin/doneez/products/bulk-upload" element={<AdminBulkUpload />} />
+            <Route path="/admin/doneez/categories" element={<AdminCategories />} />
             <Route path="/customer-profile" element={<CustomerProfile />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/faq" element={<FAQ />} />

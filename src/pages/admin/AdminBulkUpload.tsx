@@ -169,7 +169,7 @@ export default function AdminBulkUpload() {
         <div className="container mx-auto py-8 px-4 max-w-3xl">
           <Button
             variant="ghost"
-            onClick={() => navigate('/admin/products')}
+            onClick={() => navigate('/admin/doneez/products')}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
