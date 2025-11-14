@@ -15,6 +15,7 @@ import { RoleGuard } from '@/components/RoleGuard';
 
 // Hardcoded categories for DoneEZ products
 const PLATFORM_CATEGORIES = [
+  // Parts
   'Alternators',
   'Batteries',
   'Brakes',
@@ -33,6 +34,15 @@ const PLATFORM_CATEGORIES = [
   'Tools',
   'Fluids',
   'Accessories',
+  // Supplies
+  'Shop Supplies',
+  'Cleaners & Chemicals',
+  'Gloves & PPE',
+  'Towels & Wipes',
+  'Detailing Supplies',
+  'Small Tools & Accessories',
+  'Shop Equipment',
+  'Adhesives & Sealants',
   'Other',
 ];
 
