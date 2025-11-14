@@ -27,60 +27,50 @@ export default function AdminBulkUpload() {
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [platformSupplierId, setPlatformSupplierId] = useState<string | null>(null);
+  const [supplierLoading, setSupplierLoading] = useState(true);
 
   useEffect(() => {
     fetchPlatformSupplier();
   }, []);
 
   const fetchPlatformSupplier = async () => {
+    setSupplierLoading(true);
     try {
+      console.log('Fetching platform supplier...');
       let { data, error } = await supabase
         .from('suppliers')
         .select('id')
         .eq('is_platform_seller', true)
         .maybeSingle();
 
-      if (error) throw error;
-      
-      // If platform supplier doesn't exist, create it
-      if (!data) {
-        const { data: newSupplier, error: createError } = await supabase
-          .from('suppliers')
-          .insert({
-            business_name: 'DoneEZ',
-            contact_name: 'DoneEZ Platform',
-            business_address: 'Platform Headquarters',
-            city: 'Online',
-            state: 'CA',
-            zip: '00000',
-            email: 'platform@doneez.com',
-            phone: '0000000000',
-            is_platform_seller: true,
-            stripe_connect_account_id: null,
-            status: 'approved',
-          })
-          .select('id')
-          .single();
+      console.log('Query result:', { data, error });
 
-        if (createError) throw createError;
-        data = newSupplier;
-        
-        toast({
-          title: 'Success',
-          description: 'Platform supplier created successfully',
-        });
+      if (error) {
+        console.error('Error querying suppliers:', error);
+        throw error;
       }
       
-      if (data) {
-        setPlatformSupplierId(data.id);
+      // If platform supplier doesn't exist, show error - it should be created by migration
+      if (!data) {
+        toast({
+          title: 'Setup Required',
+          description: 'Platform supplier not found. Please contact support or run database migrations.',
+          variant: 'destructive',
+        });
+        return;
       }
-    } catch (error) {
+      
+      setPlatformSupplierId(data.id);
+      console.log('Platform supplier ID set:', data.id);
+    } catch (error: any) {
       console.error('Error fetching platform supplier:', error);
       toast({
         title: 'Error',
-        description: 'Failed to initialize platform supplier',
+        description: error.message || 'Failed to initialize platform supplier',
         variant: 'destructive',
       });
+    } finally {
+      setSupplierLoading(false);
     }
   };
 
@@ -125,10 +115,19 @@ export default function AdminBulkUpload() {
   };
 
   const handleUpload = async () => {
-    if (!file || !platformSupplierId) {
+    if (!platformSupplierId) {
       toast({
         title: 'Error',
-        description: 'Please select a file',
+        description: 'Platform supplier not initialized. Please refresh the page.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!file) {
+      toast({
+        title: 'Error',
+        description: 'Please select a CSV file',
         variant: 'destructive',
       });
       return;
@@ -273,14 +272,28 @@ export default function AdminBulkUpload() {
               </div>
 
               <div className="flex gap-4">
-                <Button onClick={handleUpload} disabled={!file || loading}>
+                <Button onClick={handleUpload} disabled={!file || loading || supplierLoading || !platformSupplierId}>
                   <Upload className="mr-2 h-4 w-4" />
-                  {loading ? 'Uploading...' : 'Upload Products'}
+                  {supplierLoading ? 'Initializing...' : loading ? 'Uploading...' : 'Upload Products'}
                 </Button>
                 <Button variant="outline" onClick={() => navigate('/admin/products')}>
                   Cancel
                 </Button>
               </div>
+              
+              {supplierLoading && (
+                <p className="text-sm text-muted-foreground">
+                  Initializing platform supplier...
+                </p>
+              )}
+              
+              {!supplierLoading && !platformSupplierId && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                  <p className="text-sm text-destructive font-semibold">
+                    Platform supplier not found. Please run the database migrations or contact support.
+                  </p>
+                </div>
+              )}
 
               <div className="bg-muted p-4 rounded-lg">
                 <h4 className="font-semibold mb-2">CSV Format Guidelines:</h4>
