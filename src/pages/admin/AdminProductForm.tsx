@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { RoleGuard } from '@/components/RoleGuard';
 
 interface ProductForm {
@@ -26,7 +27,15 @@ interface ProductForm {
   warranty_months: number;
 }
 
+interface UploadedImage {
+  file: File;
+  preview: string;
+  uploaded?: boolean;
+  url?: string;
+}
+
 const CATEGORIES = [
+  // Parts
   'Alternators',
   'Batteries',
   'Brakes',
@@ -35,6 +44,25 @@ const CATEGORIES = [
   'Lights',
   'Suspension',
   'Transmission',
+  'Cooling System',
+  'Exhaust',
+  'Fuel System',
+  'Ignition',
+  'Electrical',
+  'Body Parts',
+  'Interior',
+  'Tools',
+  'Fluids',
+  'Accessories',
+  // Supplies
+  'Shop Supplies',
+  'Cleaners & Chemicals',
+  'Gloves & PPE',
+  'Towels & Wipes',
+  'Detailing Supplies',
+  'Small Tools & Accessories',
+  'Shop Equipment',
+  'Adhesives & Sealants',
   'Other',
 ];
 
@@ -44,6 +72,8 @@ export default function AdminProductForm() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [platformSupplierId, setPlatformSupplierId] = useState<string | null>(null);
+  const [images, setImages] = useState<UploadedImage[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [formData, setFormData] = useState<ProductForm>({
     part_name: '',
     description: '',
@@ -116,6 +146,16 @@ export default function AdminProductForm() {
           condition: data.condition,
           warranty_months: data.warranty_months,
         });
+        
+        // Load existing image if present
+        if (data.image_url) {
+          setImages([{
+            file: new File([], 'existing'),
+            preview: data.image_url,
+            uploaded: true,
+            url: data.image_url,
+          }]);
+        }
       }
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -127,6 +167,62 @@ export default function AdminProductForm() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const newImages = files.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      uploaded: false,
+    }));
+    setImages(prev => [...prev, ...newImages]);
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => {
+      const updated = [...prev];
+      URL.revokeObjectURL(updated[index].preview);
+      updated.splice(index, 1);
+      return updated;
+    });
+  };
+
+  const uploadImages = async (): Promise<string[]> => {
+    const uploadedUrls: string[] = [];
+    
+    for (const img of images) {
+      if (img.uploaded && img.url) {
+        uploadedUrls.push(img.url);
+        continue;
+      }
+
+      try {
+        const fileExt = img.file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError, data } = await supabase.storage
+          .from('product-images')
+          .upload(filePath, img.file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        throw error;
+      }
+    }
+
+    return uploadedUrls;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -143,9 +239,15 @@ export default function AdminProductForm() {
 
     try {
       setLoading(true);
+      setUploadingImages(true);
+
+      // Upload images first
+      const imageUrls = await uploadImages();
+      const primaryImageUrl = imageUrls[0] || formData.image_url;
 
       const productData = {
         ...formData,
+        image_url: primaryImageUrl,
         supplier_id: platformSupplierId,
         admin_approved: true,
       };
@@ -187,6 +289,7 @@ export default function AdminProductForm() {
       });
     } finally {
       setLoading(false);
+      setUploadingImages(false);
     }
   };
 
@@ -321,7 +424,48 @@ export default function AdminProductForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="image_url">Image URL</Label>
+                  <Label htmlFor="images">Product Images</Label>
+                  <Input
+                    id="images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="cursor-pointer"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Upload product images (JPG, PNG, WebP). First image will be the primary image.
+                  </p>
+                  
+                  {images.length > 0 && (
+                    <div className="grid grid-cols-4 gap-4 mt-4">
+                      {images.map((img, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={img.preview}
+                            alt={`Product ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                          {index === 0 && (
+                            <Badge className="absolute bottom-1 left-1 text-xs">
+                              Primary
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="image_url">Or Image URL (optional)</Label>
                   <Input
                     id="image_url"
                     type="url"
@@ -329,6 +473,9 @@ export default function AdminProductForm() {
                     onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                     placeholder="https://example.com/image.jpg"
                   />
+                  <p className="text-sm text-muted-foreground">
+                    You can provide an image URL instead of uploading
+                  </p>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -341,9 +488,9 @@ export default function AdminProductForm() {
                 </div>
 
                 <div className="flex gap-4">
-                  <Button type="submit" disabled={loading}>
+                  <Button type="submit" disabled={loading || uploadingImages}>
                     <Save className="mr-2 h-4 w-4" />
-                    {loading ? 'Saving...' : productId ? 'Update Product' : 'Create Product'}
+                    {uploadingImages ? 'Uploading Images...' : loading ? 'Saving...' : productId ? 'Update Product' : 'Create Product'}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => navigate('/admin/doneez/products')}>
                     Cancel
