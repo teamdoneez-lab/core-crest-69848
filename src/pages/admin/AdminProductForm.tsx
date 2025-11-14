@@ -99,13 +99,43 @@ export default function AdminProductForm() {
 
   const fetchPlatformSupplier = async () => {
     try {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('suppliers')
         .select('id')
         .eq('is_platform_seller', true)
         .maybeSingle();
 
       if (error) throw error;
+      
+      // If platform supplier doesn't exist, create it
+      if (!data) {
+        const { data: newSupplier, error: createError } = await supabase
+          .from('suppliers')
+          .insert({
+            business_name: 'DoneEZ',
+            contact_name: 'DoneEZ Platform',
+            business_address: 'Platform Headquarters',
+            city: 'Online',
+            state: 'CA',
+            zip: '00000',
+            email: 'platform@doneez.com',
+            phone: '0000000000',
+            is_platform_seller: true,
+            stripe_connect_account_id: null,
+            status: 'approved',
+          })
+          .select('id')
+          .single();
+
+        if (createError) throw createError;
+        data = newSupplier;
+        
+        toast({
+          title: 'Success',
+          description: 'Platform supplier created successfully',
+        });
+      }
+      
       if (data) {
         setPlatformSupplierId(data.id);
       }
