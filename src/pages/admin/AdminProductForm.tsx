@@ -228,6 +228,11 @@ export default function AdminProductForm() {
   const uploadImages = async (): Promise<string[]> => {
     const uploadedUrls: string[] = [];
     
+    // If no images selected, return empty array
+    if (images.length === 0) {
+      return uploadedUrls;
+    }
+    
     for (const img of images) {
       if (img.uploaded && img.url) {
         uploadedUrls.push(img.url);
@@ -246,14 +251,20 @@ export default function AdminProductForm() {
             upsert: false,
           });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          // If bucket doesn't exist, throw specific error
+          if (uploadError.message?.includes('Bucket not found')) {
+            throw new Error('BUCKET_NOT_FOUND');
+          }
+          throw uploadError;
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('product-images')
           .getPublicUrl(filePath);
 
         uploadedUrls.push(publicUrl);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error uploading image:', error);
         throw error;
       }
@@ -278,13 +289,35 @@ export default function AdminProductForm() {
       setLoading(true);
       setUploadingImages(true);
 
-      // Upload images first
-      const imageUrls = await uploadImages();
-      const primaryImageUrl = imageUrls[0] || formData.image_url;
+      let primaryImageUrl = formData.image_url;
+
+      // Try to upload images, but continue if bucket doesn't exist
+      try {
+        const imageUrls = await uploadImages();
+        if (imageUrls.length > 0) {
+          primaryImageUrl = imageUrls[0];
+        }
+      } catch (uploadError: any) {
+        setUploadingImages(false);
+        
+        if (uploadError.message === 'BUCKET_NOT_FOUND') {
+          toast({
+            title: 'Storage Not Configured',
+            description: 'Image upload bucket not found. Product will be saved with URL only. Please run create-product-images-bucket.sql to enable uploads.',
+            variant: 'destructive',
+          });
+          // Continue with product creation using URL if provided
+          if (!formData.image_url && images.length > 0) {
+            throw new Error('Cannot upload images - storage bucket not configured. Please provide an image URL or configure storage.');
+          }
+        } else {
+          throw uploadError;
+        }
+      }
 
       const productData = {
         ...formData,
-        image_url: primaryImageUrl,
+        image_url: primaryImageUrl || null,
         supplier_id: platformSupplierId,
         admin_approved: true,
       };
@@ -317,14 +350,22 @@ export default function AdminProductForm() {
       }
 
       navigate('/admin/doneez/products');
-  } catch (error: any) {
-    console.error('Error saving product:', error);
-    toast({
-      title: 'Error',
-      description: error?.message || 'Failed to save product',
-      variant: 'destructive',
-    });
-  } finally {
+    } catch (error: any) {
+      console.error('Error saving product:', error);
+      
+      let errorMessage = 'Failed to save product';
+      if (error?.message?.includes('storage')) {
+        errorMessage = error.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
       setLoading(false);
       setUploadingImages(false);
     }
