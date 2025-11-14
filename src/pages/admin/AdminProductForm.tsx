@@ -317,14 +317,14 @@ export default function AdminProductForm() {
       }
 
       navigate('/admin/doneez/products');
-    } catch (error) {
-      console.error('Error saving product:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save product',
-        variant: 'destructive',
-      });
-    } finally {
+  } catch (error: any) {
+    console.error('Error saving product:', error);
+    toast({
+      title: 'Error',
+      description: error?.message || 'Failed to save product',
+      variant: 'destructive',
+    });
+  } finally {
       setLoading(false);
       setUploadingImages(false);
     }
