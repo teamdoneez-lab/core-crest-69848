@@ -99,16 +99,20 @@ export default function AdminProductForm() {
 
   const fetchPlatformSupplier = async () => {
     try {
-      let { data, error } = await supabase
+      // Query for platform supplier - handle multiple by taking the first one
+      const { data, error } = await supabase
         .from('suppliers')
         .select('id')
         .eq('is_platform_seller', true)
-        .maybeSingle();
+        .order('created_at', { ascending: true })
+        .limit(1);
 
       if (error) throw error;
       
-      // If platform supplier doesn't exist, create it
-      if (!data) {
+      if (data && data.length > 0) {
+        setPlatformSupplierId(data[0].id);
+      } else {
+        // If platform supplier doesn't exist, try to create it
         const { data: newSupplier, error: createError } = await supabase
           .from('suppliers')
           .insert({
@@ -127,17 +131,20 @@ export default function AdminProductForm() {
           .select('id')
           .single();
 
-        if (createError) throw createError;
-        data = newSupplier;
-        
-        toast({
-          title: 'Success',
-          description: 'Platform supplier created successfully',
-        });
-      }
-      
-      if (data) {
-        setPlatformSupplierId(data.id);
+        if (createError) {
+          console.error('Error creating platform supplier:', createError);
+          toast({
+            title: 'Error',
+            description: 'Failed to create platform supplier',
+            variant: 'destructive',
+          });
+        } else {
+          setPlatformSupplierId(newSupplier.id);
+          toast({
+            title: 'Success',
+            description: 'Platform supplier created successfully',
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching platform supplier:', error);
