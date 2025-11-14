@@ -100,7 +100,23 @@ export default function SupplierProductUpload() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      
+      // Validate file type
+      const validTypes = ['text/csv', 'application/vnd.ms-excel', 'application/csv'];
+      const isValidType = validTypes.includes(selectedFile.type) || selectedFile.name.endsWith('.csv');
+      
+      if (!isValidType) {
+        toast({
+          title: 'Invalid File Type',
+          description: 'Please select a CSV file',
+          variant: 'destructive',
+        });
+        e.target.value = '';
+        return;
+      }
+      
+      setFile(selectedFile);
     }
   };
 
@@ -260,7 +276,7 @@ export default function SupplierProductUpload() {
               </div>
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,text/csv,application/vnd.ms-excel,application/csv"
                 onChange={handleFileChange}
                 className="hidden"
                 id="csv-upload"
