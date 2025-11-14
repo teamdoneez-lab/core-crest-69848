@@ -12,10 +12,10 @@ const menuItems = [
     title: 'DoneEZ Products',
     icon: Package,
     items: [
-      { title: 'Product List', icon: List, href: '/admin/products' },
-      { title: 'Add New Product', icon: Plus, href: '/admin/products/new' },
-      { title: 'Bulk Upload', icon: Upload, href: '/admin/products/bulk-upload' },
-      { title: 'Categories', icon: Tag, href: '/admin/categories' },
+      { title: 'Product List', icon: List, href: '/admin/doneez/products' },
+      { title: 'Add New Product', icon: Plus, href: '/admin/doneez/products/new' },
+      { title: 'Bulk Upload', icon: Upload, href: '/admin/doneez/products/bulk-upload' },
+      { title: 'Categories', icon: Tag, href: '/admin/doneez/categories' },
     ],
   },
 ];

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
 import { supabase } from '@/integrations/supabase/client';
@@ -116,6 +116,7 @@ interface Fee {
 const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useRole();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('customers');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [pros, setPros] = useState<Pro[]>([]);
@@ -865,7 +866,7 @@ const AdminDashboard = () => {
               <Button 
                 variant="outline" 
                 className="h-auto py-4 flex flex-col gap-2"
-                onClick={() => window.location.href = '/admin/products'}
+                onClick={() => navigate('/admin/doneez/products')}
               >
                 <FileText className="h-5 w-5" />
                 <span className="text-sm">Product List</span>
@@ -873,7 +874,7 @@ const AdminDashboard = () => {
               <Button 
                 variant="outline" 
                 className="h-auto py-4 flex flex-col gap-2"
-                onClick={() => window.location.href = '/admin/products/new'}
+                onClick={() => navigate('/admin/doneez/products/new')}
               >
                 <CheckCircle className="h-5 w-5" />
                 <span className="text-sm">Add Product</span>
@@ -881,7 +882,7 @@ const AdminDashboard = () => {
               <Button 
                 variant="outline" 
                 className="h-auto py-4 flex flex-col gap-2"
-                onClick={() => window.location.href = '/admin/products/bulk-upload'}
+                onClick={() => navigate('/admin/doneez/products/bulk-upload')}
               >
                 <Download className="h-5 w-5" />
                 <span className="text-sm">Bulk Upload</span>
@@ -889,7 +890,7 @@ const AdminDashboard = () => {
               <Button 
                 variant="outline" 
                 className="h-auto py-4 flex flex-col gap-2"
-                onClick={() => window.location.href = '/admin/categories'}
+                onClick={() => navigate('/admin/doneez/categories')}
               >
                 <Users className="h-5 w-5" />
                 <span className="text-sm">Categories</span>

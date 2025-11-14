@@ -135,11 +135,11 @@ export default function AdminProductList() {
               <p className="text-muted-foreground">Manage platform-owned product listings</p>
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => navigate('/admin/products/bulk-upload')}>
+              <Button onClick={() => navigate('/admin/doneez/products/bulk-upload')}>
                 <Upload className="mr-2 h-4 w-4" />
                 Bulk Upload CSV
               </Button>
-              <Button onClick={() => navigate('/admin/products/new')}>
+              <Button onClick={() => navigate('/admin/doneez/products/new')}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add New Product
               </Button>
@@ -213,10 +213,10 @@ export default function AdminProductList() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => navigate(`/admin/products/edit/${product.id}`)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
+                  onClick={() => navigate(`/admin/doneez/products/edit/${product.id}`)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
