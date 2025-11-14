@@ -44,8 +44,7 @@ export default function AdminBulkUpload() {
         .select('id, business_name')
         .eq('is_platform_seller', true)
         .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
 
       console.log('Platform supplier query result:', { data, error });
 
@@ -55,9 +54,9 @@ export default function AdminBulkUpload() {
       }
       
       // If platform supplier exists, use it
-      if (data) {
-        setPlatformSupplierId(data.id);
-        console.log('Platform supplier found:', data);
+      if (data && data.length > 0) {
+        setPlatformSupplierId(data[0].id);
+        console.log('Platform supplier found:', data[0]);
         return;
       }
       
