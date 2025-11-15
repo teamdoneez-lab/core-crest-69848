@@ -70,12 +70,23 @@ export default function ProMarketplace() {
       // Map database products to Product interface
       const mappedProducts: Product[] = (data || []).map(product => {
         const supplier = Array.isArray(product.suppliers) ? product.suppliers[0] : product.suppliers;
+        
+        // Get the first valid image from either images array or image_url
+        let productImage = fallbackImage;
+        const productAny = product as any; // Temporary until migration is run
+        if (productAny.images && Array.isArray(productAny.images) && productAny.images.length > 0) {
+          const firstValidImage = productAny.images.find((img: string) => isValidImageUrl(img));
+          if (firstValidImage) productImage = firstValidImage;
+        } else if (isValidImageUrl(product.image_url)) {
+          productImage = product.image_url;
+        }
+        
         return {
           id: product.id,
           name: product.part_name,
           price: Number(product.price),
           category: product.category,
-          image: isValidImageUrl(product.image_url) ? product.image_url : fallbackImage,
+          image: productImage,
           description: product.description || '',
           inStock: (product.quantity || 0) > 0,
           sku: product.sku,

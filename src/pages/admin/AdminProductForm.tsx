@@ -238,15 +238,22 @@ export default function AdminProductForm() {
           warranty_months: data.warranty_months,
         });
         
-        // Load existing image if present
-        if (data.image_url) {
-          setImages([{
+        // Load existing images if present (support both single and multiple images)
+        const dataAny = data as any; // Temporary until migration is run
+        const existingImages = dataAny.images && Array.isArray(dataAny.images) 
+          ? dataAny.images 
+          : data.image_url 
+            ? [data.image_url] 
+            : [];
+        
+        if (existingImages.length > 0) {
+          setImages(existingImages.map((url: string) => ({
             id: crypto.randomUUID(),
             file: new File([], 'existing'),
-            preview: data.image_url,
+            preview: url,
             uploaded: true,
-            url: data.image_url,
-          }]);
+            url: url,
+          })));
         }
       }
     } catch (error) {
@@ -360,8 +367,10 @@ export default function AdminProductForm() {
       let primaryImageUrl = formData.image_url;
 
       // Try to upload images, but continue if bucket doesn't exist
+      let allImageUrls: string[] = [];
       try {
         const imageUrls = await uploadImages();
+        allImageUrls = imageUrls;
         if (imageUrls.length > 0) {
           primaryImageUrl = imageUrls[0];
         }
@@ -386,6 +395,7 @@ export default function AdminProductForm() {
       const productData = {
         ...formData,
         image_url: primaryImageUrl || null,
+        images: allImageUrls.length > 0 ? allImageUrls : null,
         supplier_id: platformSupplierId,
         admin_approved: true,
       };
