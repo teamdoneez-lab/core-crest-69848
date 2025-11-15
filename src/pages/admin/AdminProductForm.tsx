@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RoleGuard } from '@/components/RoleGuard';
-import { getFlatCategoryList } from '@/data/mockCategories';
+import { getSuppliesCategoryList } from '@/data/mockCategories';
 
 interface ProductForm {
   part_name: string;
@@ -35,8 +35,8 @@ interface UploadedImage {
   url?: string;
 }
 
-// Get categories from the same source as Pro Marketplace
-const CATEGORIES = getFlatCategoryList();
+// Get only Supplies categories matching Pro Marketplace
+const CATEGORIES = getSuppliesCategoryList();
 
 export default function AdminProductForm() {
   const navigate = useNavigate();

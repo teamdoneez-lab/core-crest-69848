@@ -376,3 +376,29 @@ export function getFlatCategoryList(): string[] {
   
   return flatList;
 }
+
+/**
+ * Returns only the Supplies category list (flattened)
+ * for use in the Admin Panel product form
+ */
+export function getSuppliesCategoryList(): string[] {
+  const flatList: string[] = [];
+  
+  function traverse(category: CategoryFilter) {
+    // Add the category name
+    flatList.push(category.name);
+    
+    // Recursively traverse children
+    if (category.children) {
+      category.children.forEach(child => traverse(child));
+    }
+  }
+  
+  // Find and traverse only the Supplies category
+  const suppliesCategory = MOCK_CATEGORIES.find(cat => cat.id === 'supplies');
+  if (suppliesCategory) {
+    traverse(suppliesCategory);
+  }
+  
+  return flatList;
+}
