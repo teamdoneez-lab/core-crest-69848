@@ -353,3 +353,26 @@ export const PART_TYPES = [
   { id: 'rebuilt', name: 'Rebuilt' },
   { id: 'used', name: 'Used Parts' },
 ];
+
+/**
+ * Flattens the hierarchical category structure into a simple array of category names
+ * for use in dropdowns and simple selection UI
+ */
+export function getFlatCategoryList(): string[] {
+  const flatList: string[] = [];
+  
+  function traverse(category: CategoryFilter) {
+    // Add the category name
+    flatList.push(category.name);
+    
+    // Recursively traverse children
+    if (category.children) {
+      category.children.forEach(child => traverse(child));
+    }
+  }
+  
+  // Traverse all top-level categories
+  MOCK_CATEGORIES.forEach(category => traverse(category));
+  
+  return flatList;
+}

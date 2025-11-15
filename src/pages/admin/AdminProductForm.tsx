@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RoleGuard } from '@/components/RoleGuard';
+import { getFlatCategoryList } from '@/data/mockCategories';
 
 interface ProductForm {
   part_name: string;
@@ -34,37 +35,8 @@ interface UploadedImage {
   url?: string;
 }
 
-const CATEGORIES = [
-  // Parts
-  'Alternators',
-  'Batteries',
-  'Brakes',
-  'Engine Parts',
-  'Filters',
-  'Lights',
-  'Suspension',
-  'Transmission',
-  'Cooling System',
-  'Exhaust',
-  'Fuel System',
-  'Ignition',
-  'Electrical',
-  'Body Parts',
-  'Interior',
-  'Tools',
-  'Fluids',
-  'Accessories',
-  // Supplies
-  'Shop Supplies',
-  'Cleaners & Chemicals',
-  'Gloves & PPE',
-  'Towels & Wipes',
-  'Detailing Supplies',
-  'Small Tools & Accessories',
-  'Shop Equipment',
-  'Adhesives & Sealants',
-  'Other',
-];
+// Get categories from the same source as Pro Marketplace
+const CATEGORIES = getFlatCategoryList();
 
 export default function AdminProductForm() {
   const navigate = useNavigate();
