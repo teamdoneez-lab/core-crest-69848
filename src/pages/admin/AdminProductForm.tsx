@@ -82,9 +82,11 @@ function SortableImageItem({
     <div 
       ref={setNodeRef} 
       style={style}
-      className="relative group"
+      className="relative group cursor-grab active:cursor-grabbing"
+      {...attributes} 
+      {...listeners}
     >
-      <div className="absolute top-1 left-1 bg-background/80 rounded p-1 cursor-grab active:cursor-grabbing z-10" {...attributes} {...listeners}>
+      <div className="absolute top-1 left-1 bg-background/80 rounded p-1 z-10">
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </div>
       <img
@@ -95,7 +97,7 @@ function SortableImageItem({
       <button
         type="button"
         onClick={onRemove}
-        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-20"
       >
         <X className="h-3 w-3" />
       </button>
