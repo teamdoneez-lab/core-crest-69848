@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
-import { CheckCircle, XCircle, Eye, Building2, Package, AlertCircle, Filter } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Building2, Package, AlertCircle, Filter, Pencil, Trash2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Supplier {
@@ -49,6 +51,7 @@ interface SupplierProduct {
 type ProductFilter = 'all' | 'platform' | 'vendors';
 
 export function SuppliersTab() {
+  const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<SupplierProduct[]>([]);
   const [allProducts, setAllProducts] = useState<SupplierProduct[]>([]);
@@ -57,6 +60,7 @@ export function SuppliersTab() {
   const [allProductsLoading, setAllProductsLoading] = useState(true);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<SupplierProduct | null>(null);
+  const [deleteProduct, setDeleteProduct] = useState<SupplierProduct | null>(null);
   const [verificationNotes, setVerificationNotes] = useState('');
   const [showDialog, setShowDialog] = useState(false);
   const [showProductDialog, setShowProductDialog] = useState(false);
@@ -237,6 +241,35 @@ export function SuppliersTab() {
     } catch (error: any) {
       console.error('Product approval error:', error);
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deleteProduct) return;
+
+    try {
+      const { error } = await supabase
+        .from('supplier_products')
+        .delete()
+        .eq('id', deleteProduct.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Product deleted successfully',
+      });
+      
+      fetchAllProducts();
+      fetchPendingProducts();
+      setDeleteProduct(null);
+    } catch (error: any) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete product',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -564,6 +597,7 @@ export function SuppliersTab() {
                     <TableHead>Price</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -609,6 +643,34 @@ export function SuppliersTab() {
                         ) : (
                           <Badge variant="secondary">Pending</Badge>
                         )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (product.suppliers.is_platform_seller) {
+                                navigate(`/admin/doneez/products/edit/${product.id}`);
+                              } else {
+                                toast({
+                                  title: 'Info',
+                                  description: 'Vendor products can only be edited by the vendor',
+                                  variant: 'default',
+                                });
+                              }
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteProduct(product)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -682,6 +744,23 @@ export function SuppliersTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteProduct} onOpenChange={() => setDeleteProduct(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteProduct?.part_name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProduct} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
