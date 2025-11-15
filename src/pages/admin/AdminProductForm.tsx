@@ -10,10 +10,27 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save, X } from 'lucide-react';
+import { ArrowLeft, Save, X, GripVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RoleGuard } from '@/components/RoleGuard';
 import { getSuppliesCategoryList } from '@/data/mockCategories';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface ProductForm {
   part_name: string;
@@ -29,10 +46,66 @@ interface ProductForm {
 }
 
 interface UploadedImage {
+  id: string;
   file: File;
   preview: string;
   uploaded?: boolean;
   url?: string;
+}
+
+// Sortable Image Component
+function SortableImageItem({ 
+  image, 
+  index, 
+  onRemove 
+}: { 
+  image: UploadedImage; 
+  index: number; 
+  onRemove: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: image.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      className="relative group"
+    >
+      <div className="absolute top-1 left-1 bg-background/80 rounded p-1 cursor-grab active:cursor-grabbing z-10" {...attributes} {...listeners}>
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <img
+        src={image.preview}
+        alt={`Product ${index + 1}`}
+        className="w-full h-32 object-cover rounded-lg border"
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <X className="h-3 w-3" />
+      </button>
+      {index === 0 && (
+        <Badge className="absolute bottom-1 left-1 text-xs">
+          Primary
+        </Badge>
+      )}
+    </div>
+  );
 }
 
 // Get only Supplies categories matching Pro Marketplace
@@ -58,6 +131,13 @@ export default function AdminProductForm() {
     condition: 'new',
     warranty_months: 12,
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     fetchPlatformSupplier();
@@ -159,6 +239,7 @@ export default function AdminProductForm() {
         // Load existing image if present
         if (data.image_url) {
           setImages([{
+            id: crypto.randomUUID(),
             file: new File([], 'existing'),
             preview: data.image_url,
             uploaded: true,
@@ -181,6 +262,7 @@ export default function AdminProductForm() {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const newImages = files.map(file => ({
+      id: crypto.randomUUID(),
       file,
       preview: URL.createObjectURL(file),
       uploaded: false,
@@ -195,6 +277,18 @@ export default function AdminProductForm() {
       updated.splice(index, 1);
       return updated;
     });
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setImages((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
   };
 
   const uploadImages = async (): Promise<string[]> => {
@@ -484,33 +578,31 @@ export default function AdminProductForm() {
                     className="cursor-pointer"
                   />
                   <p className="text-sm text-muted-foreground">
-                    Upload product images (JPG, PNG, WebP). First image will be the primary image.
+                    Upload product images (JPG, PNG, WebP). Drag to reorder - first image will be the primary image.
                   </p>
                   
                   {images.length > 0 && (
-                    <div className="grid grid-cols-4 gap-4 mt-4">
-                      {images.map((img, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={img.preview}
-                            alt={`Product ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-lg border"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                          {index === 0 && (
-                            <Badge className="absolute bottom-1 left-1 text-xs">
-                              Primary
-                            </Badge>
-                          )}
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext
+                        items={images.map(img => img.id)}
+                        strategy={rectSortingStrategy}
+                      >
+                        <div className="grid grid-cols-4 gap-4 mt-4">
+                          {images.map((img, index) => (
+                            <SortableImageItem
+                              key={img.id}
+                              image={img}
+                              index={index}
+                              onRemove={() => removeImage(index)}
+                            />
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </SortableContext>
+                    </DndContext>
                   )}
                 </div>
 
