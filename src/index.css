@@ -44,23 +44,31 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
-    /* Modern green gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 69% 58%));
-    --gradient-hero: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(142 69% 58%) 50%, hsl(164 76% 46%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(142 76% 98%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(142 76% 98%) 0%, hsl(0 0% 100%) 100%);
+    /* Premium minimal gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 42%));
+    --gradient-hero: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(142 69% 48%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(0 0% 99%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 99%) 0%, hsl(0 0% 100%) 100%);
     
-    /* Modern shadows with green tint */
-    --shadow-sm: 0 2px 4px hsl(142 76% 36% / 0.08);
-    --shadow-md: 0 4px 12px hsl(142 76% 36% / 0.12);
-    --shadow-lg: 0 8px 25px hsl(142 76% 36% / 0.15);
-    --shadow-xl: 0 20px 40px hsl(142 76% 36% / 0.2);
-    --shadow-glow: 0 0 30px hsl(142 69% 58% / 0.3);
-    --shadow-elegant: 0 10px 30px -10px hsl(142 76% 36% / 0.3);
+    /* Refined shadows - subtle and elegant */
+    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.04);
+    --shadow-md: 0 2px 8px hsl(0 0% 0% / 0.06);
+    --shadow-lg: 0 4px 16px hsl(0 0% 0% / 0.08);
+    --shadow-xl: 0 8px 32px hsl(0 0% 0% / 0.1);
+    --shadow-glow: 0 0 24px hsl(142 69% 58% / 0.15);
+    --shadow-elegant: 0 4px 20px -4px hsl(0 0% 0% / 0.08);
     
-    /* Animation variables */
-    --animate-duration: 0.3s;
+    /* Animation variables - smooth and subtle */
+    --animate-duration: 0.2s;
     --animate-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Spacing system */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+    --spacing-2xl: 4rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -146,6 +154,22 @@ All colors MUST be HSL.
 
 .shadow-glow {
   box-shadow: var(--shadow-glow);
+}
+
+/* Premium typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+p {
+  line-height: 1.6;
+}
+
+/* Smooth transitions */
+* {
+  transition-timing-function: var(--animate-ease);
 }
 @keyframes fade-in {
   from {
