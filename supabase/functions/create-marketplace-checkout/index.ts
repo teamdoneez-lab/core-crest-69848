@@ -173,8 +173,8 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email!,
       line_items: lineItems,
       mode: "payment",
-      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/checkout/cancel`,
+      success_url: `${origin}/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/pro-marketplace`,
       metadata: {
         order_id: order.id,
         user_id: user.id,
@@ -184,14 +184,14 @@ serve(async (req) => {
 
     // Add payment routing for vendor items
     if (stripeConnectAccountId) {
-      const platformFeeAmount = Math.round(totalAmount * platformFeePercent * 100); // Convert to cents
+      const platformFeeAmount = Math.round(totalAmount * 0.10 * 100); // 10% commission in cents
       sessionConfig.payment_intent_data = {
-        application_fee_amount: platformFeeAmount,
+        application_fee_amount: platformFeeAmount, // Platform keeps 10%
         transfer_data: {
-          destination: stripeConnectAccountId,
+          destination: stripeConnectAccountId, // Vendor receives 90%
         },
       };
-      console.log("Platform fee:", platformFeeAmount, "cents");
+      console.log("Platform fee (10%):", platformFeeAmount, "cents");
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
