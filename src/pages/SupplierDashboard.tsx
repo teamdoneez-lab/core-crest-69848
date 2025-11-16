@@ -144,16 +144,29 @@ export default function SupplierDashboard() {
     try {
       const { data, error } = await supabase.functions.invoke('create-supplier-connect-account');
       
-      if (error) throw error;
-      if (!data?.url) throw new Error('No redirect URL received');
+      if (error) {
+        console.error('Stripe setup error:', error);
+        toast({
+          title: "Setup Failed",
+          description: error.message || "Failed to initiate Stripe setup. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      // Redirect to Stripe onboarding
-      window.open(data.url, '_blank');
+      if (data?.url) {
+        // Handle iframe redirect for Lovable preview
+        if (window.top !== window.self) {
+          window.top.location.href = data.url;
+        } else {
+          window.location.href = data.url;
+        }
+      }
     } catch (error) {
       console.error('Error setting up Stripe:', error);
       toast({
-        title: "Stripe Setup Failed",
-        description: "Please try again or contact support if the issue persists.",
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -37,6 +37,8 @@ import SupplierDashboard from "./pages/SupplierDashboard";
 import SupplierProductUpload from "./pages/SupplierProductUpload";
 import SupplierSignup from "./pages/SupplierSignup";
 import SupplierLogin from "./pages/SupplierLogin";
+import SupplierStripeRefresh from "./pages/SupplierStripeRefresh";
+import SupplierStripeComplete from "./pages/SupplierStripeComplete";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
 import NotFound from "./pages/NotFound";
@@ -92,6 +94,9 @@ const App = () => (
             <Route path="/supplier-onboarding" element={<SupplierOnboarding />} />
             <Route path="/supplier-dashboard" element={<SupplierDashboard />} />
             <Route path="/supplier/upload-products" element={<SupplierProductUpload />} />
+            <Route path="/supplier/stripe/refresh" element={<SupplierStripeRefresh />} />
+            <Route path="/supplier/stripe/complete" element={<SupplierStripeComplete />} />
+            <Route path="/checkout-success" element={<CheckoutSuccess />} />
             <Route path="/success" element={<CheckoutSuccess />} />
             <Route path="/cancel" element={<CheckoutCancel />} />
             <Route path="/checkout/success" element={<CheckoutSuccess />} />

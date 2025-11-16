@@ -68,20 +68,10 @@ export function CartPanel() {
 
       console.log("Valid Stripe checkout URL confirmed:", data.url);
       
-      // Always open in new tab when in iframe to avoid security restrictions
-      const isInIframe = window.top !== window.self;
-      console.log("Running in iframe:", isInIframe);
-      
-      if (isInIframe) {
-        console.log("Opening checkout in new tab (iframe detected)...");
-        const newWindow = window.open(data.url, '_blank');
-        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-          // Popup was blocked
-          toast.error("Popup blocked. Please allow popups and try again.");
-        } else {
-          toast.success("Opening Stripe checkout in new tab...");
-        }
-        setIsProcessing(false);
+      // Handle iframe redirect for Lovable preview
+      if (window.top !== window.self) {
+        console.log("Redirecting parent window to Stripe checkout (iframe detected)...");
+        window.top.location.href = data.url;
       } else {
         console.log("Redirecting to Stripe checkout...");
         window.location.href = data.url;

@@ -98,8 +98,8 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "http://localhost:5173";
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${origin}/supplier-dashboard?stripe_refresh=true`,
-      return_url: `${origin}/supplier-dashboard?stripe_success=true`,
+      refresh_url: `${origin}/supplier/stripe/refresh`,
+      return_url: `${origin}/supplier/stripe/complete`,
       type: 'account_onboarding',
     });
 
