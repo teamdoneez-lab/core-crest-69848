@@ -42,33 +42,44 @@ All colors MUST be HSL.
     --outline-hover-bg: 142 76% 96%;
     --outline-hover-text: 142 76% 30%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Premium minimal gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 42%));
-    --gradient-hero: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(142 69% 48%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(0 0% 99%) 100%);
+    /* Ultra-premium gradients - Apple-inspired */
+    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 40%));
+    --gradient-hero: linear-gradient(180deg, hsl(142 76% 36%) 0%, hsl(142 69% 44%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(0 0% 99.5%) 100%);
     --gradient-subtle: linear-gradient(180deg, hsl(0 0% 99%) 0%, hsl(0 0% 100%) 100%);
+    --gradient-premium: linear-gradient(135deg, hsl(0 0% 99%) 0%, hsl(0 0% 100%) 50%, hsl(0 0% 99%) 100%);
     
-    /* Refined shadows - subtle and elegant */
-    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.04);
-    --shadow-md: 0 2px 8px hsl(0 0% 0% / 0.06);
-    --shadow-lg: 0 4px 16px hsl(0 0% 0% / 0.08);
-    --shadow-xl: 0 8px 32px hsl(0 0% 0% / 0.1);
-    --shadow-glow: 0 0 24px hsl(142 69% 58% / 0.15);
-    --shadow-elegant: 0 4px 20px -4px hsl(0 0% 0% / 0.08);
+    /* Ultra-refined shadows - soft and diffused */
+    --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.02);
+    --shadow-sm: 0 2px 4px hsl(0 0% 0% / 0.03), 0 1px 2px hsl(0 0% 0% / 0.02);
+    --shadow-md: 0 4px 8px hsl(0 0% 0% / 0.04), 0 2px 4px hsl(0 0% 0% / 0.02);
+    --shadow-lg: 0 8px 16px hsl(0 0% 0% / 0.06), 0 4px 8px hsl(0 0% 0% / 0.03);
+    --shadow-xl: 0 16px 32px hsl(0 0% 0% / 0.08), 0 8px 16px hsl(0 0% 0% / 0.04);
+    --shadow-2xl: 0 24px 48px hsl(0 0% 0% / 0.1), 0 12px 24px hsl(0 0% 0% / 0.05);
+    --shadow-glow: 0 0 32px hsl(142 69% 58% / 0.12);
+    --shadow-elegant: 0 8px 24px -6px hsl(0 0% 0% / 0.06);
     
-    /* Animation variables - smooth and subtle */
-    --animate-duration: 0.2s;
+    /* Glassmorphism effects */
+    --glass-bg: hsl(0 0% 100% / 0.7);
+    --glass-border: hsl(0 0% 100% / 0.3);
+    --glass-shadow: 0 8px 32px hsl(0 0% 0% / 0.08);
+    
+    /* Animation variables - Apple-smooth */
+    --animate-duration: 0.18s;
     --animate-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --animate-ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --animate-ease-in-out: cubic-bezier(0.4, 0, 0.6, 1);
     
-    /* Spacing system */
+    /* Premium spacing system */
     --spacing-xs: 0.5rem;
     --spacing-sm: 1rem;
     --spacing-md: 1.5rem;
-    --spacing-lg: 2rem;
-    --spacing-xl: 3rem;
-    --spacing-2xl: 4rem;
+    --spacing-lg: 2.5rem;
+    --spacing-xl: 4rem;
+    --spacing-2xl: 6rem;
+    --spacing-3xl: 8rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -156,20 +167,49 @@ All colors MUST be HSL.
   box-shadow: var(--shadow-glow);
 }
 
-/* Premium typography */
-h1, h2, h3, h4, h5, h6 {
+/* Ultra-premium typography - Apple-inspired */
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+}
+
+h2 {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+h3 {
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.2;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
 }
 
 p {
-  line-height: 1.6;
+  line-height: 1.7;
+  letter-spacing: -0.01em;
 }
 
-/* Smooth transitions */
+/* Smooth, Apple-like transitions */
 * {
   transition-timing-function: var(--animate-ease);
+}
+
+/* Premium text rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 @keyframes fade-in {
   from {
