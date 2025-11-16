@@ -68,40 +68,45 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    let accountId = supplier.stripe_connect_account_id;
-
-    // Create Stripe Connect account if it doesn't exist
-    if (!accountId) {
-      const account = await stripe.accounts.create({
-        type: 'express',
-        country: 'US',
-        email: supplier.email,
-        capabilities: {
-          transfers: { requested: true },
-        },
-        business_type: 'company',
-        company: {
-          name: supplier.business_name,
-        },
-      });
-
-      accountId = account.id;
-
-      // Update supplier with Stripe account ID
+    // FORCE FRESH EXPRESS ACCOUNT CREATION
+    // Delete any existing stripe_account_id to ensure we create a new Express account
+    if (supplier.stripe_connect_account_id) {
+      console.log("Removing old Stripe account ID:", supplier.stripe_connect_account_id);
       await supabaseClient
         .from('suppliers')
-        .update({ stripe_connect_account_id: accountId })
+        .update({ stripe_connect_account_id: null, stripe_onboarding_complete: false })
         .eq('id', supplier.id);
     }
 
-    // Create account link for onboarding
+    // Create NEW Stripe Express account (minimal required fields only)
+    console.log("Creating NEW Express account for supplier:", supplier.email);
+    const account = await stripe.accounts.create({
+      type: "express",
+      country: "US",
+      email: supplier.email,
+      capabilities: {
+        transfers: { requested: true },
+      },
+    });
+
+    console.log("✅ STRIPE ACCOUNT CREATED - TYPE:", account.type, "ID:", account.id);
+
+    // Save the new Express account ID
+    await supabaseClient
+      .from('suppliers')
+      .update({ stripe_connect_account_id: account.id })
+      .eq('id', supplier.id);
+
+    // Create Express account onboarding link
     const origin = req.headers.get("origin") || "http://localhost:5173";
     const accountLink = await stripe.accountLinks.create({
-      account: accountId,
+      account: account.id,
       refresh_url: `${origin}/supplier/stripe/refresh`,
       return_url: `${origin}/supplier/stripe/complete`,
-      type: 'account_onboarding',
+      type: "account_onboarding",
     });
+
+    console.log("✅ EXPRESS ONBOARDING LINK CREATED:", accountLink.url);
 
     return new Response(JSON.stringify({ url: accountLink.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
