@@ -74,6 +74,11 @@ serve(async (req) => {
     // Check Stripe account status
     const account = await stripe.accounts.retrieve(supplier.stripe_connect_account_id);
     
+    console.log("✅ RETRIEVED STRIPE ACCOUNT - TYPE:", account.type, "ID:", account.id);
+    console.log("Details submitted:", account.details_submitted);
+    console.log("Charges enabled:", account.charges_enabled);
+    console.log("Payouts enabled:", account.payouts_enabled);
+    
     const isComplete = account.details_submitted === true;
 
     // Update supplier record if onboarding is complete
