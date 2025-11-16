@@ -151,15 +151,25 @@ export default function SupplierDashboard() {
           description: error.message || "Failed to initiate Stripe setup. Please try again.",
           variant: "destructive",
         });
+        setStripeLoading(false);
         return;
       }
 
       if (data?.url) {
-        // Handle iframe redirect for Lovable preview
-        if (window.top !== window.self) {
-          window.top.location.href = data.url;
+        // Open Stripe onboarding in a new tab (works in iframe and standalone)
+        const newWindow = window.open(data.url, '_blank');
+        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+          // Popup was blocked
+          toast({
+            title: "Popup Blocked",
+            description: "Please allow popups for this site and try again.",
+            variant: "destructive",
+          });
         } else {
-          window.location.href = data.url;
+          toast({
+            title: "Opening Stripe Setup",
+            description: "Complete the setup in the new tab and return here when done.",
+          });
         }
       }
     } catch (error) {
