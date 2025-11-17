@@ -319,43 +319,33 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section 
-        className="hero-section relative overflow-hidden min-h-[620px] lg:min-h-[780px] h-[620px] lg:h-[780px]"
-      >
-        {/* Hero Image */}
-        <img 
-          src={heroImage} 
-          alt="DoneEZ Mechanic" 
-          className="absolute inset-0 w-full h-full object-cover object-[center_top] lg:object-[right_top]"
-        />
-        
-        {/* Gradient overlay - left side only for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-transparent to-transparent"></div>
-        
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 h-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
-            {/* Left side: Text block */}
-            <div className="text-left space-y-6 animate-fade-in absolute top-[60%] lg:top-[52%] -translate-y-1/2 left-0 px-4 sm:px-6 lg:px-8 max-w-7xl">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight font-playfair leading-tight text-white drop-shadow-2xl">
+      <section className="hero-section w-full bg-background">
+        <div className="max-w-[1200px] mx-auto px-[5%] py-20 lg:py-24">
+          {/* Two-column flex row */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10 lg:gap-10">
+            
+            {/* Left Column: Text + CTAs */}
+            <div className="flex flex-col items-start gap-6 w-full lg:w-[48%]">
+              <h1 className="text-[3.2rem] leading-[1.1] font-bold tracking-tight font-playfair text-foreground">
                 Auto Service, The Easy Way
               </h1>
-              <p className="text-xl sm:text-2xl md:text-3xl text-white/95 font-medium leading-relaxed drop-shadow-lg">
+              <p className="text-xl text-muted-foreground font-medium mt-2">
                 Compare, Book & Done.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Link to="/auth" className="w-full sm:w-auto">
+              <div className="flex flex-wrap gap-4 mt-2">
+                <Link to="/auth">
                   <Button 
                     size="lg" 
-                    className="w-full text-base sm:text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-white shadow-elegant hover:shadow-glow transition-all duration-300"
+                    className="text-base sm:text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-elegant hover:shadow-glow transition-all duration-300"
                   >
                     Get Started
                   </Button>
                 </Link>
-                <Link to="/auth" className="w-full sm:w-auto">
+                <Link to="/auth">
                   <Button 
                     size="lg" 
                     variant="outline" 
-                    className="w-full text-base sm:text-lg px-8 py-6 border-2 border-white text-white hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
+                    className="text-base sm:text-lg px-8 py-6 border-2 transition-all duration-300"
                   >
                     Join as a Professional
                   </Button>
@@ -363,8 +353,15 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Right side: Image space (mechanic visible in background) */}
-            <div className="hidden lg:block"></div>
+            {/* Right Column: Mechanic Image */}
+            <div className="w-full lg:w-[52%]">
+              <img 
+                src={heroImage} 
+                alt="DoneEZ Mechanic" 
+                className="w-full h-auto block object-cover object-[center_right]"
+              />
+            </div>
+            
           </div>
         </div>
       </section>
