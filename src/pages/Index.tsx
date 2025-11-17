@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import logo from '@/assets/logo-new.png';
 import mechanicWorking from '@/assets/mechanic-working.jpg';
-import heroDaytime from '@/assets/hero-daytime-new.jpg';
+import heroDaytime from '@/assets/hero-clean.jpg';
 import heroNighttime from '@/assets/hero-nighttime.jpg';
 import { Footer } from '@/components/Footer';
 
@@ -320,11 +320,16 @@ const Index = () => {
 
       {/* Hero Section */}
       <section 
-        className="hero-section relative overflow-hidden h-[600px] md:h-[700px] lg:h-[750px] bg-cover bg-center"
-        style={{ backgroundImage: `url(${heroImage})` }}
+        className="hero-section relative overflow-hidden h-[600px] md:h-[700px] lg:h-[750px]"
+        style={{ 
+          backgroundImage: `url(${heroImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          backgroundRepeat: 'no-repeat'
+        }}
       >
         {/* Gradient overlay - left side only for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-transparent to-transparent"></div>
         
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center w-full">
