@@ -215,7 +215,7 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Insert quote directly
+      // NEW: Submit quote without payment (status: 'submitted')
       const { data: newQuote, error: quoteError } = await supabase
         .from("quotes")
         .insert({
@@ -224,13 +224,18 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
           estimated_price: validation.data.estimated_price,
           description: validation.data.description,
           notes: validation.data.notes,
-          status: "pending",
-          payment_status: "pending",
+          status: "submitted"
         })
         .select()
         .single();
 
       if (quoteError) throw quoteError;
+
+      // Update service request status to quotes_pending
+      await supabase
+        .from("service_requests")
+        .update({ status: 'quotes_pending' })
+        .eq('id', requestId);
 
       // Send email notification to customer
       try {
@@ -247,8 +252,8 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
       }
 
       toast({
-        title: "Success",
-        description: "Quote submitted successfully!",
+        title: "Quote Submitted Successfully",
+        description: "The customer will review your quote. You'll be notified if they select you.",
       });
       
       onSuccess();

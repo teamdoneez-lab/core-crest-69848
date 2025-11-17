@@ -26,6 +26,7 @@ import {
 import { format } from 'date-fns';
 import { EarningsTab } from '@/components/pro/EarningsTab';
 import { QuoteConfirmation } from '@/components/pro/QuoteConfirmation';
+import { ProSelectedPayment } from '@/components/pro/ProSelectedPayment';
 
 interface ServiceRequest {
   id: string;
@@ -409,21 +410,8 @@ export default function ProDashboard() {
 
           {/* New Requests Tab */}
           <TabsContent value="new-requests" className="mt-6">
-            {/* Pending Quote Confirmations */}
-            {pendingQuotes.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">🎉 Quotes Selected by Customers</h2>
-                <div className="space-y-4">
-                  {pendingQuotes.map((quote) => (
-                    <QuoteConfirmation 
-                      key={quote.id} 
-                      quote={quote} 
-                      onConfirmed={fetchDashboardData}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Pro Selected - Payment Required */}
+            <ProSelectedPayment />
 
             <div className="mb-6">
               <h2 className="text-xl font-semibold mb-2">Job Requests</h2>
