@@ -319,49 +319,45 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="hero-section w-full bg-background">
-        <div className="max-w-[1200px] mx-auto px-[5%] py-20 lg:py-24">
-          {/* Two-column flex row */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10 lg:gap-10">
-            
-            {/* Left Column: Text + CTAs */}
-            <div className="flex flex-col items-start gap-6 w-full lg:w-[48%]">
-              <h1 className="text-[3.2rem] leading-[1.1] font-bold tracking-tight font-playfair text-foreground">
-                Auto Service, The Easy Way
-              </h1>
-              <p className="text-xl text-muted-foreground font-medium mt-2">
-                Compare, Book & Done.
-              </p>
-              <div className="flex flex-wrap gap-4 mt-2">
-                <Link to="/auth">
-                  <Button 
-                    size="lg" 
-                    className="text-base sm:text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-elegant hover:shadow-glow transition-all duration-300"
-                  >
-                    Get Started
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="text-base sm:text-lg px-8 py-6 border-2 transition-all duration-300"
-                  >
-                    Join as a Professional
-                  </Button>
-                </Link>
-              </div>
+      <section className="hero-section relative w-full h-[600px] md:h-[650px] lg:h-[700px] overflow-hidden">
+        {/* Background Image */}
+        <img 
+          src={heroImage} 
+          alt="DoneEZ Mechanic" 
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        
+        {/* Gradient Overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent"></div>
+        
+        {/* Content Container */}
+        <div className="relative z-10 h-full max-w-7xl mx-auto px-6 lg:px-8 flex items-center">
+          <div className="max-w-2xl">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight font-playfair text-white leading-tight mb-6">
+              Auto Service, The Easy Way
+            </h1>
+            <p className="text-xl sm:text-2xl text-white/95 font-medium mb-8">
+              Compare, Book & Done.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link to="/auth">
+                <Button 
+                  size="lg" 
+                  className="w-full sm:w-auto text-base sm:text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-elegant hover:shadow-glow transition-all duration-300"
+                >
+                  Get Started
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="w-full sm:w-auto text-base sm:text-lg px-8 py-6 border-2 border-white text-white hover:bg-white/20 backdrop-blur-sm transition-all duration-300"
+                >
+                  Join as a Professional
+                </Button>
+              </Link>
             </div>
-            
-            {/* Right Column: Mechanic Image */}
-            <div className="w-full lg:w-[52%]">
-              <img 
-                src={heroImage} 
-                alt="DoneEZ Mechanic" 
-                className="w-full h-auto block object-cover object-[center_right]"
-              />
-            </div>
-            
           </div>
         </div>
       </section>
