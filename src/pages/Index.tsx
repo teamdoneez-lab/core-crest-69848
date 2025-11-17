@@ -332,10 +332,10 @@ const Index = () => {
         {/* Gradient overlay - left side only for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-transparent to-transparent"></div>
         
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center w-full">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-start justify-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start w-full">
             {/* Left side: Text block */}
-            <div className="text-left space-y-6 animate-fade-in flex flex-col justify-center" style={{ transform: 'translateY(20px)' }}>
+            <div className="text-left space-y-6 animate-fade-in relative top-[35%] lg:top-[25%]">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight font-playfair leading-tight text-white drop-shadow-2xl">
                 Auto Service, The Easy Way
               </h1>
