@@ -319,12 +319,12 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="hero-section relative w-full h-[600px] md:h-[650px] lg:h-[700px] overflow-hidden">
+      <section className="hero-section relative w-full h-[650px] md:h-[700px] lg:h-[750px] overflow-hidden">
         {/* Background Image */}
         <img 
           src={heroImage} 
           alt="DoneEZ Mechanic" 
-          className="absolute inset-0 w-full h-full object-cover object-[center_30%]"
+          className="absolute inset-0 w-full h-full object-cover object-[center_40%]"
         />
         
         {/* Gradient Overlay for text readability */}
