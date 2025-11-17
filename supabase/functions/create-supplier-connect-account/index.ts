@@ -91,6 +91,34 @@ serve(async (req) => {
 
     console.log("✅ STRIPE ACCOUNT CREATED - TYPE:", account.type, "ID:", account.id);
 
+    // Check account status immediately after creation
+    const accountStatus = await stripe.accounts.retrieve(account.id);
+    console.log("Account status:", accountStatus.requirements?.disabled_reason, "Charges enabled:", accountStatus.charges_enabled);
+
+    // Check if account is rejected or restricted
+    if (accountStatus.requirements?.disabled_reason) {
+      const reason = accountStatus.requirements.disabled_reason;
+      console.error("❌ STRIPE ACCOUNT REJECTED/RESTRICTED:", reason);
+      
+      // Clean up the rejected account from our database
+      await supabaseClient
+        .from('suppliers')
+        .update({ stripe_connect_account_id: null, stripe_onboarding_complete: false })
+        .eq('id', supplier.id);
+      
+      // Provide user-friendly error messages
+      let userMessage = "Your Stripe account setup was unsuccessful. ";
+      if (reason === 'rejected.fraud' || reason === 'rejected.terms_of_service' || reason === 'rejected.other') {
+        userMessage += "Stripe has rejected this account. This may be due to previous violations or fraud detection. Please contact Stripe support or try with a different email address.";
+      } else if (reason.includes('listed')) {
+        userMessage += "Your business type or location may not be supported. Please contact support for assistance.";
+      } else {
+        userMessage += `Reason: ${reason}. Please contact support for assistance.`;
+      }
+      
+      throw new Error(userMessage);
+    }
+
     // Save the new Express account ID
     await supabaseClient
       .from('suppliers')
@@ -99,19 +127,31 @@ serve(async (req) => {
 
     // Create Express account onboarding link
     const origin = req.headers.get("origin") || "http://localhost:5173";
-    const accountLink = await stripe.accountLinks.create({
-      account: account.id,
-      refresh_url: `${origin}/supplier/stripe/refresh`,
-      return_url: `${origin}/supplier/stripe/complete`,
-      type: "account_onboarding",
-    });
+    
+    try {
+      const accountLink = await stripe.accountLinks.create({
+        account: account.id,
+        refresh_url: `${origin}/supplier/stripe/refresh`,
+        return_url: `${origin}/supplier/stripe/complete`,
+        type: "account_onboarding",
+      });
 
-    console.log("✅ EXPRESS ONBOARDING LINK CREATED:", accountLink.url);
+      console.log("✅ EXPRESS ONBOARDING LINK CREATED:", accountLink.url);
+      
+      return new Response(JSON.stringify({ url: accountLink.url }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    } catch (linkError: any) {
+      console.error("❌ ERROR CREATING ACCOUNT LINK:", linkError.message);
+      
+      // If account link creation fails, provide specific guidance
+      if (linkError.message.includes('rejected')) {
+        throw new Error("Your Stripe account has been rejected. Please check your Stripe dashboard or contact Stripe support. You may need to use a different email address.");
+      }
+      throw linkError;
+    }
 
-    return new Response(JSON.stringify({ url: accountLink.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
   } catch (error) {
     console.error("Error creating Stripe Connect account:", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to create Stripe Connect account";
