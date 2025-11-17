@@ -16,7 +16,6 @@ const VerifyReferralPaymentSchema = z.object({
 });
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -42,200 +41,109 @@ serve(async (req) => {
     }
 
     const { session_id, request_id } = validation.data;
+    console.log("[VERIFY-PAYMENT] Verifying session:", session_id, "for request:", request_id);
 
-    console.log("[VERIFY-PAYMENT] Verifying session:", session_id);
-
-    // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Retrieve the session
     const session = await stripe.checkout.sessions.retrieve(session_id);
     
-    if (session.payment_status === 'paid') {
-        console.log("[VERIFY-PAYMENT] Payment confirmed, starting updates");
-
-        // Update service request and appointment statuses
-        await supabaseClient
-          .from('service_requests')
-          .update({ status: 'confirmed' })
-          .eq('id', request_id);
-
-        await supabaseClient
-          .from('appointments')
-          .update({ status: 'confirmed' })
-          .eq('request_id', request_id);
-
-        await supabaseClient
-          .from('quotes')
-          .update({ status: 'confirmed' })
-          .eq('id', quote_id);
-
-        console.log("[VERIFY-PAYMENT] All statuses updated successfully");
-
-        // Send notification to customer
-        try {
-          await supabaseClient.functions.invoke('send-customer-appointment-confirmed', {
-            body: { request_id }
-          });
-          console.log("[VERIFY-PAYMENT] Customer notification sent");
-        } catch (emailError) {
-          console.error("[VERIFY-PAYMENT] Failed to send customer email:", emailError);
-          // Don't fail the payment verification if email fails
-        }
-        }
-
-        console.log("[VERIFY-PAYMENT] Step 2/5: Fee marked as paid");
-
-        // Step 3: Update quote status to confirmed
-        if (quote_id) {
-          const { error: quoteError } = await supabaseClient
-            .from('quotes')
-            .update({ status: 'confirmed' })
-            .eq('id', quote_id);
-
-          if (quoteError) {
-            console.error("[VERIFY-PAYMENT] CRITICAL: Failed to update quote", {
-              request_id,
-              quote_id,
-              session_id,
-              payment_intent,
-              pro_id,
-              error: quoteError
-            });
-            throw new Error(`Failed to update quote: ${quoteError.message}`);
-          }
-
-          console.log("[VERIFY-PAYMENT] Step 3/5: Quote confirmed");
-        }
-
-        // Step 3: Update quote status to confirmed
-        const { error: quoteError } = await supabaseClient
-          .from('quotes')
-          .update({ status: 'confirmed' })
-          .eq('id', quote_id);
-
-        if (quoteError) {
-          console.error("[VERIFY-PAYMENT] CRITICAL: Failed to update quote", {
-            request_id,
-            session_id,
-            payment_intent,
-            error: quoteError
-          });
-          throw new Error(`Failed to update quote: ${quoteError.message}`);
-        }
-
-        console.log("[VERIFY-PAYMENT] Step 3/5: Quote confirmed");
-
-        // Step 4: Update service request status to confirmed and set accepted_pro_id
-        const { error: requestError } = await supabaseClient
-          .from('service_requests')
-          .update({ 
-            status: 'confirmed',
-            accepted_pro_id: pro_id
-          })
-          .eq('id', request_id);
-
-        if (requestError) {
-          console.error("[VERIFY-PAYMENT] CRITICAL: Failed to update service request", {
-            request_id,
-            session_id,
-            payment_intent,
-            pro_id,
-            error: requestError
-          });
-          throw new Error(`Failed to update service request: ${requestError.message}`);
-        }
-
-        console.log("[VERIFY-PAYMENT] Step 4/5: Service request updated to confirmed");
-
-        // Step 5: Update or create appointment with confirmed status
-        const { error: appointmentError } = await supabaseClient
-          .from('appointments')
-          .upsert({ 
-            request_id,
-            pro_id,
-            starts_at: new Date().toISOString(),
-            status: 'confirmed'
-          }, {
-            onConflict: 'request_id'
-          });
-
-        if (appointmentError) {
-          console.error("[VERIFY-PAYMENT] CRITICAL: Failed to update appointment", {
-            request_id,
-            session_id,
-            payment_intent,
-            pro_id,
-            error: appointmentError
-          });
-          throw new Error(`Failed to update appointment: ${appointmentError.message}`);
-        }
-
-        console.log("[VERIFY-PAYMENT] Step 5/5: Appointment confirmed - TRANSACTION COMPLETE");
-
-        // Send notification to customer (TODO: implement email)
-        console.log("[VERIFY-PAYMENT] Customer notification should be sent for request:", request_id);
-
-        // All steps succeeded
-        return new Response(JSON.stringify({ 
-          success: true, 
-          paid: true,
-          appointment_confirmed: true
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        });
-
-        // All steps succeeded
-        return new Response(JSON.stringify({ 
-          success: true, 
-          paid: true,
-          appointment_confirmed: true
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        });
-
-      } catch (transactionError) {
-        // Transaction failed - log comprehensive error details
-        console.error("[VERIFY-PAYMENT] TRANSACTION FAILED - ATOMIC ROLLBACK REQUIRED", {
-          request_id,
-          session_id,
-          payment_intent: payment_intent || 'unknown',
-          timestamp: new Date().toISOString(),
-          error: transactionError instanceof Error ? transactionError.message : String(transactionError),
-          stack: transactionError instanceof Error ? transactionError.stack : undefined
-        });
-
-        // Return detailed error for frontend to handle
-        return new Response(JSON.stringify({ 
-          success: false,
-          paid: true,
-          appointment_confirmed: false,
-          error: "Payment received but appointment confirmation failed",
-          details: {
-            session_id,
-            request_id,
-            timestamp: new Date().toISOString()
-          }
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500,
-        });
-      }
+    if (session.payment_status !== 'paid') {
+      console.log("[VERIFY-PAYMENT] Payment not completed yet");
+      return new Response(JSON.stringify({ 
+        success: true, 
+        paid: false 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
 
-    return new Response(JSON.stringify({ 
+    console.log("[VERIFY-PAYMENT] Payment confirmed, updating database");
+
+    const quote_id = session.metadata?.quote_id;
+    const pro_id = session.metadata?.pro_id;
+
+    if (!quote_id || !pro_id) {
+      throw new Error("Missing quote_id or pro_id in session metadata");
+    }
+
+    // Update referral fee as paid
+    const { error: feeError } = await supabaseClient
+      .from('referral_fees')
+      .update({ 
+        payment_status: 'paid',
+        stripe_payment_intent_id: session.payment_intent as string
+      })
+      .eq('quote_id', quote_id);
+
+    if (feeError) {
+      console.error("[VERIFY-PAYMENT] Failed to update referral fee:", feeError);
+      throw new Error(`Failed to update referral fee: ${feeError.message}`);
+    }
+
+    console.log("[VERIFY-PAYMENT] Referral fee marked as paid");
+
+    // Update quote status to confirmed
+    const { error: quoteError } = await supabaseClient
+      .from('quotes')
+      .update({ status: 'confirmed' })
+      .eq('id', quote_id);
+
+    if (quoteError) {
+      console.error("[VERIFY-PAYMENT] Failed to update quote:", quoteError);
+      throw new Error(`Failed to update quote: ${quoteError.message}`);
+    }
+
+    console.log("[VERIFY-PAYMENT] Quote confirmed");
+
+    // Update service request status to confirmed
+    const { error: requestError } = await supabaseClient
+      .from('service_requests')
+      .update({ status: 'confirmed' })
+      .eq('id', request_id);
+
+    if (requestError) {
+      console.error("[VERIFY-PAYMENT] Failed to update service request:", requestError);
+      throw new Error(`Failed to update service request: ${requestError.message}`);
+    }
+
+    console.log("[VERIFY-PAYMENT] Service request confirmed");
+
+    // Update appointment status to confirmed
+    const { error: appointmentError } = await supabaseClient
+      .from('appointments')
+      .update({ status: 'confirmed' })
+      .eq('request_id', request_id);
+
+    if (appointmentError) {
+      console.error("[VERIFY-PAYMENT] Failed to update appointment:", appointmentError);
+      throw new Error(`Failed to update appointment: ${appointmentError.message}`);
+    }
+
+    console.log("[VERIFY-PAYMENT] Appointment confirmed");
+
+    // Send email notification to customer (non-blocking)
+    supabaseClient.functions.invoke('send-appointment-confirmed', {
+      body: { request_id, quote_id, pro_id }
+    }).then(() => {
+      console.log("[VERIFY-PAYMENT] Customer notification sent");
+    }).catch((emailError) => {
+      console.error("[VERIFY-PAYMENT] Failed to send customer email:", emailError);
+    });
+
+    return new Response(JSON.stringify({
       success: true, 
-      paid: false 
+      paid: true,
+      appointment_confirmed: true
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
+
   } catch (error) {
-    console.error("[VERIFY-PAYMENT] UNEXPECTED ERROR:", {
+    console.error("[VERIFY-PAYMENT] ERROR:", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
