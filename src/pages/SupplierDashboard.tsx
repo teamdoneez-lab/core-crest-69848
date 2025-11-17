@@ -146,10 +146,37 @@ export default function SupplierDashboard() {
       
       if (error) {
         console.error('Stripe setup error:', error);
+        
+        // Extract error message from the response
+        const errorMessage = error.message || error.context?.body?.error || "Failed to initiate Stripe setup. Please try again.";
+        
+        toast({
+          title: "Stripe Setup Failed",
+          description: errorMessage,
+          variant: "destructive",
+          duration: 10000, // Show longer for important account rejection messages
+        });
+        setStripeLoading(false);
+        return;
+      }
+
+      if (!data) {
         toast({
           title: "Setup Failed",
-          description: error.message || "Failed to initiate Stripe setup. Please try again.",
+          description: "No response from Stripe setup. Please try again.",
           variant: "destructive",
+        });
+        setStripeLoading(false);
+        return;
+      }
+
+      // Check if there's an error in the data
+      if (data.error) {
+        toast({
+          title: "Stripe Setup Failed",
+          description: data.error,
+          variant: "destructive",
+          duration: 10000,
         });
         setStripeLoading(false);
         return;
