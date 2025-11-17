@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import logo from '@/assets/logo-new.png';
 import mechanicWorking from '@/assets/mechanic-working.jpg';
-import heroDaytime from '@/assets/hero-daytime.jpg';
+import heroDaytime from '@/assets/hero-daytime-new.jpg';
 import heroNighttime from '@/assets/hero-nighttime.jpg';
 import { Footer } from '@/components/Footer';
 
