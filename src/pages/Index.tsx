@@ -320,12 +320,9 @@ const Index = () => {
 
       {/* Hero Section */}
       <section 
-        className="hero-section relative overflow-hidden h-[600px] md:h-[700px] lg:h-[750px]"
+        className="hero-section relative overflow-hidden min-h-[520px] md:min-h-[680px] h-auto bg-cover bg-no-repeat bg-[center_top] md:bg-[right_center]"
         style={{ 
-          backgroundImage: `url(${heroImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center right',
-          backgroundRepeat: 'no-repeat'
+          backgroundImage: `url(${heroImage})`
         }}
       >
         {/* Gradient overlay - left side only for text readability */}
