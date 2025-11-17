@@ -335,7 +335,7 @@ const Index = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-start justify-start">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start w-full">
             {/* Left side: Text block */}
-            <div className="text-left space-y-6 animate-fade-in relative top-[35%] lg:top-[25%]">
+            <div className="text-left space-y-6 animate-fade-in relative top-[28%] lg:top-[16%]">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight font-playfair leading-tight text-white drop-shadow-2xl">
                 Auto Service, The Easy Way
               </h1>
