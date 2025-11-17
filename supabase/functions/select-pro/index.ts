@@ -71,8 +71,8 @@ serve(async (req) => {
 
     console.log("[SELECT-PRO] Pro selected successfully:", data);
 
-    // TODO: Send notification to selected pro
-    // This could be done via email or push notification
+    // Send notification to selected pro (TODO: implement email)
+    console.log("[SELECT-PRO] Pro selected, notification should be sent to pro_id:", data.pro_id);
 
     return new Response(
       JSON.stringify({ 

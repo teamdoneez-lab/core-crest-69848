@@ -231,8 +231,8 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/pro-inbox?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/pro-inbox?payment=cancelled`,
+      success_url: `${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app') || 'https://doneez.com'}/payment-success?session_id={CHECKOUT_SESSION_ID}&request_id=${quote.request_id}`,
+      cancel_url: `${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app') || 'https://doneez.com'}/pro-dashboard`,
       metadata: {
         quote_id,
         referral_fee_id: referralFee.id,
