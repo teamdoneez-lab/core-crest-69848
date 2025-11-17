@@ -54,6 +54,9 @@ verify_jwt = true
 [functions.send-supplier-notification]
 verify_jwt = true
 
+[functions.select-pro]
+verify_jwt = true
+
 [functions.send-appointment-status-email]
 verify_jwt = true
 

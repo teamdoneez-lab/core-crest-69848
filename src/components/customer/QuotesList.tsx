@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProDetailWithReviewsModal } from '@/components/customer/ProDetailWithReviewsModal';
+import { SelectProButton } from '@/components/customer/SelectProButton';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, CheckCircle, XCircle, User } from "lucide-react";
+import { DollarSign, CheckCircle, XCircle, User, Clock, Award } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -259,17 +260,17 @@ export function QuotesList({ requestId }: QuotesListProps) {
   };
 
   const getStatusBadge = (status: string, isRevised: boolean = false) => {
-    if (status === 'pending') {
+    if (status === 'submitted') {
       return (
         <Badge variant="secondary">
           {isRevised ? "Revised Quote Available" : "Available to Select"}
         </Badge>
       );
     }
-    if (status === 'pending_confirmation') {
+    if (status === 'selected') {
       return (
         <Badge className="bg-orange-100 text-orange-800">
-          ⏳ Awaiting Pro Confirmation
+          ⏳ Awaiting Pro Payment
         </Badge>
       );
     }
@@ -277,6 +278,13 @@ export function QuotesList({ requestId }: QuotesListProps) {
       return (
         <Badge className="bg-green-100 text-green-800">
           ✓ Confirmed - Job Secured
+        </Badge>
+      );
+    }
+    if (status === 'not_selected') {
+      return (
+        <Badge variant="outline" className="text-gray-500">
+          Not Selected
         </Badge>
       );
     }
@@ -330,9 +338,10 @@ export function QuotesList({ requestId }: QuotesListProps) {
   }
 
   const getCompactStatusBadge = (status: string) => {
-    if (status === 'pending') return <Badge variant="secondary" className="text-xs">✓ Available</Badge>;
-    if (status === 'pending_confirmation') return <Badge className="bg-orange-100 text-orange-800 text-xs">⏳ Pending</Badge>;
+    if (status === 'submitted') return <Badge variant="secondary" className="text-xs">✓ Available</Badge>;
+    if (status === 'selected') return <Badge className="bg-orange-100 text-orange-800 text-xs">⏳ Awaiting Payment</Badge>;
     if (status === 'confirmed') return <Badge className="bg-green-100 text-green-800 text-xs">✓ Confirmed</Badge>;
+    if (status === 'not_selected') return <Badge variant="outline" className="text-gray-500 text-xs">Not Selected</Badge>;
     if (status === 'declined') return <Badge variant="outline" className="text-gray-500 text-xs">✗ Declined</Badge>;
     if (status === 'expired') return <Badge variant="outline" className="text-red-500 text-xs">⏰ Expired</Badge>;
     return <Badge variant="outline" className="text-xs">{status}</Badge>;
@@ -385,11 +394,10 @@ export function QuotesList({ requestId }: QuotesListProps) {
               </div>
 
               {/* Status Messages */}
-              {quote.status === "pending_confirmation" && quote.confirmation_timer_expires_at && 
-                getTimeRemaining(quote.confirmation_timer_expires_at) !== "Expired" && (
+              {quote.status === "selected" && (
                 <div className="text-xs p-2 bg-orange-50 border border-orange-200 rounded">
                   <span className="text-orange-700 font-semibold">
-                    ⏱ {getTimeRemaining(quote.confirmation_timer_expires_at)}
+                    Waiting for pro to confirm payment
                   </span>
                 </div>
               )}
@@ -415,41 +423,25 @@ export function QuotesList({ requestId }: QuotesListProps) {
               View Profile
             </Button>
             
-            {quote.status === "pending" && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button size="sm" className="w-full">
-                    <CheckCircle className="mr-1 h-3 w-3" />
-                    Book Now
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Select this quote?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      The professional will be notified to confirm your appointment. They must confirm within the time limit based on your service urgency.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleAcceptQuote(quote.id)}>
-                      Select
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+            {quote.status === "submitted" && (
+              <SelectProButton 
+                quoteId={quote.id}
+                requestId={requestId}
+                proName={quote.pro_profiles?.business_name || "Unknown Professional"}
+                amount={quote.estimated_price}
+                onSuccess={fetchQuotes}
+              />
             )}
 
-            {quote.status === "pending_confirmation" && 
-              getTimeRemaining(quote.confirmation_timer_expires_at) !== "Expired" && (
+            {quote.status === "selected" && (
               <Button 
-                variant="destructive" 
                 size="sm" 
-                className="w-full"
-                onClick={() => handleCancelQuote(quote.id)}
+                className="w-full" 
+                variant="outline"
+                disabled
               >
-                <XCircle className="mr-1 h-3 w-3" />
-                Cancel
+                <Clock className="mr-1 h-3 w-3" />
+                Awaiting Pro Confirmation
               </Button>
             )}
           </CardFooter>
