@@ -320,11 +320,15 @@ const Index = () => {
 
       {/* Hero Section */}
       <section 
-        className="hero-section relative overflow-hidden min-h-[520px] md:min-h-[680px] h-auto bg-cover bg-no-repeat bg-[center_top] md:bg-[right_center]"
-        style={{ 
-          backgroundImage: `url(${heroImage})`
-        }}
+        className="hero-section relative overflow-hidden min-h-[600px] lg:min-h-[760px] h-auto"
       >
+        {/* Hero Image */}
+        <img 
+          src={heroImage} 
+          alt="DoneEZ Mechanic" 
+          className="absolute inset-0 w-full h-full object-cover object-[center_top] lg:object-[right_top]"
+        />
+        
         {/* Gradient overlay - left side only for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-transparent to-transparent"></div>
         
