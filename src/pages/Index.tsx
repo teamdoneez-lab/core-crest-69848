@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import logo from '@/assets/logo-new.png';
 import mechanicWorking from '@/assets/mechanic-working.jpg';
+import heroDaytime from '@/assets/hero-daytime.jpg';
+import heroNighttime from '@/assets/hero-nighttime.jpg';
 import { Footer } from '@/components/Footer';
 
 interface ServiceCategory {
@@ -40,9 +42,23 @@ const Index = () => {
   const { user, loading } = useAuth();
   const { profile, isCustomer, isPro, isAdmin } = useRole();
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [heroImage, setHeroImage] = useState(heroDaytime);
 
   useEffect(() => {
     fetchServiceCategories();
+    
+    // Time-based hero image swapping
+    const updateHeroImage = () => {
+      const hour = new Date().getHours();
+      const isNight = hour >= 19 || hour < 7;
+      setHeroImage(isNight ? heroNighttime : heroDaytime);
+    };
+    
+    updateHeroImage();
+    // Update every minute to catch time changes
+    const interval = setInterval(updateHeroImage, 60000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const fetchServiceCategories = async () => {
@@ -303,51 +319,46 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-24 bg-gradient-to-br from-primary/3 via-background to-accent/5">
-        {/* Background decorations */}
-        <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-gradient-to-r from-accent/15 to-primary/15 rounded-full blur-2xl animate-pulse delay-1000"></div>
-          <div className="absolute top-3/4 left-1/2 w-32 h-32 bg-primary/10 rounded-full blur-xl animate-bounce"></div>
-        </div>
+      <section 
+        className="hero-section relative overflow-hidden h-[600px] md:h-[700px] lg:h-[750px] bg-cover bg-center"
+        style={{ backgroundImage: `url(${heroImage})` }}
+      >
+        {/* Gradient overlay - left side only for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent"></div>
         
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="text-center lg:text-left space-y-8 animate-fade-in">
-              <h1 className="text-5xl md:text-7xl font-bold tracking-tight font-playfair leading-tight">
-                <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent drop-shadow-sm">
-                  Auto Care, The Easy Way
-                </span>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center w-full">
+            {/* Left side: Text block */}
+            <div className="text-left space-y-6 animate-fade-in">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight font-playfair leading-tight text-white drop-shadow-2xl">
+                Auto Service, The Easy Way
               </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                Request service, connect with trusted pros ready to help, and get back on the road with confidence.
+              <p className="text-xl sm:text-2xl md:text-3xl text-white/95 font-medium leading-relaxed drop-shadow-lg">
+                Compare, Book & Done.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center lg:justify-start">
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <Link to="/auth" className="w-full sm:w-auto">
-                  <Button size="lg" className="w-full text-base sm:text-lg px-6 py-4 sm:px-10 sm:py-7 bg-gradient-primary hover:opacity-90 shadow-elegant hover:shadow-glow transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
-                    <Car className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-                    Request Service Now
+                  <Button 
+                    size="lg" 
+                    className="w-full text-base sm:text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-white shadow-elegant hover:shadow-glow transition-all duration-300"
+                  >
+                    Get Started
                   </Button>
                 </Link>
                 <Link to="/auth" className="w-full sm:w-auto">
-                  <Button size="lg" variant="outline" className="w-full text-base sm:text-lg px-6 py-4 sm:px-10 sm:py-7 border-2 border-primary/30 hover:border-primary bg-background/80 backdrop-blur-sm hover:bg-primary/5 transition-all duration-500 transform hover:scale-105">
-                    <UserPlus className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-                    Join as Professional
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="w-full text-base sm:text-lg px-8 py-6 border-2 border-white text-white hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
+                  >
+                    Join as a Professional
                   </Button>
                 </Link>
               </div>
             </div>
             
-            {/* Professional Service Image */}
-            <div className="relative">
-              <div className="rounded-2xl overflow-hidden shadow-2xl transition-shadow duration-500">
-                <img 
-                  src={mechanicWorking} 
-                  alt="Professional automotive technician working on car engine" 
-                  className="w-full h-auto object-cover"
-                />
-              </div>
-            </div>
+            {/* Right side: Image space (mechanic visible in background) */}
+            <div className="hidden lg:block"></div>
           </div>
         </div>
       </section>
