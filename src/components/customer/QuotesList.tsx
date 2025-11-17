@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, CheckCircle, XCircle, User, Clock, Award } from "lucide-react";
+import { Calendar, DollarSign, CheckCircle, XCircle, User, Clock, Award } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -260,14 +260,14 @@ export function QuotesList({ requestId }: QuotesListProps) {
   };
 
   const getStatusBadge = (status: string, isRevised: boolean = false) => {
-    if (status === 'submitted') {
+    if (status === 'submitted' || status === 'pending') {
       return (
         <Badge variant="secondary">
           {isRevised ? "Revised Quote Available" : "Available to Select"}
         </Badge>
       );
     }
-    if (status === 'selected') {
+    if (status === 'selected' || status === 'pending_confirmation') {
       return (
         <Badge className="bg-orange-100 text-orange-800">
           ⏳ Awaiting Pro Payment
@@ -338,8 +338,8 @@ export function QuotesList({ requestId }: QuotesListProps) {
   }
 
   const getCompactStatusBadge = (status: string) => {
-    if (status === 'submitted') return <Badge variant="secondary" className="text-xs">✓ Available</Badge>;
-    if (status === 'selected') return <Badge className="bg-orange-100 text-orange-800 text-xs">⏳ Awaiting Payment</Badge>;
+    if (status === 'submitted' || status === 'pending') return <Badge variant="secondary" className="text-xs">✓ Available</Badge>;
+    if (status === 'selected' || status === 'pending_confirmation') return <Badge className="bg-orange-100 text-orange-800 text-xs">⏳ Awaiting Payment</Badge>;
     if (status === 'confirmed') return <Badge className="bg-green-100 text-green-800 text-xs">✓ Confirmed</Badge>;
     if (status === 'not_selected') return <Badge variant="outline" className="text-gray-500 text-xs">Not Selected</Badge>;
     if (status === 'declined') return <Badge variant="outline" className="text-gray-500 text-xs">✗ Declined</Badge>;
@@ -423,7 +423,7 @@ export function QuotesList({ requestId }: QuotesListProps) {
               View Profile
             </Button>
             
-            {quote.status === "submitted" && (
+            {(quote.status === "submitted" || quote.status === "pending") && (
               <SelectProButton 
                 quoteId={quote.id}
                 requestId={requestId}
@@ -433,7 +433,7 @@ export function QuotesList({ requestId }: QuotesListProps) {
               />
             )}
 
-            {quote.status === "selected" && (
+            {(quote.status === "selected" || quote.status === "pending_confirmation") && (
               <Button 
                 size="sm" 
                 className="w-full" 
@@ -442,6 +442,17 @@ export function QuotesList({ requestId }: QuotesListProps) {
               >
                 <Clock className="mr-1 h-3 w-3" />
                 Awaiting Pro Confirmation
+              </Button>
+            )}
+
+            {quote.status === "confirmed" && (
+              <Button 
+                size="sm" 
+                className="w-full"
+                onClick={() => window.location.href = '/appointments'}
+              >
+                <Calendar className="mr-1 h-3 w-3" />
+                Book Appointment
               </Button>
             )}
           </CardFooter>
