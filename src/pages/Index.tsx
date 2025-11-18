@@ -324,7 +324,7 @@ const Index = () => {
         <img 
           src={heroImage} 
           alt="DoneEZ Mechanic" 
-          className="absolute inset-0 w-full h-full object-cover object-[center_20%]"
+          className="absolute inset-0 w-full h-full object-cover object-[center_35%]"
         />
         
         {/* Gradient Overlay for text readability */}
@@ -332,7 +332,7 @@ const Index = () => {
         
         {/* Content Container */}
         <div className="relative z-10 h-full max-w-7xl mx-auto px-6 lg:px-8 flex items-center">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl pt-16 md:pt-20">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight font-playfair text-white leading-tight mb-6">
               Auto Service, The Easy Way
             </h1>
