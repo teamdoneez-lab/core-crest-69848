@@ -324,7 +324,7 @@ const Index = () => {
         <img 
           src={heroImage} 
           alt="DoneEZ Mechanic" 
-          className="absolute inset-0 w-full h-full object-cover object-[center_60%]"
+          className="absolute inset-0 w-full h-full object-cover object-[center_65%]"
         />
         
         {/* Gradient Overlay for text readability */}
