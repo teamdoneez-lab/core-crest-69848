@@ -319,19 +319,19 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="hero-section relative w-full h-[750px] md:h-[820px] lg:h-[900px] overflow-hidden">
+      <section className="hero-section relative w-full h-[600px] md:h-[650px] lg:h-[700px] overflow-hidden">
         {/* Background Image */}
         <img 
           src={heroImage} 
           alt="DoneEZ Mechanic" 
-          className="absolute inset-0 w-full h-full object-cover object-[center_42%] md:object-[center_52%]"
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
         
         {/* Gradient Overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent"></div>
         
         {/* Content Container */}
-        <div className="relative z-10 h-full max-w-7xl mx-auto px-6 lg:px-8 flex items-center pt-20 md:pt-0">
+        <div className="relative z-10 h-full max-w-7xl mx-auto px-6 lg:px-8 flex items-center">
           <div className="max-w-2xl">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight font-playfair text-white leading-tight mb-6">
               Auto Service, The Easy Way
