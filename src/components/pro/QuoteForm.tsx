@@ -215,7 +215,7 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // NEW: Submit quote without payment (status: 'submitted')
+      // NEW: Submit quote without payment (status: 'pending')
       const { data: newQuote, error: quoteError } = await supabase
         .from("quotes")
         .insert({
@@ -224,7 +224,7 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
           estimated_price: validation.data.estimated_price,
           description: validation.data.description,
           notes: validation.data.notes,
-          status: "submitted"
+          status: "pending"
         })
         .select()
         .single();
