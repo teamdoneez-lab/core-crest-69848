@@ -250,6 +250,7 @@ export default function ProDashboard() {
           )
         )
       `)
+      .eq('pro_id', user?.id)
       .eq('status', 'new')
       .order('created_at', { ascending: false });
 
