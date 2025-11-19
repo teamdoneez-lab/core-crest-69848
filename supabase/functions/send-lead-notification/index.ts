@@ -82,15 +82,11 @@ const handler = async (req: Request): Promise<Response> => {
     
     const proEmail = proProfile?.email;
     const proName = proProfile?.pro_profiles?.business_name || proProfile?.name || "Professional";
-    const customerName = serviceRequest?.profiles?.name || "Customer";
-    const customerEmail = serviceRequest?.contact_email;
-    const customerPhone = serviceRequest?.contact_phone;
     const serviceName = serviceRequest?.service_categories?.name || "Service";
     const vehicleInfo = `${serviceRequest?.year} ${serviceRequest?.vehicle_make} ${serviceRequest?.model}${serviceRequest?.trim ? ' ' + serviceRequest.trim : ''}`;
     const mileage = serviceRequest?.mileage ? `${serviceRequest.mileage.toLocaleString()} miles` : "Not specified";
     const urgency = serviceRequest?.urgency === "asap" ? "ASAP" : serviceRequest?.urgency === "day" ? "Within 1 day" : serviceRequest?.urgency === "week" ? "Within 1 week" : "Flexible";
     const appointmentType = serviceRequest?.appointment_type === "mobile" ? "Mobile Service" : "In-Shop Service";
-    const location = serviceRequest?.formatted_address || `${serviceRequest?.address || ''}, ZIP: ${serviceRequest?.zip}` || `ZIP: ${serviceRequest?.zip}`;
     const preferredTime = serviceRequest?.preferred_time ? new Date(serviceRequest.preferred_time).toLocaleString() : "Not specified";
     const description = serviceRequest?.description || "No additional details provided.";
 
@@ -103,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #2563eb;">New Service Request!</h1>
         <p>Hi ${proName},</p>
-        <p>You've received a new service request in your area. Review the details below and submit your quote.</p>
+        <p>You've received a new service request in your area. Review the details below and submit your quote through the platform.</p>
         
         <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h2 style="margin-top: 0; color: #1f2937;">Request Details</h2>
@@ -119,19 +115,19 @@ const handler = async (req: Request): Promise<Response> => {
           <p style="margin: 5px 0;"><strong>Preferred Time:</strong> ${preferredTime}</p>
           <p style="margin: 5px 0;"><strong>Description:</strong> ${description}</p>
           
-          <h3 style="color: #2563eb; margin-top: 20px; margin-bottom: 10px;">Location</h3>
-          <p style="margin: 5px 0;"><strong>Service Location:</strong> ${location}</p>
-          
-          <h3 style="color: #2563eb; margin-top: 20px; margin-bottom: 10px;">Customer Contact</h3>
-          <p style="margin: 5px 0;"><strong>Customer:</strong> ${customerName}</p>
-          <p style="margin: 5px 0;"><strong>Email:</strong> ${customerEmail}</p>
-          <p style="margin: 5px 0;"><strong>Phone:</strong> ${customerPhone}</p>
+          <h3 style="color: #2563eb; margin-top: 20px; margin-bottom: 10px;">Service Area</h3>
+          <p style="margin: 5px 0;"><strong>ZIP Code:</strong> ${serviceRequest?.zip}</p>
+          ${serviceRequest?.appointment_type === "shop" && serviceRequest?.formatted_address ? `<p style="margin: 5px 0;"><strong>General Area:</strong> ${serviceRequest.formatted_address}</p>` : ''}
+        </div>
+        
+        <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0;">
+          <p style="margin: 0; color: #92400e;"><strong>⚠️ Important:</strong> Customer contact details will be provided after you're selected and the job is confirmed through the platform. Please use the in-platform messaging system to communicate.</p>
         </div>
         
         <div style="margin: 30px 0;">
           <a href="${req.headers.get("origin")}/pro-dashboard" 
              style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            View Request & Submit Quote
+            Submit Your Quote Now
           </a>
         </div>
         
@@ -139,12 +135,13 @@ const handler = async (req: Request): Promise<Response> => {
           <strong>Next Steps:</strong><br>
           1. Review the request details carefully<br>
           2. Log in to your dashboard<br>
-          3. Submit your competitive quote<br>
-          4. Wait for customer to select your quote
+          3. Submit your competitive quote through the platform<br>
+          4. Use in-platform messaging for questions<br>
+          5. Get customer contact details once selected
         </p>
         
         <p style="color: #6b7280; font-size: 12px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
-          This is an automated notification. Please do not reply to this email. Log in to your dashboard to communicate with the customer.
+          This is an automated notification. Use the platform's messaging system to communicate with customers. Direct contact outside the platform before job confirmation is prohibited.
         </p>
       </div>
     `;
