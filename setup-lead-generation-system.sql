@@ -54,9 +54,8 @@ BEGIN
       -- Exact ZIP match
       RAISE NOTICE 'Pro % matched by exact ZIP', pro_record.user_id;
       
-      INSERT INTO leads (service_request_id, pro_id, status)
-      VALUES (request_id, pro_record.user_id, 'pending')
-      ON CONFLICT (service_request_id, pro_id) DO NOTHING;
+      -- Use RPC function to create lead with notification
+      PERFORM create_lead_with_notification(request_id, pro_record.user_id);
       
       lead_count := lead_count + 1;
       
@@ -92,9 +91,8 @@ BEGIN
           IF distance_miles <= pro_record.service_radius THEN
             RAISE NOTICE 'Pro % matched by distance', pro_record.user_id;
             
-            INSERT INTO leads (service_request_id, pro_id, status)
-            VALUES (request_id, pro_record.user_id, 'pending')
-            ON CONFLICT (service_request_id, pro_id) DO NOTHING;
+            -- Use RPC function to create lead with notification
+            PERFORM create_lead_with_notification(request_id, pro_record.user_id);
             
             lead_count := lead_count + 1;
           END IF;
@@ -134,36 +132,14 @@ CREATE TRIGGER auto_generate_leads
   EXECUTE FUNCTION trigger_generate_leads();
 
 -- ============================================================================
--- FUNCTION: Trigger function to send email notification after lead insert
+-- DEPRECATED: Trigger-based notification (replaced by RPC function)
 -- ============================================================================
-CREATE OR REPLACE FUNCTION notify_pro_new_lead()
-RETURNS TRIGGER AS $$
-BEGIN
-  -- Call the edge function asynchronously using pg_net extension
-  -- Note: This requires pg_net extension to be enabled and configured
-  PERFORM net.http_post(
-    url := current_setting('app.settings.supabase_url') || '/functions/v1/send-lead-notification',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key')
-    ),
-    body := jsonb_build_object(
-      'leadId', NEW.id
-    )
-  );
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- ============================================================================
--- TRIGGER: Send email notification when lead is created
--- ============================================================================
-DROP TRIGGER IF EXISTS trigger_notify_pro_new_lead ON leads;
-CREATE TRIGGER trigger_notify_pro_new_lead
-  AFTER INSERT ON leads
-  FOR EACH ROW
-  EXECUTE FUNCTION notify_pro_new_lead();
+-- The notify_pro_new_lead trigger has been replaced by the
+-- create_lead_with_notification RPC function which creates both the lead
+-- and notification atomically. This ensures notifications are never missed.
+--
+-- Previous approach using triggers was unreliable. New approach:
+-- Use create_lead_with_notification() instead of direct INSERT INTO leads.
 
 -- ============================================================================
 -- GRANT PERMISSIONS
@@ -171,7 +147,6 @@ CREATE TRIGGER trigger_notify_pro_new_lead
 -- Grant necessary permissions for the functions to work
 GRANT EXECUTE ON FUNCTION generate_leads_for_request TO postgres, service_role;
 GRANT EXECUTE ON FUNCTION trigger_generate_leads TO postgres, service_role;
-GRANT EXECUTE ON FUNCTION notify_pro_new_lead TO postgres, service_role;
 
 -- ============================================================================
 -- NOTES FOR MANUAL SETUP
