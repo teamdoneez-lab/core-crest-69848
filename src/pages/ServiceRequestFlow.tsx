@@ -231,11 +231,14 @@ export default function ServiceRequestFlow() {
         return;
       }
 
-      if (!formData.contact_email || !formData.contact_phone) {
-        toast.error("Please provide your contact information");
+      if (!formData.contact_phone) {
+        toast.error("Please provide your phone number");
         setIsSubmitting(false);
         return;
       }
+
+      // Use user's email if not explicitly provided
+      const contactEmail = formData.contact_email || user.email || "";
 
       // Upload file if exists
       let imageUrl = "";
@@ -339,7 +342,7 @@ export default function ServiceRequestFlow() {
           formatted_address: geo.formatted_address,
           preferred_time: formData.preferred_time?.toISOString() || null,
           contact_phone: formData.contact_phone,
-          contact_email: formData.contact_email,
+          contact_email: contactEmail,
           appointment_pref: "scheduled",
           status: "pending",
           image_url: imageUrl || null,
@@ -372,7 +375,7 @@ export default function ServiceRequestFlow() {
         
         await supabase.functions.invoke('send-booking-confirmation', {
           body: {
-            email: formData.contact_email,
+            email: contactEmail,
             name: user.email?.split('@')[0] || 'Customer',
             services: serviceNames,
             vehicle: vehicleInfo,
