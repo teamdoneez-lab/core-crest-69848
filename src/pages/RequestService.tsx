@@ -87,7 +87,33 @@ export default function RequestService() {
         mileage: formData.mileage ? Number(formData.mileage) : undefined
       });
 
-      // Insert service request with status 'quote_requested'
+      // Geocode the address to get latitude and longitude
+      let latitude: number | null = null;
+      let longitude: number | null = null;
+
+      try {
+        const { data: geocodeData, error: geocodeError } = await supabase.functions.invoke('geocode-address', {
+          body: { address: validatedData.address }
+        });
+
+        if (geocodeError) {
+          console.error('Geocoding error:', geocodeError);
+          toast({
+            title: 'Warning',
+            description: 'Could not determine exact location. Pros may still match by ZIP code.',
+            variant: 'default'
+          });
+        } else if (geocodeData) {
+          latitude = geocodeData.latitude;
+          longitude = geocodeData.longitude;
+          console.log('Address geocoded successfully:', { latitude, longitude });
+        }
+      } catch (geocodeError) {
+        console.error('Geocoding failed:', geocodeError);
+        // Continue without coordinates - matching will fall back to ZIP code only
+      }
+
+      // Insert service request with status 'pending' and coordinates
       const { data: newRequest, error } = await supabase
         .from('service_requests')
         .insert({
@@ -101,10 +127,12 @@ export default function RequestService() {
           appointment_pref: validatedData.appointment_pref,
           address: validatedData.address,
           zip: validatedData.zip,
+          latitude: latitude,
+          longitude: longitude,
           contact_email: validatedData.contact_email,
           contact_phone: validatedData.contact_phone,
           notes: validatedData.notes,
-          status: 'quote_requested'
+          status: 'pending'
         })
         .select()
         .single();
@@ -118,9 +146,9 @@ export default function RequestService() {
         return;
       }
 
-      // Generate leads for nearby pros
+      // Generate leads for nearby pros using RPC function
       try {
-        const { error: leadsError } = await supabase.rpc('generate_leads_for_request', {
+        const { data: leadsData, error: leadsError } = await supabase.rpc('generate_leads_for_request', {
           p_request_id: newRequest.id
         });
 
@@ -131,6 +159,8 @@ export default function RequestService() {
             description: 'Request created but pro matching may be delayed.',
             variant: 'default'
           });
+        } else {
+          console.log(`Generated ${leadsData || 0} leads for request ${newRequest.id}`);
         }
       } catch (leadsError) {
         console.error('Lead generation failed:', leadsError);
