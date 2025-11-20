@@ -326,14 +326,26 @@ export default function ServiceRequestFlow() {
         console.warn("Category ID not found for services:", formData.service_category);
       }
 
-      // Build full address and geocode
+      // Build full address and geocode (optional - will use defaults if geocoding fails)
       const fullAddress = formData.address 
         ? `${formData.address}, ${formData.zip}`
         : formData.zip;
       
       console.log("Geocoding address:", fullAddress);
-      const geo = await geocodeFullAddress(fullAddress);
-      console.log("Geocoded location:", geo);
+      let geo = { 
+        latitude: null, 
+        longitude: null, 
+        formatted_address: fullAddress 
+      };
+      
+      try {
+        geo = await geocodeFullAddress(fullAddress);
+        console.log("Geocoded location:", geo);
+      } catch (geoError) {
+        console.warn("Geocoding failed, continuing without coordinates:", geoError);
+        // Use the user-provided address as fallback
+        toast.info("Could not verify address coordinates. Your request will still be submitted.");
+      }
 
       const { error, data: request } = await supabase
         .from("service_requests")
