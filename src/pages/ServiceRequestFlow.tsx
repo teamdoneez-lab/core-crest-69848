@@ -137,30 +137,22 @@ export default function ServiceRequestFlow() {
     }
   };
 
-  const validateZipCode = async () => {
-    if (!formData.zip) return false;
-    
+  const geocodeFullAddress = async (fullAddress: string) => {
     try {
-      // Note: Replace with your Google Maps API key
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${formData.zip}&key=YOUR_API_KEY`
-      );
-      const data = await response.json();
+      const { data, error } = await supabase.functions.invoke('geocode-address', {
+        body: { address: fullAddress }
+      });
+
+      if (error) throw error;
       
-      if (data.results && data.results[0]) {
-        const location = data.results[0].geometry.location;
-        setFormData((prev) => ({
-          ...prev,
-          latitude: location.lat,
-          longitude: location.lng,
-          formatted_address: data.results[0].formatted_address,
-        }));
-        return true;
-      }
-      return false;
+      return {
+        latitude: data.latitude,
+        longitude: data.longitude,
+        formatted_address: data.formatted_address
+      };
     } catch (error) {
       console.error("Geocoding error:", error);
-      return true; // Continue without geocoding if API fails
+      throw new Error("Failed to geocode address. Please check your address and try again.");
     }
   };
 
@@ -198,10 +190,6 @@ export default function ServiceRequestFlow() {
         toast.error("Please complete all required fields");
       }
       return;
-    }
-
-    if (currentStep === 5) {
-      await validateZipCode();
     }
 
     if (currentStep < 7) {
@@ -321,34 +309,60 @@ export default function ServiceRequestFlow() {
         console.warn("Category ID not found for services:", formData.service_category);
       }
 
-      const { error, data: insertedData } = await supabase.from("service_requests").insert({
-        customer_id: user.id,
-        service_category: formData.service_category,
-        category_id: categoryId,
-        year: formData.year,
-        vehicle_make: formData.vehicle_make,
-        model: formData.vehicle_model,
-        trim: formData.trim || null,
-        mileage: formData.mileage || null,
-        description: formData.description || null,
-        urgency: formData.urgency,
-        appointment_type: formData.appointment_type,
-        zip: formData.zip,
-        address: formData.address || null,
-        latitude: formData.latitude || null,
-        longitude: formData.longitude || null,
-        formatted_address: formData.formatted_address || null,
-        preferred_time: formData.preferred_time?.toISOString() || null,
-        contact_phone: formData.contact_phone,
-        contact_email: formData.contact_email,
-        appointment_pref: "scheduled",
-        status: "pending",
-        image_url: imageUrl || null,
-      });
+      // Build full address and geocode
+      const fullAddress = formData.address 
+        ? `${formData.address}, ${formData.zip}`
+        : formData.zip;
+      
+      console.log("Geocoding address:", fullAddress);
+      const geo = await geocodeFullAddress(fullAddress);
+      console.log("Geocoded location:", geo);
+
+      const { error, data: request } = await supabase
+        .from("service_requests")
+        .insert({
+          customer_id: user.id,
+          service_category: formData.service_category,
+          category_id: categoryId,
+          year: formData.year,
+          vehicle_make: formData.vehicle_make,
+          model: formData.vehicle_model,
+          trim: formData.trim || null,
+          mileage: formData.mileage || null,
+          description: formData.description || null,
+          urgency: formData.urgency,
+          appointment_type: formData.appointment_type,
+          zip: formData.zip,
+          address: geo.formatted_address,
+          latitude: geo.latitude,
+          longitude: geo.longitude,
+          formatted_address: geo.formatted_address,
+          preferred_time: formData.preferred_time?.toISOString() || null,
+          contact_phone: formData.contact_phone,
+          contact_email: formData.contact_email,
+          appointment_pref: "scheduled",
+          status: "pending",
+          image_url: imageUrl || null,
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error("Insert error:", error);
         throw new Error(error.message || "Failed to submit service request. Please try again.");
+      }
+
+      // Generate leads for professionals
+      console.log("Generating leads for request:", request.id);
+      const { error: rpcError } = await supabase.rpc('generate_leads_for_request', {
+        p_request_id: request.id
+      });
+
+      if (rpcError) {
+        console.error("Lead generation error:", rpcError);
+        // Don't fail the request if lead generation fails
+      } else {
+        console.log("Leads generated successfully");
       }
 
       // Send confirmation email
