@@ -73,7 +73,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.geocode-address]
-verify_jwt = true
+verify_jwt = false
 
 [functions.check-expired-quotes]
 verify_jwt = false

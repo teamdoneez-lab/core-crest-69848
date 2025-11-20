@@ -138,12 +138,26 @@ export default function ServiceRequestFlow() {
   };
 
   const geocodeFullAddress = async (fullAddress: string) => {
+    console.log('Geocoding address:', fullAddress);
+    
     try {
       const { data, error } = await supabase.functions.invoke('geocode-address', {
         body: { address: fullAddress }
       });
 
-      if (error) throw error;
+      console.log('Geocode response:', { data, error });
+
+      if (error) {
+        console.error('Geocode error from function:', error);
+        throw error;
+      }
+
+      if (!data || !data.latitude || !data.longitude) {
+        console.error('Invalid geocode response:', data);
+        throw new Error('Invalid response from geocoding service');
+      }
+      
+      console.log('Geocoded successfully:', data);
       
       return {
         latitude: data.latitude,
