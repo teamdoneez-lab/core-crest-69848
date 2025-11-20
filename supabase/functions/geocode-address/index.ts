@@ -6,18 +6,27 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('Geocode function called, method:', req.method);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { address } = await req.json();
     const GOOGLE_MAPS_API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY');
+    console.log('API key exists:', !!GOOGLE_MAPS_API_KEY);
 
     if (!GOOGLE_MAPS_API_KEY) {
-      throw new Error('Google Maps API key not configured');
+      console.error('Google Maps API key not configured');
+      return new Response(
+        JSON.stringify({ error: 'Google Maps API key not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    const { address } = await req.json();
+    console.log('Geocoding address:', address);
 
     if (!address) {
       return new Response(
@@ -25,8 +34,6 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log('Geocoding address:', address);
 
     // Call Google Maps Geocoding API
     const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`;
