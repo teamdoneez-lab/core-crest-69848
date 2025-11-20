@@ -62,18 +62,32 @@ BEGIN
     ELSIF pro_record.latitude IS NOT NULL 
       AND pro_record.longitude IS NOT NULL 
       AND pro_record.service_radius IS NOT NULL THEN
-      -- Distance-based matching (if ZIP coordinates are available)
+      -- Distance-based matching using request coordinates or ZIP lookup
       DECLARE
         distance_miles NUMERIC;
         customer_lat NUMERIC;
         customer_lon NUMERIC;
       BEGIN
-        -- Try to get customer ZIP coordinates
-        SELECT latitude, longitude INTO customer_lat, customer_lon
-        FROM zip_codes
-        WHERE zip_code = request_record.zip;
+        -- Use request coordinates if available, otherwise try ZIP lookup
+        IF request_record.latitude IS NOT NULL AND request_record.longitude IS NOT NULL THEN
+          customer_lat := request_record.latitude;
+          customer_lon := request_record.longitude;
+          RAISE NOTICE 'Using request coordinates for distance calculation: %, %', customer_lat, customer_lon;
+        ELSE
+          -- Fallback to ZIP code lookup
+          SELECT latitude, longitude INTO customer_lat, customer_lon
+          FROM zip_codes
+          WHERE zip_code = request_record.zip;
+          
+          IF FOUND THEN
+            RAISE NOTICE 'Using ZIP code coordinates for distance calculation: %, %', customer_lat, customer_lon;
+          ELSE
+            RAISE NOTICE 'No coordinates available for request % (ZIP: %)', request_id, request_record.zip;
+          END IF;
+        END IF;
 
-        IF FOUND THEN
+        -- Only calculate distance if we have customer coordinates
+        IF customer_lat IS NOT NULL AND customer_lon IS NOT NULL THEN
           -- Calculate distance using Haversine formula
           distance_miles := (
             3959 * acos(
