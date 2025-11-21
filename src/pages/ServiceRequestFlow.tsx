@@ -369,7 +369,7 @@ export default function ServiceRequestFlow() {
           contact_phone: formData.contact_phone,
           contact_email: contactEmail,
           appointment_pref: "scheduled",
-          status: "pending",
+          status: "quote_requested",
           image_url: imageUrl || null,
         })
         .select()
