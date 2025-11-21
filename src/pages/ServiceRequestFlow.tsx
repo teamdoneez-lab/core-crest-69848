@@ -343,7 +343,7 @@ export default function ServiceRequestFlow() {
         console.log("Geocoded location:", geo);
       } catch (geoError) {
         console.warn("Geocoding failed, continuing without coordinates:", geoError);
-        toast.info("Could not verify address coordinates. Your request will still be submitted.");
+        // Silent fallback - request will proceed with null coordinates
       }
 
       const { error, data: request } = await supabase
