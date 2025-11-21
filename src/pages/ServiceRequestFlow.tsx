@@ -369,7 +369,7 @@ export default function ServiceRequestFlow() {
           contact_phone: formData.contact_phone,
           contact_email: contactEmail,
           appointment_pref: "scheduled",
-          status: "pending",
+          status: "quote_requested",
           image_url: imageUrl || null,
         })
         .select()
@@ -388,7 +388,7 @@ export default function ServiceRequestFlow() {
 
       if (rpcError) {
         console.error("Lead generation error:", rpcError);
-        // Don't fail the request if lead generation fails
+        toast.error("Warning: Failed to notify professionals. Request was saved.");
       } else {
         console.log("Leads generated successfully");
       }
