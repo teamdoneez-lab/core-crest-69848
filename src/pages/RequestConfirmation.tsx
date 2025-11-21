@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom';
-import { Navigation } from '@/components/Navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { CheckCircle } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { Navigation } from "@/components/Navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CheckCircle } from "lucide-react";
 
 export default function RequestConfirmation() {
   return (
@@ -27,13 +27,13 @@ export default function RequestConfirmation() {
                 <li>Schedule your service appointment</li>
               </ul>
             </div>
-            
+
             <div className="flex gap-4">
               <Button asChild className="flex-1">
                 <Link to="/">Return to Dashboard</Link>
               </Button>
               <Button variant="outline" asChild className="flex-1">
-                <Link to="/request-service">Submit Another Request</Link>
+                <Link to="/request-service-flow">Submit Another Request</Link>
               </Button>
             </div>
           </CardContent>
