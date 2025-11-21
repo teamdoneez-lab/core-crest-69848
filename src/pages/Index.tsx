@@ -105,7 +105,7 @@ const Index = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Link to="/request-service-flow">
+                    <Link to="/request-service">
                       <Card className="group cursor-pointer transition-all duration-500 hover:shadow-xl hover:scale-105 hover:bg-gradient-subtle border-2 hover:border-primary/20">
                         <CardContent className="p-8 text-center">
                           <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-elegant">

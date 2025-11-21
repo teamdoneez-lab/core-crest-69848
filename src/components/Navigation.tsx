@@ -62,11 +62,11 @@ export function Navigation() {
       {isCustomer && (
         <>
           <Link 
-            to="/request-service-flow" 
+            to="/request-service" 
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
               "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
-              isActive('/request-service-flow') ? 'text-primary' : 'text-muted-foreground'
+              isActive('/request-service') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
             Request

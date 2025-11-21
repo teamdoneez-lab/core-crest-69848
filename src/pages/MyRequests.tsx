@@ -209,7 +209,7 @@ const MyRequests = () => {
 
   const handleRebook = (request: ServiceRequest) => {
     // Navigate to service request flow with pre-filled data
-    navigate('/request-service-flow', { state: { rebookData: request } });
+    navigate('/request-service', { state: { rebookData: request } });
   };
 
   const getStatusColor = (status: string) => {
@@ -429,7 +429,7 @@ const MyRequests = () => {
                   : "No requests match your current filters."}
               </p>
               {requests.length === 0 && (
-                <Button className="mt-4" onClick={() => navigate('/request-service-flow')}>
+                <Button className="mt-4" onClick={() => navigate('/request-service')}>
                   Create Service Request
                 </Button>
               )}
