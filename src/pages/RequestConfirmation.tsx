@@ -33,7 +33,7 @@ export default function RequestConfirmation() {
                 <Link to="/">Return to Dashboard</Link>
               </Button>
               <Button variant="outline" asChild className="flex-1">
-                <Link to="/request-service-flow">Submit Another Request</Link>
+                <Link to="/request-service">Submit Another Request</Link>
               </Button>
             </div>
           </CardContent>

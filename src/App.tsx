@@ -9,7 +9,6 @@ import { CartProvider } from "@/contexts/CartContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
-import RequestService from "./pages/RequestService";
 import ServiceRequestFlow from "./pages/ServiceRequestFlow";
 import RequestConfirmation from "./pages/RequestConfirmation";
 import ProProfile from "./pages/ProProfile";
@@ -62,8 +61,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/request-service" element={<RequestService />} />
-            <Route path="/request-service-flow" element={<ServiceRequestFlow />} />
+            <Route path="/request-service" element={<ServiceRequestFlow />} />
             <Route path="/request-confirmation" element={<RequestConfirmation />} />
             <Route path="/pro-profile" element={<ProProfile />} />
             <Route path="/pro-onboarding" element={<ProOnboarding />} />
