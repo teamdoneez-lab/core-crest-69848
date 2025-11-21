@@ -1,37 +1,46 @@
 # Phase 1 - Core Booking Workflow Implementation
 
 ## Overview
+
 This document describes the implemented Phase 1 booking workflow for the DoneEZ service marketplace platform.
 
 ## Entities
 
 ### 1. Customer
+
 - Uses the platform to request automotive services
 - Can view quotes and select preferred professional
 - Simplified status view in UI
 
 ### 2. Mechanic (Professional/Pro)
+
 - Receives service request leads
 - Submits quotes for jobs
 - Must confirm and pay referral fee to secure jobs
 - Sees detailed fee status
 
 ### 3. ServiceRequest
+
 Database table: `service_requests`
 
 ### 4. Quote
+
 Database table: `quotes`
 
 ### 5. Appointment
+
 Database table: `appointments`
 
 ### 6. ReferralFee
+
 Database table: `referral_fees`
 
 ## Data Models
 
 ### ServiceRequest
+
 **Fields:**
+
 - `id` (UUID) - Primary key
 - `customer_id` (UUID) - References auth user
 - `vehicle_info` - Make, model, year, trim, mileage
@@ -41,6 +50,7 @@ Database table: `referral_fees`
 - `created_at`, `updated_at` - Timestamps
 
 **Status Values:**
+
 - `quote_requested` - Initial state when customer submits request
 - `pending_confirmation` - Customer selected a quote, waiting for pro confirmation
 - `confirmed` - Pro confirmed and paid referral fee
@@ -53,7 +63,9 @@ Database table: `referral_fees`
 - `completed` - Job successfully completed
 
 ### Quote
+
 **Fields:**
+
 - `id` (UUID) - Primary key
 - `mechanic_id` (UUID) - Professional who submitted quote
 - `service_request_id` (UUID) - Related service request
@@ -65,6 +77,7 @@ Database table: `referral_fees`
 - `created_at`, `updated_at` - Timestamps
 
 **Status Values:**
+
 - `pending` - Submitted by pro, awaiting customer selection
 - `pending_confirmation` - Selected by customer, awaiting pro confirmation
 - `confirmed` - Pro confirmed and paid
@@ -72,7 +85,9 @@ Database table: `referral_fees`
 - `expired` - Confirmation timer ran out
 
 ### Appointment
+
 **Fields:**
+
 - `id` (UUID) - Primary key
 - `quote_id` (UUID) - Related quote
 - `mechanic_id` (UUID) - Assigned professional
@@ -89,6 +104,7 @@ Same as ServiceRequest statuses
 ## Flow Logic
 
 ### 1. Customer Submits Service Request
+
 ```
 Customer fills form → ServiceRequest created
 Initial status: "quote_requested"
@@ -96,11 +112,12 @@ System generates leads for eligible mechanics in area
 ```
 
 **Implementation:**
-- File: `src/pages/RequestService.tsx`
+
 - Sets `status: 'quote_requested'` on insert
 - Database function `handle_new_service_request` trigger creates leads
 
 ### 2. Request Becomes Visible to Eligible Mechanics
+
 ```
 Mechanics receive lead notifications
 Can view: vehicle info, location (zip only), urgency, service type
@@ -108,11 +125,13 @@ Cannot see: customer contact info, full address
 ```
 
 **Implementation:**
+
 - File: `src/pages/ProDashboard.tsx`
 - Leads tab shows new requests
 - RLS policies restrict sensitive data
 
 ### 3. Mechanics Submit Quotes
+
 ```
 Mechanic reviews request → Submits quote
 Quote status: "pending"
@@ -120,11 +139,13 @@ Customer receives email notification
 ```
 
 **Implementation:**
+
 - File: `src/components/pro/QuoteForm.tsx`
 - Creates quote with `status: 'pending'`
 - Edge function `send-quote-email` notifies customer
 
 ### 4. Customer Selects One Quote
+
 ```
 Customer reviews quotes → Selects preferred pro
 Selected quote status: "pending_confirmation"
@@ -139,11 +160,13 @@ ReferralFee record created (amount = 10% of quote)
 ```
 
 **Implementation:**
+
 - File: `src/components/customer/QuotesList.tsx`
 - Calls database function `accept_quote_with_timer`
 - Function updates statuses and creates referral fee record
 
 ### 5. Mechanic is Notified and Must Confirm
+
 ```
 Mechanic receives notification
 Sees timer countdown
@@ -155,11 +178,13 @@ If timer expires:
 ```
 
 **Implementation:**
+
 - File: `src/components/pro/QuoteConfirmation.tsx`
 - Shows timer and action buttons
 - Database function `expire_timed_out_quotes` handles expirations
 
 ### 6. Mechanic Confirms and Pays Referral Fee
+
 ```
 Mechanic clicks "Confirm & Pay Fee"
 Redirected to Stripe checkout
@@ -172,7 +197,8 @@ Payment completed →
 ```
 
 **Implementation:**
-- Files: 
+
+- Files:
   - `src/components/pro/QuoteConfirmation.tsx` - Initiates payment
   - Edge function `create-referral-checkout` - Creates Stripe session
   - Edge function `verify-referral-payment` - Processes payment callback
@@ -185,6 +211,7 @@ Payment completed →
 ### 7. Alternative Flows
 
 #### Mechanic Declines
+
 ```
 Mechanic clicks "Decline"
 Quote status: "declined"
@@ -193,6 +220,7 @@ Customer notified to select another quote
 ```
 
 #### Quote Expires
+
 ```
 Timer reaches zero
 Quote status: "expired"
@@ -203,7 +231,9 @@ Customer must select another quote
 ## UI/UX Behavior
 
 ### Customer View
+
 **Simplified Status Display:**
+
 - "Awaiting Quotes" - `quote_requested`
 - "Pending Confirmation" - `pending_confirmation`
 - "Confirmed" - `confirmed`
@@ -211,6 +241,7 @@ Customer must select another quote
 - "Cancelled" - Any cancellation status
 
 **Customer Can See:**
+
 - All received quotes with pro details
 - Business name, verification badge
 - Service categories offered
@@ -219,21 +250,26 @@ Customer must select another quote
 - Status of each quote
 
 **Customer Cannot See:**
+
 - Referral fee details
 - Payment processing details
 - Pro's financial information
 
 **Implementation:**
+
 - File: `src/pages/MyRequests.tsx`
 - File: `src/components/customer/QuotesList.tsx`
 
 ### Mechanic View
+
 **Detailed Status Display:**
+
 - All standard statuses shown
 - Referral fee status visible
 - Payment status tracked
 
 **Mechanic Can See:**
+
 - Lead details (limited info initially)
 - Quote confirmation requirements
 - Referral fee amount (10% of quote)
@@ -241,21 +277,26 @@ Customer must select another quote
 - Full customer contact info (after payment)
 
 **Mechanic Cannot See:**
+
 - Customer contact info before payment
 - Other mechanics' quotes
 
 **Implementation:**
+
 - File: `src/pages/ProDashboard.tsx`
 - File: `src/components/pro/QuoteConfirmation.tsx`
 
 ### Violation Warnings
+
 **Off-Platform Cancellation:**
+
 - If job cancelled as `cancelled_off_platform`
 - Both customer and mechanic profiles flagged
 - Warning displayed in UI
 - Referral fee NOT refunded
 
 **Implementation:**
+
 - Database function `cancel_appointment_with_validation`
 - Tracks `violation_flags` in profiles table
 
@@ -264,16 +305,19 @@ Customer must select another quote
 ### Valid Transitions
 
 **From `quote_requested`:**
+
 - → `pending_confirmation` (customer selects quote)
 - → `cancelled_by_customer` (customer cancels)
 
 **From `pending_confirmation`:**
+
 - → `confirmed` (pro pays referral fee)
 - → `declined` (pro declines)
 - → `expired` (timer expires)
 - → `cancelled_by_customer` (customer cancels)
 
 **From `confirmed`:**
+
 - → `in_progress` (after payment verified)
 - → `completed` (job finished)
 - → `cancelled_after_requote` (customer declines revised quote)
@@ -281,11 +325,13 @@ Customer must select another quote
 - → `no_show` (customer doesn't show)
 
 **From `expired`:**
+
 - → `pending_confirmation` (customer selects different quote)
 
 ## Key Database Functions
 
 ### 1. `accept_quote_with_timer(quote_id)`
+
 - Updates selected quote to `pending_confirmation`
 - Declines other quotes
 - Creates referral fee record
@@ -293,17 +339,20 @@ Customer must select another quote
 - Returns timer expiration time
 
 ### 2. `expire_timed_out_quotes()`
+
 - Runs periodically to check for expired timers
 - Updates quotes past deadline to `expired`
 - Updates referral fees to `expired`
 
 ### 3. `cancel_appointment_with_validation(appointment_id, cancellation_reason)`
+
 - Validates cancellation reason
 - Prevents customer cancellations without valid reason
 - Handles refund logic based on reason
 - Flags accounts for off-platform violations
 
 ### 4. `handle_new_service_request()`
+
 - Trigger on new service request
 - Generates leads for matching pros
 - Based on service area and categories
@@ -311,9 +360,11 @@ Customer must select another quote
 ## Edge Functions
 
 ### 1. `create-referral-checkout`
+
 **Purpose:** Create Stripe checkout session for referral fee payment
 
 **Input:**
+
 ```json
 {
   "quote_id": "uuid"
@@ -321,6 +372,7 @@ Customer must select another quote
 ```
 
 **Output:**
+
 ```json
 {
   "url": "stripe_checkout_url",
@@ -329,9 +381,11 @@ Customer must select another quote
 ```
 
 ### 2. `verify-referral-payment`
+
 **Purpose:** Verify Stripe payment and update records
 
 **Input:**
+
 ```json
 {
   "session_id": "stripe_session_id",
@@ -340,6 +394,7 @@ Customer must select another quote
 ```
 
 **Output:**
+
 ```json
 {
   "success": true,
@@ -348,6 +403,7 @@ Customer must select another quote
 ```
 
 **Actions:**
+
 - Updates referral fee status to `paid`
 - Updates quote status to `confirmed`
 - Updates service request status to `in_progress`
@@ -355,9 +411,11 @@ Customer must select another quote
 - Sets `accepted_pro_id` on service request
 
 ### 3. `send-quote-email`
+
 **Purpose:** Notify customer when quote received
 
 **Input:**
+
 ```json
 {
   "quoteId": "uuid"
@@ -367,22 +425,26 @@ Customer must select another quote
 ## Security & RLS Policies
 
 ### Service Requests
+
 - Customers can view only their own requests
 - Pros can view requests in their service area + categories
 - Full customer contact info only visible after pro pays fee
 
 ### Quotes
+
 - Customers can view quotes for their requests
 - Pros can view only their own quotes
 - Customers can update status to `accepted`
 - Pros can update status to `declined`
 
 ### Appointments
+
 - Customers can view appointments for their requests
 - Pros can view only their own appointments
 - Pros can create appointments for accepted requests
 
 ### Referral Fees
+
 - Pros can view their own fees
 - Customers can view fees for their requests
 - Only admins can update fee status manually
@@ -390,11 +452,13 @@ Customer must select another quote
 ## Payment Flow Details
 
 ### Referral Fee Calculation
+
 ```
 Referral Fee = Quote Amount × 10%
 ```
 
 ### Payment Process
+
 1. Pro clicks "Confirm & Pay Fee"
 2. System creates Stripe checkout session
 3. Session metadata includes:
@@ -411,15 +475,18 @@ Referral Fee = Quote Amount × 10%
 ### Refund Logic
 
 **Full Refund Scenarios:**
+
 - `cancelled_by_customer` (before work starts)
 - `cancelled_after_requote` (declined revised quote)
 - `no_show` (customer doesn't show)
 
 **No Refund Scenarios:**
+
 - `cancelled_off_platform` (completed outside platform)
 - `completed` (job successfully finished)
 
 **Implementation:**
+
 - Function `cancel_appointment_with_validation` handles refund logic
 - Edge function `refund-referral-fee` processes Stripe refunds
 
@@ -440,12 +507,14 @@ function getConfirmationTimer(urgency) {
 ```
 
 ### Timer Display
+
 - Shows remaining time in format: "Xh Xm" or "X minutes"
 - Updates in real-time
 - Warning when < 5 minutes remaining
 - Auto-expires when timer reaches zero
 
 **Implementation:**
+
 - File: `src/components/pro/QuoteConfirmation.tsx`
 - Function `getTimeRemaining()` calculates remaining time
 - useEffect hook monitors expiration
@@ -453,6 +522,7 @@ function getConfirmationTimer(urgency) {
 ## Testing Checklist
 
 ### Customer Flow
+
 - [ ] Submit service request → status = `quote_requested`
 - [ ] Receive multiple quotes
 - [ ] Select preferred quote
@@ -462,6 +532,7 @@ function getConfirmationTimer(urgency) {
 - [ ] Complete job → status = `completed`
 
 ### Mechanic Flow
+
 - [ ] Receive lead notification
 - [ ] Submit quote → status = `pending`
 - [ ] Customer selects quote
@@ -471,6 +542,7 @@ function getConfirmationTimer(urgency) {
 - [ ] Complete appointment
 
 ### Edge Cases
+
 - [ ] Timer expires → quote becomes `expired`
 - [ ] Pro declines → customer can select another
 - [ ] Customer cancels before confirmation
@@ -480,6 +552,7 @@ function getConfirmationTimer(urgency) {
 ## Next Steps (Future Phases)
 
 ### Phase 2 - Enhanced Features
+
 - Review and rating system
 - Multi-image upload
 - Real-time chat
@@ -487,6 +560,7 @@ function getConfirmationTimer(urgency) {
 - Calendar integration
 
 ### Phase 3 - Advanced Workflows
+
 - Recurring maintenance schedules
 - Fleet management
 - Multi-vehicle quotes
@@ -523,18 +597,18 @@ src/
 ```sql
 -- Core tables
 service_requests (
-  id, customer_id, vehicle_info, 
+  id, customer_id, vehicle_info,
   status, urgency, created_at, ...
 )
 
 quotes (
-  id, request_id, pro_id, 
-  estimated_price, status, 
+  id, request_id, pro_id,
+  estimated_price, status,
   confirmation_timer_expires_at, ...
 )
 
 appointments (
-  id, request_id, pro_id, 
+  id, request_id, pro_id,
   starts_at, status, ...
 )
 
@@ -552,6 +626,7 @@ profiles (id, role, violation_flags, ...)
 ## Monitoring & Alerts
 
 ### Key Metrics to Track
+
 1. Average time from request to first quote
 2. Quote acceptance rate
 3. Pro confirmation rate (vs. declines/expires)
@@ -560,6 +635,7 @@ profiles (id, role, violation_flags, ...)
 6. Violation flag frequency
 
 ### Automated Jobs
+
 1. Expire timed-out quotes (every 1 minute)
 2. Send reminder emails (5 min before expiry)
 3. Release expired job locks
@@ -571,21 +647,25 @@ profiles (id, role, violation_flags, ...)
 ### Common Issues
 
 **Pro can't see customer contact info:**
+
 - Verify referral fee status is `paid`
 - Check appointment status is `confirmed`
 - Verify RLS policies allow access
 
 **Quote expired before pro could confirm:**
+
 - Review timer settings by urgency
 - Consider extending timers
 - Check notification delivery
 
 **Payment failed but quote marked confirmed:**
+
 - Review Stripe webhook logs
 - Check `verify-referral-payment` function logs
 - Manual reconciliation may be needed
 
 **Customer cancelled but fee not refunded:**
+
 - Verify cancellation reason
 - Check refund eligibility rules
 - Process manual refund if warranted
