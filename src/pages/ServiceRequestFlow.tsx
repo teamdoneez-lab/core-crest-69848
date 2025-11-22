@@ -300,24 +300,23 @@ export default function ServiceRequestFlow() {
       // Map service ID prefixes to category names
       // "1-x-x" services are under "Auto Repair", etc.
       const getCategoryId = (serviceIds: string[]): string | null => {
-        if (serviceIds.length === 0) return null;
-        
-        // Check the first service to determine the main category
-        const firstService = serviceIds[0];
-        const categoryPrefix = firstService.split("-")[0];
-        
-        // Map prefixes to category names
-        const categoryMap: Record<string, string> = {
+        if (!categories || categories.length === 0) return null;
+
+        // Prefix mapping based on service ID format "1-x-x"
+        const prefix = serviceIds?.[0]?.split("-")[0];
+
+        const prefixMap: Record<string, string> = {
           "1": "Auto Repair",
           "2": "Oil Change",
           "3": "Tire Service",
           "4": "Car Wash",
-          "5": "Diagnostics",
+          "5": "Diagnostics"
         };
-        
-        const categoryName = categoryMap[categoryPrefix];
-        const category = categories?.find(c => c.name === categoryName);
-        return category?.id || null;
+
+        const categoryName = prefixMap[prefix];
+        const match = categories.find((c) => c.name === categoryName);
+
+        return match?.id ?? null;
       };
 
       const categoryId = getCategoryId(formData.service_category);
@@ -333,17 +332,18 @@ export default function ServiceRequestFlow() {
       
       console.log("Geocoding address:", fullAddress);
       let geo = { 
-        latitude: null as number | null, 
-        longitude: null as number | null, 
+        latitude: 34.0500, 
+        longitude: -118.2500, 
         formatted_address: fullAddress 
       };
       
       try {
-        geo = await geocodeFullAddress(fullAddress);
+        const geocodedResult = await geocodeFullAddress(fullAddress);
+        geo = geocodedResult;
         console.log("Geocoded location:", geo);
       } catch (geoError) {
-        console.warn("Geocoding failed, continuing without coordinates:", geoError);
-        // Silent fallback - request will proceed with null coordinates
+        console.warn("Geocoding failed, using default LA coordinates:", geoError);
+        // Fallback to LA coordinates if geocoding fails
       }
 
       const { error, data: request } = await supabase
@@ -369,7 +369,7 @@ export default function ServiceRequestFlow() {
           contact_phone: formData.contact_phone,
           contact_email: contactEmail,
           appointment_pref: "scheduled",
-          status: "pending",
+          status: "quote_requested",
           image_url: imageUrl || null,
         })
         .select()
