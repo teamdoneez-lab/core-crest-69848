@@ -302,28 +302,34 @@ export default function ServiceRequestFlow() {
       const getCategoryId = (serviceIds: string[]): string | null => {
         if (!categories || categories.length === 0) return null;
 
-        // Prefix mapping based on service ID format "1-x-x"
-        const prefix = serviceIds?.[0]?.split("-")[0];
+        // Look up service definitions from the selected service IDs
+        const matches: string[] = [];
+        
+        for (const serviceId of serviceIds) {
+          const parts = serviceId.split("-");
+          const categoryPrefix = parts[0];
 
-        const prefixMap: Record<string, string> = {
-          "1": "Auto Repair",
-          "2": "Oil Change",
-          "3": "Tire Service",
-          "4": "Car Wash",
-          "5": "Diagnostics"
-        };
+          const categoryNameMap: Record<string, string> = {
+            "1": "Auto Repair",
+            "2": "Oil Change",
+            "3": "Tire Service",
+            "4": "Car Wash",
+            "5": "Diagnostics"
+          };
 
-        const categoryName = prefixMap[prefix];
-        const match = categories.find((c) => c.name === categoryName);
+          const categoryName = categoryNameMap[categoryPrefix];
+          const matched = categories.find(c => c.name === categoryName);
+          if (matched) {
+            matches.push(matched.id);
+          }
+        }
 
-        return match?.id ?? null;
+        return matches.length > 0 ? matches[0] : null;
       };
 
-      const categoryId = getCategoryId(formData.service_category);
+      const categoryId = getCategoryId(formData.service_category) ?? categories[0].id;
 
-      if (!categoryId) {
-        console.warn("Category ID not found for services:", formData.service_category);
-      }
+      console.log("Mapped category_id:", categoryId, "for services:", formData.service_category);
 
       // Build full address for geocoding (address field already contains street, city, state)
       const fullAddress = formData.address 
@@ -382,7 +388,7 @@ export default function ServiceRequestFlow() {
 
       // Generate leads for professionals
       console.log("Generating leads for request:", request.id);
-      const { error: rpcError } = await supabase.rpc('generate_leads_for_request', {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('generate_leads_for_request', {
         p_request_id: request.id
       });
 
@@ -390,7 +396,22 @@ export default function ServiceRequestFlow() {
         console.error("Lead generation error:", rpcError);
         toast.error("Warning: Failed to notify professionals. Request was saved.");
       } else {
-        console.log("Leads generated successfully");
+        console.log("Leads generated successfully. RPC result:", rpcData);
+        
+        // Verify leads were created
+        const { data: leadsCheck, error: leadsError } = await supabase
+          .from('leads')
+          .select('id')
+          .eq('request_id', request.id);
+        
+        if (leadsError) {
+          console.error("Error checking leads:", leadsError);
+        } else if (!leadsCheck || leadsCheck.length === 0) {
+          console.warn("No leads created for request:", request.id);
+          toast.error("Warning: No matching professionals found in your area.");
+        } else {
+          console.log(`Created ${leadsCheck.length} lead(s) for request:`, request.id);
+        }
       }
 
       // Send confirmation email
