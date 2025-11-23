@@ -27,6 +27,7 @@ import { format } from 'date-fns';
 import { EarningsTab } from '@/components/pro/EarningsTab';
 import { QuoteConfirmation } from '@/components/pro/QuoteConfirmation';
 import { ProSelectedPayment } from '@/components/pro/ProSelectedPayment';
+import { getServiceNamesByIds } from '@/utils/serviceHelpers';
 
 interface ServiceRequest {
   id: string;
@@ -41,6 +42,7 @@ interface ServiceRequest {
   notes?: string;
   status: string;
   urgency?: string;
+  service_category: string[];
   service_categories: {
     name: string;
   };
@@ -245,6 +247,7 @@ export default function ProDashboard() {
           appointment_pref,
           notes,
           status,
+          service_category,
           service_categories (
             name
           )
@@ -430,6 +433,10 @@ export default function ProDashboard() {
               <div className="space-y-4">
                 {leads.map((lead) => {
                   const request = lead.service_requests;
+                  const serviceNames = Array.isArray(request.service_category) 
+                    ? request.service_category 
+                    : [];
+                  
                   return (
                     <Card key={lead.id}>
                       <CardHeader>
@@ -442,6 +449,12 @@ export default function ProDashboard() {
                               <Car className="h-4 w-4" />
                               {request.year} {request.vehicle_make} {request.model}
                             </CardDescription>
+                            {serviceNames.length > 0 && (
+                              <div className="mt-2 text-sm">
+                                <span className="font-medium">Services: </span>
+                                {serviceNames.join(', ')}
+                              </div>
+                            )}
                           </div>
                           <div className="flex flex-col items-end gap-2">
                             {getStatusBadge('new')}
