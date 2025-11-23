@@ -162,17 +162,16 @@ export default function ProDashboard() {
     if (!user || !isPro) return;
 
     const channel = supabase
-      .channel("leads-changes")
+      .channel("service-requests-changes")
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
-          table: "leads",
-          filter: `pro_id=eq.${user.id}`,
+          table: "service_requests",
         },
         () => {
-          console.log("New lead received, refreshing...");
+          console.log("New service request received, refreshing...");
           fetchLeads();
         },
       )
@@ -359,34 +358,40 @@ export default function ProDashboard() {
 
   const handleAcceptLead = async (leadId: string) => {
     try {
-      const { data, error } = await supabase.rpc("accept_lead_and_lock_job", {
-        lead_id: leadId,
-      });
+      // 1. Attempt to lock the service request for this pro
+      const { data, error } = await supabase
+        .from("service_requests")
+        .update({
+          accepted_pro_id: user?.id,
+          status: "pending_quote", // or "accepted"
+        })
+        .eq("id", leadId)
+        .eq("status", "new") // ensures job is still open
+        .is("accepted_pro_id", null) // double protection
+        .select();
 
       if (error) throw error;
 
-      const result = typeof data === "string" ? JSON.parse(data) : data;
-
-      if (!result.success) {
+      if (!data || data.length === 0) {
         toast({
-          title: "Cannot Accept",
-          description: result.error,
+          title: "Request Already Taken",
+          description: "Another pro accepted this job first.",
           variant: "destructive",
         });
         return;
       }
 
       toast({
-        title: "Lead Accepted!",
-        description: "Job locked for 24 hours",
+        title: "Job Locked!",
+        description: "You can now send the customer a quote.",
       });
 
       fetchDashboardData();
     } catch (error) {
-      console.error("Error accepting lead:", error);
+      console.error("Error accepting service request:", error);
       toast({
         title: "Error",
-        description: "Failed to accept lead",
+        description: "Failed to accept request",
         variant: "destructive",
       });
     }
@@ -394,21 +399,25 @@ export default function ProDashboard() {
 
   const handleDeclineLead = async (leadId: string) => {
     try {
-      const { error } = await supabase.from("leads").update({ status: "declined" }).eq("id", leadId);
+      const { error } = await supabase
+        .from("service_requests")
+        .update({ status: "declined" })
+        .eq("id", leadId)
+        .eq("status", "new"); // Only decline if still open
 
       if (error) throw error;
 
       toast({
-        title: "Lead Declined",
-        description: "The lead has been declined",
+        title: "Request Declined",
+        description: "This request will no longer appear.",
       });
 
-      fetchLeads();
+      fetchLeads(); // Refresh list
     } catch (error) {
       console.error("Error declining lead:", error);
       toast({
         title: "Error",
-        description: "Failed to decline lead",
+        description: "Failed to decline request",
         variant: "destructive",
       });
     }
