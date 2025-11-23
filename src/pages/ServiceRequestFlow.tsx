@@ -18,8 +18,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Upload, MapPin, Home, Building2, ChevronLeft, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { accordionsData } from "@/data/serviceslist-detailed";
-import { GuidedServiceSelection } from "@/components/GuidedServiceSelection";
+import { accordionsData } from "@/data/serviceslist";
+import { GuidedServiceSelection, serviceFlow } from "@/components/GuidedServiceSelection";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -463,7 +463,16 @@ export default function ServiceRequestFlow() {
   const getSelectedServiceNames = () => {
     const names: string[] = [];
     
-    // Check in accordions data
+    // Check in the new guided selection flow
+    Object.values(serviceFlow).forEach((level) => {
+      level.options.forEach((option) => {
+        if (formData.service_category.includes(option.id)) {
+          names.push(option.name);
+        }
+      });
+    });
+    
+    // Also check in old accordions data for backward compatibility
     accordionsData.forEach((category) => {
       category.subItems.forEach((subItem) => {
         subItem.services.forEach((service) => {
