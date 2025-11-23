@@ -17,6 +17,22 @@ import { Building2, MapPin, CheckCircle, XCircle, Save, Edit, Search } from 'luc
 import { accordionsData } from '@/data/serviceslist-detailed';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
+const triggerGeocode = async (zip_code: string, address: string, user_id?: string) => {
+  try {
+    await fetch('/functions/v1/geocode_pro_profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        zip_code,
+        address,
+        pro_id: user_id
+      }),
+    });
+  } catch (e) {
+    console.error("Geocode failed:", e);
+  }
+};
+
 const proProfileSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(100, 'Name too long'),
   business_name: z.string().trim().min(1, 'Business name is required').max(100, 'Business name too long'),
@@ -220,6 +236,13 @@ export default function ProProfile() {
         });
 
       if (profileError) throw profileError;
+
+      const zipChanged = validatedData.zip_code !== profile?.zip_code;
+      const addressChanged = validatedData.address !== profile?.address;
+
+      if (zipChanged || addressChanged) {
+        await triggerGeocode(validatedData.zip_code || '', validatedData.address || '', user?.id);
+      }
 
       // Store selected services in notes field as JSON
       const servicesData = {
