@@ -1,32 +1,32 @@
-import { useState, useEffect } from 'react';
-import { Navigate, Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { useRole } from '@/hooks/useRole';
-import { supabase } from '@/integrations/supabase/client';
-import { Navigation } from '@/components/Navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Settings, 
-  DollarSign, 
-  CheckCircle, 
+import { useState, useEffect } from "react";
+import { Navigate, Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useRole } from "@/hooks/useRole";
+import { supabase } from "@/integrations/supabase/client";
+import { Navigation } from "@/components/Navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Settings,
+  DollarSign,
+  CheckCircle,
   Star,
-  Clock, 
-  MapPin, 
-  Car, 
+  Clock,
+  MapPin,
+  Car,
   Phone,
   MessageCircle,
   Calendar,
   TrendingUp,
-  Award
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { EarningsTab } from '@/components/pro/EarningsTab';
-import { QuoteConfirmation } from '@/components/pro/QuoteConfirmation';
-import { ProSelectedPayment } from '@/components/pro/ProSelectedPayment';
+  Award,
+} from "lucide-react";
+import { format } from "date-fns";
+import { EarningsTab } from "@/components/pro/EarningsTab";
+import { QuoteConfirmation } from "@/components/pro/QuoteConfirmation";
+import { ProSelectedPayment } from "@/components/pro/ProSelectedPayment";
 
 interface ServiceRequest {
   id: string;
@@ -41,6 +41,9 @@ interface ServiceRequest {
   notes?: string;
   status: string;
   urgency?: string;
+  created_at: string;
+  latitude?: number | null;
+  longitude?: number | null;
   service_categories: {
     name: string;
   };
@@ -48,7 +51,7 @@ interface ServiceRequest {
 
 interface Lead {
   id: string;
-  status: 'new' | 'accepted' | 'declined';
+  status: "new" | "accepted" | "declined";
   created_at: string;
   service_requests: ServiceRequest;
 }
@@ -88,11 +91,25 @@ interface EarningsData {
   totalFeesPaid: number;
   netEarnings: number;
 }
+function getDistanceMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3958.8; // Earth radius in miles
+  const toRad = (v: number) => (v * Math.PI) / 180;
+
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export default function ProDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { isPro, loading: roleLoading } = useRole();
-  const [activeTab, setActiveTab] = useState('new-requests');
+  const [activeTab, setActiveTab] = useState("new-requests");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [pendingQuotes, setPendingQuotes] = useState<PendingQuote[]>([]);
@@ -101,7 +118,7 @@ export default function ProDashboard() {
     completedJobs: 0,
     averageRating: 0,
     totalFeesPaid: 0,
-    netEarnings: 0
+    netEarnings: 0,
   });
   const [loading, setLoading] = useState(true);
   const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
@@ -117,9 +134,9 @@ export default function ProDashboard() {
   const checkProfileComplete = async () => {
     try {
       const { data, error } = await supabase
-        .from('pro_profiles')
-        .select('profile_complete')
-        .eq('pro_id', user?.id)
+        .from("pro_profiles")
+        .select("profile_complete")
+        .eq("pro_id", user?.id)
         .single();
 
       if (error) {
@@ -129,7 +146,7 @@ export default function ProDashboard() {
 
       setProfileComplete(data?.profile_complete || false);
     } catch (error) {
-      console.error('Error checking profile:', error);
+      console.error("Error checking profile:", error);
       setProfileComplete(false);
     }
   };
@@ -145,19 +162,19 @@ export default function ProDashboard() {
     if (!user || !isPro) return;
 
     const channel = supabase
-      .channel('leads-changes')
+      .channel("leads-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'leads',
-          filter: `pro_id=eq.${user.id}`
+          event: "INSERT",
+          schema: "public",
+          table: "leads",
+          filter: `pro_id=eq.${user.id}`,
         },
         () => {
-          console.log('New lead received, refreshing...');
+          console.log("New lead received, refreshing...");
           fetchLeads();
-        }
+        },
       )
       .subscribe();
 
@@ -183,14 +200,9 @@ export default function ProDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      await Promise.all([
-        fetchLeads(),
-        fetchJobs(),
-        fetchPendingQuotes(),
-        fetchEarnings()
-      ]);
+      await Promise.all([fetchLeads(), fetchJobs(), fetchPendingQuotes(), fetchEarnings()]);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error("Error fetching dashboard data:", error);
     } finally {
       setLoading(false);
     }
@@ -198,8 +210,9 @@ export default function ProDashboard() {
 
   const fetchPendingQuotes = async () => {
     const { data, error } = await supabase
-      .from('quotes')
-      .select(`
+      .from("quotes")
+      .select(
+        `
         id,
         estimated_price,
         description,
@@ -213,13 +226,14 @@ export default function ProDashboard() {
           year,
           urgency
         )
-      `)
-      .eq('pro_id', user?.id)
-      .eq('status', 'pending_confirmation')
-      .order('confirmation_timer_expires_at', { ascending: true });
+      `,
+      )
+      .eq("pro_id", user?.id)
+      .eq("status", "pending_confirmation")
+      .order("confirmation_timer_expires_at", { ascending: true });
 
     if (error) {
-      console.error('Error fetching pending quotes:', error);
+      console.error("Error fetching pending quotes:", error);
       return;
     }
 
@@ -227,45 +241,84 @@ export default function ProDashboard() {
   };
 
   const fetchLeads = async () => {
-    const { data, error } = await supabase
-      .from('leads')
-      .select(`
+    try {
+      // 1) Get pro location (lat/lon) from pro_profiles
+      const { data: profile, error: profileError } = await supabase
+        .from("pro_profiles")
+        .select("latitude, longitude")
+        .eq("pro_id", user?.id)
+        .single();
+
+      if (profileError) {
+        console.error("Error fetching pro location:", profileError);
+      }
+
+      // 2) Load open customer requests from service_requests
+      const { data, error } = await supabase
+        .from("service_requests")
+        .select(
+          `
         id,
+        vehicle_make,
+        model,
+        year,
+        address,
+        zip,
+        contact_email,
+        contact_phone,
+        appointment_pref,
+        notes,
         status,
         created_at,
-        service_requests (
-          id,
-          vehicle_make,
-          model,
-          year,
-          address,
-          zip,
-          contact_email,
-          contact_phone,
-          appointment_pref,
-          notes,
-          status,
-          service_categories (
-            name
-          )
+        urgency,
+        latitude,
+        longitude,
+        service_categories (
+          name
         )
-      `)
-      .eq('pro_id', user?.id)
-      .eq('status', 'new')
-      .order('created_at', { ascending: false });
+      `,
+        )
+        .eq("status", "new")
+        .is("accepted_pro_id", null)
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error('Error fetching leads:', error);
-      return;
+      if (error) {
+        console.error("Error fetching service requests:", error);
+        return;
+      }
+
+      // 3) Map raw requests into the Lead shape used by the UI
+      let mapped: Lead[] = (data || []).map((req: any) => ({
+        id: req.id,
+        status: "new",
+        created_at: req.created_at,
+        service_requests: req as ServiceRequest,
+      }));
+
+      // 4) If we have pro + request coordinates, apply 100-mile radius filter
+      if (profile?.latitude != null && profile?.longitude != null) {
+        mapped = mapped.filter((lead) => {
+          const r = lead.service_requests as any;
+          if (r.latitude == null || r.longitude == null) {
+            // If request has no coords, keep it visible
+            return true;
+          }
+          const distance = getDistanceMiles(profile.latitude, profile.longitude, r.latitude, r.longitude);
+          return distance <= 100;
+        });
+      }
+
+      setLeads(mapped);
+    } catch (err) {
+      console.error("Error in fetchLeads:", err);
     }
-
-    setLeads(data || []);
   };
 
   const fetchJobs = async () => {
     const { data, error } = await supabase
-      .from('service_requests')
-      .select(`
+      .from("service_requests")
+      .select(
+        `
         id,
         vehicle_make,
         model,
@@ -278,14 +331,15 @@ export default function ProDashboard() {
         referral_fees!inner (
           status
         )
-      `)
-      .eq('accepted_pro_id', user?.id)
-      .eq('referral_fees.status', 'paid')
-      .in('status', ['in_progress', 'scheduled', 'completed'])
-      .order('created_at', { ascending: false });
+      `,
+      )
+      .eq("accepted_pro_id", user?.id)
+      .eq("referral_fees.status", "paid")
+      .in("status", ["in_progress", "scheduled", "completed"])
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error('Error fetching jobs:', error);
+      console.error("Error fetching jobs:", error);
       return;
     }
 
@@ -299,88 +353,81 @@ export default function ProDashboard() {
       completedJobs: 1,
       averageRating: 5.0,
       totalFeesPaid: 16.25,
-      netEarnings: 308.75
+      netEarnings: 308.75,
     });
   };
 
   const handleAcceptLead = async (leadId: string) => {
     try {
-      const { data, error } = await supabase.rpc('accept_lead_and_lock_job', {
-        lead_id: leadId
+      const { data, error } = await supabase.rpc("accept_lead_and_lock_job", {
+        lead_id: leadId,
       });
 
       if (error) throw error;
 
-      const result = typeof data === 'string' ? JSON.parse(data) : data;
-      
+      const result = typeof data === "string" ? JSON.parse(data) : data;
+
       if (!result.success) {
         toast({
-          title: 'Cannot Accept',
+          title: "Cannot Accept",
           description: result.error,
-          variant: 'destructive'
+          variant: "destructive",
         });
         return;
       }
 
       toast({
-        title: 'Lead Accepted!',
-        description: 'Job locked for 24 hours'
+        title: "Lead Accepted!",
+        description: "Job locked for 24 hours",
       });
 
       fetchDashboardData();
     } catch (error) {
-      console.error('Error accepting lead:', error);
+      console.error("Error accepting lead:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to accept lead',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to accept lead",
+        variant: "destructive",
       });
     }
   };
 
   const handleDeclineLead = async (leadId: string) => {
     try {
-      const { error } = await supabase
-        .from('leads')
-        .update({ status: 'declined' })
-        .eq('id', leadId);
+      const { error } = await supabase.from("leads").update({ status: "declined" }).eq("id", leadId);
 
       if (error) throw error;
 
       toast({
-        title: 'Lead Declined',
-        description: 'The lead has been declined'
+        title: "Lead Declined",
+        description: "The lead has been declined",
       });
 
       fetchLeads();
     } catch (error) {
-      console.error('Error declining lead:', error);
+      console.error("Error declining lead:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to decline lead',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to decline lead",
+        variant: "destructive",
       });
     }
   };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      'new': { color: 'bg-blue-100 text-blue-800', text: 'New' },
-      'pending': { color: 'bg-yellow-100 text-yellow-800', text: 'Pending' },
-      'accepted': { color: 'bg-green-100 text-green-800', text: 'Accepted' },
-      'scheduled': { color: 'bg-purple-100 text-purple-800', text: 'Scheduled' },
-      'in_progress': { color: 'bg-orange-100 text-orange-800', text: 'In Progress' },
-      'completed': { color: 'bg-green-100 text-green-800', text: 'Completed' },
-      'cancelled': { color: 'bg-red-100 text-red-800', text: 'Cancelled' }
+      new: { color: "bg-blue-100 text-blue-800", text: "New" },
+      pending: { color: "bg-yellow-100 text-yellow-800", text: "Pending" },
+      accepted: { color: "bg-green-100 text-green-800", text: "Accepted" },
+      scheduled: { color: "bg-purple-100 text-purple-800", text: "Scheduled" },
+      in_progress: { color: "bg-orange-100 text-orange-800", text: "In Progress" },
+      completed: { color: "bg-green-100 text-green-800", text: "Completed" },
+      cancelled: { color: "bg-red-100 text-red-800", text: "Cancelled" },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    
-    return (
-      <Badge className={config.color}>
-        {config.text}
-      </Badge>
-    );
+
+    return <Badge className={config.color}>{config.text}</Badge>;
   };
 
   if (authLoading || roleLoading || loading) {
@@ -435,21 +482,17 @@ export default function ProDashboard() {
                       <CardHeader>
                         <div className="flex justify-between items-start">
                           <div>
-                            <CardTitle className="text-lg">
-                              {request.service_categories.name}
-                            </CardTitle>
+                            <CardTitle className="text-lg">{request.service_categories.name}</CardTitle>
                             <CardDescription className="flex items-center gap-2 mt-1">
                               <Car className="h-4 w-4" />
                               {request.year} {request.vehicle_make} {request.model}
                             </CardDescription>
                           </div>
                           <div className="flex flex-col items-end gap-2">
-                            {getStatusBadge('new')}
-                            <div className="text-sm text-muted-foreground">
-                              Budget: $200-400
-                            </div>
+                            {getStatusBadge("new")}
+                            <div className="text-sm text-muted-foreground">Budget: $200-400</div>
                             <div className="text-xs text-muted-foreground">
-                              Posted {format(new Date(lead.created_at), 'h:mm a')}
+                              Posted {format(new Date(lead.created_at), "h:mm a")}
                             </div>
                           </div>
                         </div>
@@ -461,7 +504,8 @@ export default function ProDashboard() {
                             <div>
                               <p className="font-medium">Location</p>
                               <p className="text-sm text-muted-foreground">
-                                {request.address} - {request.appointment_pref === 'mobile' ? 'Mobile Service' : 'Shop Service'}
+                                {request.address} -{" "}
+                                {request.appointment_pref === "mobile" ? "Mobile Service" : "Shop Service"}
                               </p>
                             </div>
                           </div>
@@ -470,7 +514,7 @@ export default function ProDashboard() {
                             <div>
                               <p className="font-medium">Urgency</p>
                               <p className="text-sm text-muted-foreground">
-                                {request.appointment_pref === 'asap' ? 'Immediate (ASAP)' : '1-2 days'}
+                                {request.appointment_pref === "asap" ? "Immediate (ASAP)" : "1-2 days"}
                               </p>
                             </div>
                           </div>
@@ -478,23 +522,15 @@ export default function ProDashboard() {
 
                         {request.notes && (
                           <div className="mb-4">
-                            <p className="text-sm">
-                              {request.notes}
-                            </p>
+                            <p className="text-sm">{request.notes}</p>
                           </div>
                         )}
 
                         <div className="flex gap-2 pt-4 border-t">
-                          <Button 
-                            onClick={() => handleDeclineLead(lead.id)}
-                            variant="outline"
-                          >
+                          <Button onClick={() => handleDeclineLead(lead.id)} variant="outline">
                             Decline
                           </Button>
-                          <Button 
-                            onClick={() => handleAcceptLead(lead.id)}
-                            className="bg-primary hover:bg-primary/90"
-                          >
+                          <Button onClick={() => handleAcceptLead(lead.id)} className="bg-primary hover:bg-primary/90">
                             Send Quote
                           </Button>
                         </div>
@@ -515,9 +551,7 @@ export default function ProDashboard() {
             {jobs.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">
-                    No active jobs. Accept some leads to get started!
-                  </p>
+                  <p className="text-muted-foreground">No active jobs. Accept some leads to get started!</p>
                 </CardContent>
               </Card>
             ) : (
@@ -527,17 +561,15 @@ export default function ProDashboard() {
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle className="text-lg">
-                            {job.service_categories.name}
-                          </CardTitle>
+                          <CardTitle className="text-lg">{job.service_categories.name}</CardTitle>
                           <CardDescription>
-                            Customer: {job.status === 'completed' ? 'Mike R.' : 'Lisa K.'}
+                            Customer: {job.status === "completed" ? "Mike R." : "Lisa K."}
                           </CardDescription>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           {getStatusBadge(job.status)}
                           <div className="text-lg font-semibold text-green-600">
-                            +${job.status === 'completed' ? '$45' : '$280'}
+                            +${job.status === "completed" ? "$45" : "$280"}
                           </div>
                         </div>
                       </div>
@@ -547,37 +579,31 @@ export default function ProDashboard() {
                         <div>
                           <p className="text-sm font-medium">Date</p>
                           <p className="text-sm text-muted-foreground">
-                            {job.status === 'completed' ? '12/7/2024' : '12/9/2024'}
+                            {job.status === "completed" ? "12/7/2024" : "12/9/2024"}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm font-medium">Earnings</p>
-                          <p className="text-sm text-green-600">
-                            ${job.status === 'completed' ? '$45' : '$280'}
-                          </p>
+                          <p className="text-sm text-green-600">${job.status === "completed" ? "$45" : "$280"}</p>
                         </div>
                         <div>
                           <p className="text-sm font-medium">Referral Fee</p>
-                          <p className="text-sm text-red-600">
-                            -${job.status === 'completed' ? '$2.25' : '$14'}
-                          </p>
+                          <p className="text-sm text-red-600">-${job.status === "completed" ? "$2.25" : "$14"}</p>
                         </div>
                         <div>
                           <p className="text-sm font-medium">Rating</p>
                           <div className="flex items-center gap-1">
                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm">
-                              {job.status === 'completed' ? '5/5' : 'Pending'}
-                            </span>
+                            <span className="text-sm">{job.status === "completed" ? "5/5" : "Pending"}</span>
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="text-sm text-muted-foreground">
-                        Net Earnings: ${job.status === 'completed' ? '$42.75' : '$266.00'}
+                        Net Earnings: ${job.status === "completed" ? "$42.75" : "$266.00"}
                       </div>
 
-                      {job.status === 'in_progress' && (
+                      {job.status === "in_progress" && (
                         <div className="flex gap-2 pt-4 border-t">
                           <Button variant="outline" className="flex items-center gap-2">
                             <MessageCircle className="h-4 w-4" />
