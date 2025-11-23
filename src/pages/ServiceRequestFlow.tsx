@@ -18,9 +18,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Upload, MapPin, Home, Building2, ChevronLeft, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { accordionsData } from "@/data/serviceslist-detailed";
-import { GuidedServiceSelection } from "@/components/GuidedServiceSelection";
-import { getServiceNamesByIds, mapServiceIdsToCategoryId } from "@/utils/serviceHelpers";
+import { accordionsData } from "@/data/serviceslist";
+import { GuidedServiceSelection, serviceFlow } from "@/components/GuidedServiceSelection";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -298,8 +297,37 @@ export default function ServiceRequestFlow() {
         throw new Error("No service categories available. Please contact support.");
       }
 
-      // Map selected service IDs to category_id using the helper function
-      const categoryId = mapServiceIdsToCategoryId(formData.service_category, categories) ?? categories[0].id;
+      // Map service ID prefixes to category names
+      // "1-x-x" services are under "Auto Repair", etc.
+      const getCategoryId = (serviceIds: string[]): string | null => {
+        if (!categories || categories.length === 0) return null;
+
+        // Look up service definitions from the selected service IDs
+        const matches: string[] = [];
+        
+        for (const serviceId of serviceIds) {
+          const parts = serviceId.split("-");
+          const categoryPrefix = parts[0];
+
+          const categoryNameMap: Record<string, string> = {
+            "1": "Auto Repair",
+            "2": "Oil Change",
+            "3": "Tire Service",
+            "4": "Car Wash",
+            "5": "Diagnostics"
+          };
+
+          const categoryName = categoryNameMap[categoryPrefix];
+          const matched = categories.find(c => c.name === categoryName);
+          if (matched) {
+            matches.push(matched.id);
+          }
+        }
+
+        return matches.length > 0 ? matches[0] : null;
+      };
+
+      const categoryId = getCategoryId(formData.service_category) ?? categories[0].id;
 
       console.log("Mapped category_id:", categoryId, "for services:", formData.service_category);
 
@@ -324,14 +352,11 @@ export default function ServiceRequestFlow() {
         // Fallback to LA coordinates if geocoding fails
       }
 
-      // Convert service IDs to human-readable names for storage
-      const serviceNames = getServiceNamesByIds(formData.service_category);
-
       const { error, data: request } = await supabase
         .from("service_requests")
         .insert({
           customer_id: user.id,
-          service_category: serviceNames,
+          service_category: formData.service_category,
           category_id: categoryId,
           year: formData.year,
           vehicle_make: formData.vehicle_make,
@@ -425,8 +450,40 @@ export default function ServiceRequestFlow() {
     setCurrentStep(step);
   };
 
+  const filteredAccordions = accordionsData.map((category) => ({
+    ...category,
+    subItems: category.subItems.map((subItem) => ({
+      ...subItem,
+      services: subItem.services.filter((service) =>
+        service.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    })).filter((subItem) => subItem.services.length > 0),
+  })).filter((category) => category.subItems.length > 0);
+
   const getSelectedServiceNames = () => {
-    return getServiceNamesByIds(formData.service_category);
+    const names: string[] = [];
+    
+    // Check in the new guided selection flow
+    Object.values(serviceFlow).forEach((level) => {
+      level.options.forEach((option) => {
+        if (formData.service_category.includes(option.id)) {
+          names.push(option.name);
+        }
+      });
+    });
+    
+    // Also check in old accordions data for backward compatibility
+    accordionsData.forEach((category) => {
+      category.subItems.forEach((subItem) => {
+        subItem.services.forEach((service) => {
+          if (formData.service_category.includes(service.id)) {
+            names.push(service.name);
+          }
+        });
+      });
+    });
+    
+    return names;
   };
 
   const renderStep = () => {
