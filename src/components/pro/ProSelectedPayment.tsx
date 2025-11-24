@@ -6,7 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/hooks/use-toast";
 import { DollarSign, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ReferralFee {
   id: string;
@@ -35,19 +44,19 @@ export function ProSelectedPayment() {
   useEffect(() => {
     fetchPendingPayments();
 
-    // Subscribe to real-time updates
+    // Real-time updates
     const channel = supabase
-      .channel('referral-fees-changes')
+      .channel("referral-fees-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'referral_fees'
+          event: "UPDATE",
+          schema: "public",
+          table: "referral_fees",
         },
         () => {
           fetchPendingPayments();
-        }
+        },
       )
       .subscribe();
 
@@ -58,12 +67,15 @@ export function ProSelectedPayment() {
 
   const fetchPendingPayments = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
         .from("referral_fees")
-        .select(`
+        .select(
+          `
           id,
           amount,
           status,
@@ -78,7 +90,8 @@ export function ProSelectedPayment() {
               address
             )
           )
-        `)
+        `,
+        )
         .eq("pro_id", user.id)
         .eq("status", "pending")
         .order("created_at", { ascending: false });
@@ -96,23 +109,22 @@ export function ProSelectedPayment() {
     setProcessingPayment(fee.id);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("Not authenticated");
-      }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      // Create checkout session
-      const { data, error } = await supabase.functions.invoke('create-referral-checkout', {
+      if (!session) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.functions.invoke("create-referral-checkout", {
         body: { quote_id: fee.quote_id },
         headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) throw error;
 
       if (data?.url) {
-        // Redirect to Stripe checkout
         window.location.href = data.url;
       } else {
         throw new Error("No checkout URL received");
@@ -131,7 +143,7 @@ export function ProSelectedPayment() {
   const calculateFeeBreakdown = (quoteAmount: number, feeAmount: number) => {
     const percentage = ((feeAmount / quoteAmount) * 100).toFixed(1);
     const netEarnings = quoteAmount - feeAmount;
-    
+
     let tierInfo = "";
     if (quoteAmount < 1000) tierInfo = "5% (Min $5, Max $50)";
     else if (quoteAmount < 5000) tierInfo = "3% (Min $50, Max $150)";
@@ -149,17 +161,16 @@ export function ProSelectedPayment() {
     );
   }
 
-  if (referralFees.length === 0) {
-    return null;
-  }
+  // No pending fees → do not show component
+  if (referralFees.length === 0) return null;
 
   return (
     <div className="space-y-4">
       <Alert>
         <CheckCircle className="h-4 w-4" />
         <AlertDescription>
-          🎉 Congratulations! You've been selected for {referralFees.length} job{referralFees.length > 1 ? 's' : ''}. 
-          Pay the referral fee below to confirm.
+          🎉 Congratulations! You've been selected for {referralFees.length} job
+          {referralFees.length > 1 ? "s" : ""}. Pay the referral fee below to confirm.
         </AlertDescription>
       </Alert>
 
@@ -167,7 +178,7 @@ export function ProSelectedPayment() {
         const request = fee.quotes?.service_requests;
         const { percentage, netEarnings, tierInfo } = calculateFeeBreakdown(
           fee.quotes?.estimated_price || 0,
-          fee.amount
+          fee.amount,
         );
 
         return (
@@ -183,20 +194,17 @@ export function ProSelectedPayment() {
                 <Badge className="bg-green-100 text-green-800">Selected</Badge>
               </div>
             </CardHeader>
-            
+
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Your Quote</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    ${fee.quotes?.estimated_price.toFixed(2)}
-                  </p>
+                  <p className="text-2xl font-bold text-foreground">${fee.quotes?.estimated_price.toFixed(2)}</p>
                 </div>
+
                 <div>
                   <p className="text-sm text-muted-foreground">Referral Fee ({percentage}%)</p>
-                  <p className="text-2xl font-bold text-primary">
-                    ${fee.amount.toFixed(2)}
-                  </p>
+                  <p className="text-2xl font-bold text-primary">${fee.amount.toFixed(2)}</p>
                 </div>
               </div>
 
@@ -252,9 +260,7 @@ export function ProSelectedPayment() {
               <p>You're about to pay the referral fee to confirm this job.</p>
               {selectedFee && (
                 <>
-                  <p className="font-semibold text-foreground">
-                    Referral Fee: ${selectedFee.amount.toFixed(2)}
-                  </p>
+                  <p className="font-semibold text-foreground">Referral Fee: ${selectedFee.amount.toFixed(2)}</p>
                   <p className="text-sm">
                     After payment, the customer will be notified to schedule the appointment with you.
                   </p>
@@ -262,6 +268,7 @@ export function ProSelectedPayment() {
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
+
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
