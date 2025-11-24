@@ -235,12 +235,16 @@ export default function ServiceRequests() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'assigned': return 'bg-blue-100 text-blue-800';
+      case 'quote_requested': return 'bg-yellow-100 text-yellow-800';
+      case 'pending_confirmation': return 'bg-blue-100 text-blue-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'in_progress': return 'bg-purple-100 text-purple-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'declined': return 'bg-gray-100 text-gray-800';
+      case 'expired': return 'bg-orange-100 text-orange-800';
+      case 'cancelled_by_customer':
+      case 'cancelled_after_requote':
+      case 'cancelled_off_platform': return 'bg-red-100 text-red-800';
+      case 'no_show': return 'bg-amber-100 text-amber-800';
+      case 'completed': return 'bg-emerald-100 text-emerald-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -436,11 +440,13 @@ export default function ServiceRequests() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All Status</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="assigned">Assigned</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="quote_requested">Awaiting Quotes</SelectItem>
+                          <SelectItem value="pending_confirmation">Pending Confirmation</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
                           <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                          <SelectItem value="expired">Expired</SelectItem>
+                          <SelectItem value="declined">Declined</SelectItem>
+                          <SelectItem value="cancelled_by_customer">Cancelled</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
