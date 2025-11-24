@@ -149,22 +149,27 @@ export default function ProProfile() {
   // -----------------------------------------------------
   // HANDLERS
   // -----------------------------------------------------
-  const handleServiceToggle = (id: string, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      selectedServices: checked ? [...prev.selectedServices, id] : prev.selectedServices.filter((x) => x !== id),
-    }));
-  };
+  const handleSelectService = (id: string, checked: boolean) => {
+  setFormData((prev) => ({
+    ...prev,
+    selectedServices: checked
+      ? [...prev.selectedServices, id]
+      : prev.selectedServices.filter((x) => x !== id),
+  }));
+};
 
-  const handleSelectAllInSubItem = (subItem: any, checked: boolean) => {
-    const ids = subItem.services.map((s: any) => s.id);
-    setFormData((prev) => ({
-      ...prev,
-      selectedServices: checked
-        ? [...new Set([...prev.selectedServices, ...ids])]
-        : prev.selectedServices.filter((id) => !ids.includes(id)),
-    }));
-  };
+
+  const handleSelectSubCategory = (sub: any, checked: boolean) => {
+  const ids = sub.services.map((s: any) => s.id);
+
+  setFormData((prev) => ({
+    ...prev,
+    selectedServices: checked
+      ? Array.from(new Set([...prev.selectedServices, ...ids]))
+      : prev.selectedServices.filter((id) => !ids.includes(id)),
+  }));
+};
+
 
   const handleSelectAllInAccordion = (accordion: any, checked: boolean) => {
     const ids = accordion.subItems.flatMap((sub: any) => sub.services.map((s: any) => s.id));
@@ -561,109 +566,149 @@ export default function ProProfile() {
               {isEditing ? (
                 <div className="space-y-4">
                   {/* SEARCH */}
-                  <div className="space-y-2">
-                    <Label>Search Services</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        className="pl-10"
-                        placeholder="Search..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-                  </div>
+<div className="space-y-2">
+  <Label>Search Services</Label>
+  <div className="relative">
+    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <Input
+      className="pl-10"
+      placeholder="Search..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+    />
+  </div>
+</div>
 
-                  {/* SERVICE LIST */}
-                  <div className="border rounded-lg max-h-96 overflow-y-auto">
-                    <Accordion type="multiple">
-                      {filteredAccordions.map((acc) => {
-                        const allIds = acc.subItems.flatMap((s: any) => s.services.map((x: any) => x.id));
+{/* FILTERED ACCORDIONS */}
+{(() => {
+  const normalizedSearch = searchTerm.toLowerCase().trim();
 
-                        const allSelected =
-                          allIds.length > 0 && allIds.every((id) => formData.selectedServices.includes(id));
+  const filteredAccordions = accordionsData
+    .map((accordion) => {
+      const filteredSub = accordion.subItems
+        .map((sub) => {
+          const filteredServices = sub.services.filter((service) =>
+            service.name.toLowerCase().includes(normalizedSearch)
+          );
+          return { ...sub, services: filteredServices };
+        })
+        .filter((sub) => sub.services.length > 0);
 
-                        const someSelected = allIds.some((id) => formData.selectedServices.includes(id));
+      return { ...accordion, subItems: filteredSub };
+    })
+    .filter((acc) => acc.subItems.length > 0);
 
-                        return (
-                          <AccordionItem key={acc.title} value={acc.title}>
-                            <AccordionTrigger>
-                              <div className="flex items-center gap-2">
-                                <Checkbox
-                                  checked={allSelected}
-                                  ref={(el) => {
-                                    if (el) {
-                                      const input = el.querySelector("input");
-                                      if (input) input.indeterminate = someSelected && !allSelected;
-                                    }
-                                  }}
-                                  onCheckedChange={(checked) => handleSelectAllInAccordion(acc, checked as boolean)}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                                {acc.title}
-                              </div>
-                            </AccordionTrigger>
+  return (
+    <div className="border rounded-lg max-h-96 overflow-y-auto">
+      <Accordion type="multiple">
+        {filteredAccordions.map((acc) => {
+          const accServiceIds = acc.subItems.flatMap((sub) =>
+            sub.services.map((svc) => svc.id)
+          );
 
-                            <AccordionContent>
-                              <div className="px-4 pb-2">
-                                {acc.subItems.map((sub: any) => {
-                                  const subIds = sub.services.map((s: any) => s.id);
+          const allSelected =
+            accServiceIds.length > 0 &&
+            accServiceIds.every((id) =>
+              formData.selectedServices.includes(id)
+            );
 
-                                  const allSubSelected =
-                                    subIds.length > 0 && subIds.every((id) => formData.selectedServices.includes(id));
-                                  const someSubSelected = subIds.some((id) => formData.selectedServices.includes(id));
+          const someSelected = accServiceIds.some((id) =>
+            formData.selectedServices.includes(id)
+          );
 
-                                  return (
-                                    <div key={sub.title} className="mb-2">
-                                      <div className="flex items-center gap-2">
-                                        <Checkbox
-                                          checked={allSubSelected}
-                                          ref={(el) => {
-                                            if (el) {
-                                              const input = el.querySelector("input");
-                                              if (input) input.indeterminate = someSubSelected && !allSubSelected;
-                                            }
-                                          }}
-                                          onCheckedChange={(checked) =>
-                                            handleSelectAllInSubItem(sub, checked as boolean)
-                                          }
-                                        />
-                                        <span className="font-medium text-sm text-muted-foreground">{sub.title}</span>
-                                      </div>
-
-                                      <div className="pl-8 mt-2 space-y-1">
-                                        {sub.services.map((service: any) => (
-                                          <div key={service.id} className="flex items-center gap-2">
-                                            <Checkbox
-                                              checked={formData.selectedServices.includes(service.id)}
-                                              onCheckedChange={(checked) =>
-                                                handleServiceToggle(service.id, checked as boolean)
-                                              }
-                                            />
-                                            <Label className="cursor-pointer text-sm">{service.name}</Label>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        );
-                      })}
-                    </Accordion>
-                  </div>
-
-                  <p className="text-xs text-muted-foreground">Selected: {formData.selectedServices.length}</p>
+          return (
+            <AccordionItem key={acc.title} value={acc.title}>
+              <AccordionTrigger>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={allSelected}
+                    ref={(el) => {
+                      if (el) {
+                        const input = el.querySelector("input");
+                        if (input)
+                          input.indeterminate =
+                            someSelected && !allSelected;
+                      }
+                    }}
+                    onCheckedChange={(checked) =>
+                      handleSelectAllInAccordion(acc, checked as boolean)
+                    }
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  {acc.title}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">{formData.selectedServices.length} service(s) selected</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </RoleGuard>
+              </AccordionTrigger>
+
+              <AccordionContent>
+                <div className="px-4 pb-2 space-y-3">
+                  {acc.subItems.map((sub) => {
+                    const subIds = sub.services.map((svc) => svc.id);
+
+                    const subAllSelected =
+                      subIds.length > 0 &&
+                      subIds.every((id) =>
+                        formData.selectedServices.includes(id)
+                      );
+
+                    const subSomeSelected = subIds.some((id) =>
+                      formData.selectedServices.includes(id)
+                    );
+
+                    return (
+                      <div key={sub.title} className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={subAllSelected}
+                            ref={(el) => {
+                              if (el) {
+                                const input = el.querySelector("input");
+                                if (input)
+                                  input.indeterminate =
+                                    subSomeSelected &&
+                                    !subAllSelected;
+                              }
+                            }}
+                            onCheckedChange={(checked) =>
+                              handleSelectSubCategory(
+                                sub,
+                                checked as boolean
+                              )
+                            }
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <span className="font-medium">{sub.title}</span>
+                        </div>
+
+                        <div className="pl-6 space-y-1">
+                          {sub.services.map((svc) => (
+                            <div
+                              key={svc.id}
+                              className="flex items-center gap-2"
+                            >
+                              <Checkbox
+                                checked={formData.selectedServices.includes(
+                                  svc.id
+                                )}
+                                onCheckedChange={(checked) =>
+                                  handleSelectService(
+                                    svc.id,
+                                    checked as boolean
+                                  )
+                                }
+                              />
+                              {svc.name}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
+    </div>
   );
-}
+})()}
