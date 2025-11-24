@@ -277,17 +277,19 @@ export function QuoteForm({ requestId, onSuccess }: QuoteFormProps) {
     return <div className="text-center py-3 text-sm text-destructive">Failed to load details</div>;
   }
 
-  // Get specific service name (map service_category codes to names, then fallback to category name)
+  // Get specific service name (map service_category codes to names, then fallback to raw codes or category name)
   const getServiceDisplayName = () => {
-    // First, try to map service codes to actual service names
     if (requestDetails.service_category && requestDetails.service_category.length > 0) {
+      // First, try to map service codes to actual service names
       const mappedNames = getServiceNames(requestDetails.service_category);
       if (mappedNames) {
         return mappedNames;
       }
+      // If mapping fails, show the raw service codes so pro knows what to quote
+      return requestDetails.service_category.join(', ');
     }
     
-    // Fallback to generic category name
+    // Final fallback to generic category name
     return requestDetails.service_categories?.name || "Service Request";
   };
 

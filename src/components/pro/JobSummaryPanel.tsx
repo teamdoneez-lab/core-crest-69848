@@ -76,9 +76,11 @@ export function JobSummaryPanel({
           <h4 className="text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
             Customer Notes
           </h4>
-          <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-            {serviceDescription || customerNotes}
-          </p>
+          <div className="max-h-24 overflow-y-auto">
+            <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+              {serviceDescription || customerNotes}
+            </p>
+          </div>
         </div>
       )}
 
@@ -91,8 +93,8 @@ export function JobSummaryPanel({
             </h4>
           </div>
           
-          <div className="grid grid-cols-3 gap-2">
-            {photoUrls.slice(0, 6).map((url, index) => (
+          <div className="grid grid-cols-4 gap-2">
+            {photoUrls.slice(0, 8).map((url, index) => (
               <div
                 key={index}
                 className="group relative aspect-square rounded-md overflow-hidden border border-border cursor-pointer hover:ring-2 hover:ring-primary transition-all"
@@ -109,9 +111,9 @@ export function JobSummaryPanel({
               </div>
             ))}
           </div>
-          {photoUrls.length > 6 && (
+          {photoUrls.length > 8 && (
             <p className="text-xs text-muted-foreground mt-2">
-              +{photoUrls.length - 6} more photos
+              +{photoUrls.length - 8} more photos
             </p>
           )}
         </div>
