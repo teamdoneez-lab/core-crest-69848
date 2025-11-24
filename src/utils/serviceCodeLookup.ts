@@ -12,6 +12,59 @@ accordionsData.forEach((category) => {
   });
 });
 
+// Add guided selection service codes (rep-XXX format)
+const guidedServiceCodes = new Map<string, string>([
+  // Engine
+  ['rep-001', 'Engine Diagnostics'],
+  ['rep-002', 'Engine Tune-Up / Repair'],
+  ['rep-003', 'Timing Belt / Chain Replacement'],
+  ['rep-004', 'Oil Leaks / Gasket Repair'],
+  ['rep-005', 'Cooling System Repair (Radiator, Water Pump, Hoses)'],
+  ['rep-006', 'Fuel System Repairs (Injectors, Fuel Pump, Filters)'],
+  // Brakes
+  ['rep-101', 'Brake Pad / Shoe Replacement'],
+  ['rep-102', 'Brake Rotor / Drum Replacement'],
+  ['rep-103', 'Brake Fluid Flush'],
+  ['rep-104', 'Brake Lines & Hoses Repair'],
+  ['rep-105', 'ABS System Repair'],
+  // Electrical
+  ['rep-201', 'Battery Replacement & Testing'],
+  ['rep-202', 'Starter / Alternator Repair'],
+  ['rep-203', 'Wiring & Fuses Repair'],
+  ['rep-204', 'Lighting Repair (Headlights, Taillights, Interior)'],
+  ['rep-205', 'Sensor Diagnostics'],
+  // HVAC
+  ['rep-301', 'AC Recharge / Repair'],
+  ['rep-302', 'Heater Core Replacement'],
+  ['rep-303', 'Climate Control Diagnostics'],
+  ['rep-304', 'Cabin Airflow / Blower Motor Repair'],
+  // Steering & Suspension
+  ['rep-401', 'Shock & Strut Replacement'],
+  ['rep-402', 'Steering Rack / Power Steering Repair'],
+  ['rep-403', 'Ball Joints / Tie Rods Replacement'],
+  ['rep-404', 'Wheel Alignment & Suspension Diagnostics'],
+  // Transmission
+  ['rep-501', 'Transmission Repair / Replacement'],
+  ['rep-502', 'Clutch Replacement (Manual)'],
+  ['rep-503', 'Drive Shaft / Axle Repair'],
+  ['rep-504', 'Differential / Transfer Case Service'],
+  // Exhaust
+  ['rep-601', 'Muffler / Exhaust Pipe Repair'],
+  ['rep-602', 'Catalytic Converter Replacement'],
+  ['rep-603', 'Oxygen Sensor Replacement'],
+  ['rep-604', 'Emissions Diagnostics / Repairs'],
+  // EV & Hybrid
+  ['rep-701', 'Battery Pack Diagnostics & Repair'],
+  ['rep-702', 'Electric Motor Service'],
+  ['rep-703', 'Regenerative Braking System Repair'],
+  ['rep-704', 'Charging System Repair'],
+]);
+
+// Merge guided codes into the main map
+guidedServiceCodes.forEach((name, code) => {
+  serviceCodeMap.set(code, name);
+});
+
 /**
  * Get service name(s) from service code(s)
  * @param codes - Single code string or array of codes
