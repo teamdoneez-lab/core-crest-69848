@@ -712,3 +712,25 @@ export default function ProProfile() {
     </div>
   );
 })()}
+                </div> {/* end of space-y-4 */}
+              ) : (
+                <div className="space-y-2">
+                  {formData.selectedServices.length > 0 ? (
+                    <ul className="list-disc pl-5">
+                      {formData.selectedServices.map((svc) => (
+                        <li key={svc}>{svc}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No services selected</p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+        </div> {/* end max-w-4xl */}
+      </div> {/* end background */}
+    </RoleGuard>
+  );
+}
