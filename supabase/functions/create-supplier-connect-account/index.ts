@@ -13,154 +13,77 @@ serve(async (req) => {
   }
 
   try {
-    // Get auth token
+    // Auth
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header");
-    }
+    if (!authHeader) throw new Error("No authorization header");
 
-    // Initialize Supabase client with auth token for RLS
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: authHeader },
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") || "",
+      Deno.env.get("SUPABASE_ANON_KEY") || "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) throw new Error("User not authenticated");
+
+    // Lookup supplier
+    const { data: supplier, error: supplierError } =
+      await supabase.from("suppliers").select("*").eq("user_id", user.id).maybeSingle();
+
+    if (supplierError) throw new Error(supplierError.message);
+    if (!supplier) throw new Error("Supplier record not found");
+    if (supplier.status !== "approved") throw new Error("Supplier must be approved first");
+
+    // Stripe
+    const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecret) throw new Error("Missing STRIPE_SECRET_KEY");
+
+    const stripe = new Stripe(stripeSecret, {
+      apiVersion: "2024-06-20",
+    });
+
+    let accountId = supplier.stripe_connect_account_id;
+
+    // Create STANDARD connect account
+    if (!accountId) {
+      const account = await stripe.accounts.create({
+        type: "standard",
+        country: "US",
+        email: supplier.email,
+        business_type: "company",
+        company: {
+          name: supplier.business_name,
         },
-      }
-    );
-
-    // Verify user authentication
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    
-    if (userError || !user) {
-      console.error("Authentication error:", userError);
-      throw new Error("User not authenticated");
-    }
-
-    console.log("Looking up supplier for user:", user.id);
-
-    // Get supplier record
-    const { data: supplier, error: supplierError } = await supabaseClient
-      .from('suppliers')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (supplierError) {
-      console.error("Error fetching supplier:", supplierError);
-      throw new Error(`Database error: ${supplierError.message}`);
-    }
-
-    if (!supplier) {
-      console.error("No supplier record found for user:", user.id);
-      throw new Error("Supplier record not found. Please complete supplier application first.");
-    }
-
-    console.log("Found supplier:", supplier.id, "Status:", supplier.status);
-
-    if (supplier.status !== 'approved') {
-      throw new Error("Supplier account must be approved before setting up Stripe");
-    }
-
-    // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2025-08-27.basil",
-    });
-
-    // FORCE FRESH EXPRESS ACCOUNT CREATION
-    // Delete any existing stripe_account_id to ensure we create a new Express account
-    if (supplier.stripe_connect_account_id) {
-      console.log("Removing old Stripe account ID:", supplier.stripe_connect_account_id);
-      await supabaseClient
-        .from('suppliers')
-        .update({ stripe_connect_account_id: null, stripe_onboarding_complete: false })
-        .eq('id', supplier.id);
-    }
-
-    // Create NEW Stripe Express account (minimal required fields only)
-    console.log("Creating NEW Express account for supplier:", supplier.email);
-    const account = await stripe.accounts.create({
-      type: "express",
-      country: "US",
-      email: supplier.email,
-      capabilities: {
-        transfers: { requested: true },
-      },
-    });
-
-    console.log("✅ STRIPE ACCOUNT CREATED - TYPE:", account.type, "ID:", account.id);
-
-    // Check account status immediately after creation
-    const accountStatus = await stripe.accounts.retrieve(account.id);
-    console.log("Account status:", accountStatus.requirements?.disabled_reason, "Charges enabled:", accountStatus.charges_enabled);
-
-    // Check if account is rejected or restricted
-    if (accountStatus.requirements?.disabled_reason) {
-      const reason = accountStatus.requirements.disabled_reason;
-      console.error("❌ STRIPE ACCOUNT REJECTED/RESTRICTED:", reason);
-      
-      // Clean up the rejected account from our database
-      await supabaseClient
-        .from('suppliers')
-        .update({ stripe_connect_account_id: null, stripe_onboarding_complete: false })
-        .eq('id', supplier.id);
-      
-      // Provide user-friendly error messages
-      let userMessage = "Your Stripe account setup was unsuccessful. ";
-      if (reason === 'rejected.fraud' || reason === 'rejected.terms_of_service' || reason === 'rejected.other') {
-        userMessage += "Stripe has rejected this account. This may be due to previous violations or fraud detection. Please contact Stripe support or try with a different email address.";
-      } else if (reason.includes('listed')) {
-        userMessage += "Your business type or location may not be supported. Please contact support for assistance.";
-      } else {
-        userMessage += `Reason: ${reason}. Please contact support for assistance.`;
-      }
-      
-      throw new Error(userMessage);
-    }
-
-    // Save the new Express account ID
-    await supabaseClient
-      .from('suppliers')
-      .update({ stripe_connect_account_id: account.id })
-      .eq('id', supplier.id);
-
-    // Create Express account onboarding link
-    const origin = req.headers.get("origin") || "http://localhost:5173";
-    
-    try {
-      const accountLink = await stripe.accountLinks.create({
-        account: account.id,
-        refresh_url: `${origin}/supplier/stripe/refresh`,
-        return_url: `${origin}/supplier/stripe/complete`,
-        type: "account_onboarding",
       });
 
-      console.log("✅ EXPRESS ONBOARDING LINK CREATED:", accountLink.url);
-      
-      return new Response(JSON.stringify({ url: accountLink.url }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    } catch (linkError: any) {
-      console.error("❌ ERROR CREATING ACCOUNT LINK:", linkError.message);
-      
-      // If account link creation fails, provide specific guidance
-      if (linkError.message.includes('rejected')) {
-        throw new Error("Your Stripe account has been rejected. Please check your Stripe dashboard or contact Stripe support. You may need to use a different email address.");
-      }
-      throw linkError;
+      accountId = account.id;
+
+      await supabase
+        .from("suppliers")
+        .update({ stripe_connect_account_id: accountId })
+        .eq("id", supplier.id);
     }
 
-  } catch (error) {
-    console.error("Error creating Stripe Connect account:", error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to create Stripe Connect account";
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    // Create onboarding link
+    const origin = req.headers.get("origin") || "https://www.doneez.com";
+
+    const link = await stripe.accountLinks.create({
+      account: accountId,
+      type: "account_onboarding",
+      refresh_url: `${origin}/supplier-dashboard?stripe_refresh=true`,
+      return_url: `${origin}/supplier-dashboard?stripe_success=true`,
+    });
+
+    return new Response(JSON.stringify({ url: link.url }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (err) {
+    console.error("Stripe Setup Error:", err);
+    return new Response(JSON.stringify({ error: `${err}` }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
