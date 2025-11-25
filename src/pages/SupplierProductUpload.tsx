@@ -60,16 +60,20 @@ export default function SupplierProductUpload() {
 
   const fetchPlatformSupplier = async () => {
     try {
+      // Query for the DoneEZ platform supplier specifically
       const { data, error } = await supabase
         .from('suppliers')
         .select('id')
         .eq('is_platform_seller', true)
+        .eq('business_name', 'DoneEZ')
+        .eq('status', 'approved')
         .maybeSingle();
 
       if (!error && data) {
         setPlatformSupplierId(data.id);
+        console.log('DoneEZ platform supplier found:', data.id);
       } else if (!error && !data) {
-        // Create platform supplier if it doesn't exist
+        // Create DoneEZ platform supplier if it doesn't exist
         const { data: newSupplier, error: insertError } = await supabase
           .from('suppliers')
           .insert({
@@ -91,10 +95,11 @@ export default function SupplierProductUpload() {
 
         if (!insertError && newSupplier) {
           setPlatformSupplierId(newSupplier.id);
+          console.log('DoneEZ platform supplier created:', newSupplier.id);
         }
       }
     } catch (error) {
-      console.error('Error fetching platform supplier:', error);
+      console.error('Error fetching DoneEZ platform supplier:', error);
     }
   };
 

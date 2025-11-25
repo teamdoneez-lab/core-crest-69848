@@ -153,58 +153,60 @@ export default function AdminProductForm() {
 
   const fetchPlatformSupplier = async () => {
     try {
-      // Query for platform supplier - handle multiple by taking the first one
+      // Query for the DoneEZ platform supplier specifically
       const { data, error } = await supabase
         .from('suppliers')
         .select('id')
         .eq('is_platform_seller', true)
-        .order('created_at', { ascending: true })
-        .limit(1);
+        .eq('business_name', 'DoneEZ')
+        .eq('status', 'approved')
+        .single();
 
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setPlatformSupplierId(data[0].id);
-      } else {
-        // If platform supplier doesn't exist, try to create it
-        const { data: newSupplier, error: createError } = await supabase
-          .from('suppliers')
-          .insert({
-            business_name: 'DoneEZ',
-            contact_name: 'DoneEZ Platform',
-            business_address: 'Platform Headquarters',
-            city: 'Online',
-            state: 'CA',
-            zip: '00000',
-            email: 'platform@doneez.com',
-            phone: '0000000000',
-            is_platform_seller: true,
-            stripe_connect_account_id: null,
-            status: 'approved',
-          })
-          .select('id')
-          .single();
+      if (error) {
+        // If not found, create it
+        if (error.code === 'PGRST116') {
+          const { data: newSupplier, error: createError } = await supabase
+            .from('suppliers')
+            .insert({
+              business_name: 'DoneEZ',
+              contact_name: 'DoneEZ Platform',
+              business_address: 'Platform Headquarters',
+              city: 'Online',
+              state: 'CA',
+              zip: '00000',
+              email: 'platform@doneez.com',
+              phone: '0000000000',
+              is_platform_seller: true,
+              stripe_connect_account_id: null,
+              status: 'approved',
+              stripe_onboarding_complete: true,
+            })
+            .select('id')
+            .single();
 
-        if (createError) {
-          console.error('Error creating platform supplier:', createError);
-          toast({
-            title: 'Error',
-            description: 'Failed to create platform supplier',
-            variant: 'destructive',
-          });
+          if (createError) {
+            console.error('Error creating DoneEZ platform supplier:', createError);
+            toast({
+              title: 'Error',
+              description: 'Failed to create DoneEZ platform supplier',
+              variant: 'destructive',
+            });
+          } else {
+            setPlatformSupplierId(newSupplier.id);
+            console.log('DoneEZ platform supplier created:', newSupplier.id);
+          }
         } else {
-          setPlatformSupplierId(newSupplier.id);
-          toast({
-            title: 'Success',
-            description: 'Platform supplier created successfully',
-          });
+          throw error;
         }
+      } else if (data) {
+        setPlatformSupplierId(data.id);
+        console.log('DoneEZ platform supplier found:', data.id);
       }
     } catch (error) {
-      console.error('Error fetching platform supplier:', error);
+      console.error('Error fetching DoneEZ platform supplier:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load platform supplier',
+        description: 'Failed to load DoneEZ platform supplier',
         variant: 'destructive',
       });
     }
