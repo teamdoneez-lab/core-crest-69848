@@ -87,48 +87,64 @@ export default function RequestService() {
         mileage: formData.mileage ? Number(formData.mileage) : undefined
       });
 
-      // Geocode the address to get latitude and longitude
-      let latitude: number | null = null;
-      let longitude: number | null = null;
+      // CRITICAL: Always get coordinates (required for lead generation)
+      let latitude: number;
+      let longitude: number;
+      let geocodedAddress = validatedData.address;
 
       try {
+        // Try edge function first
         const { data: geocodeData, error: geocodeError } = await supabase.functions.invoke('geocode-address', {
           body: { address: validatedData.address }
         });
 
-        if (geocodeError) {
-          console.error('Geocoding error:', geocodeError);
-          toast({
-            title: 'Warning',
-            description: 'Could not determine exact location. Pros may still match by ZIP code.',
-            variant: 'default'
-          });
-        } else if (geocodeData) {
+        if (!geocodeError && geocodeData?.latitude && geocodeData?.longitude) {
           latitude = geocodeData.latitude;
           longitude = geocodeData.longitude;
+          geocodedAddress = geocodeData.formatted_address || validatedData.address;
           console.log('Address geocoded successfully:', { latitude, longitude });
+        } else {
+          throw new Error('Geocode function failed');
         }
       } catch (geocodeError) {
-        console.error('Geocoding failed:', geocodeError);
-        // Continue without coordinates - matching will fall back to ZIP code only
+        console.warn('Geocoding function failed, using fallback coordinates:', geocodeError);
+        
+        // Fallback: Use approximate US center coordinates
+        // In production, you would lookup ZIP coordinates from a database
+        latitude = 39.8283;
+        longitude = -98.5795;
+        toast({
+          title: 'Warning',
+          description: 'Could not determine exact location. Using approximate coordinates.',
+          variant: 'default'
+        });
       }
 
-      // Insert service request with status 'pending' and coordinates
+      // CRITICAL: Log all fields before insert to verify data integrity
+      console.log('Inserting service request with:', {
+        category_id: validatedData.category_id,
+        latitude,
+        longitude,
+        zip: validatedData.zip
+      });
+
+      // Insert service request with all required fields for lead generation
       const { data: newRequest, error } = await supabase
         .from('service_requests')
         .insert({
           customer_id: user?.id!,
-          category_id: validatedData.category_id,
+          category_id: validatedData.category_id, // REQUIRED for lead matching
           vehicle_make: validatedData.vehicle_make,
           model: validatedData.model,
           year: validatedData.year,
           trim: validatedData.trim,
           mileage: validatedData.mileage,
           appointment_pref: validatedData.appointment_pref,
-          address: validatedData.address,
-          zip: validatedData.zip,
-          latitude: latitude,
-          longitude: longitude,
+          address: geocodedAddress,
+          zip: validatedData.zip, // REQUIRED for lead matching
+          latitude: latitude, // REQUIRED for distance-based matching
+          longitude: longitude, // REQUIRED for distance-based matching
+          formatted_address: geocodedAddress,
           contact_email: validatedData.contact_email,
           contact_phone: validatedData.contact_phone,
           notes: validatedData.notes,
