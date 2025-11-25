@@ -604,11 +604,13 @@ export function SuppliersTab() {
                   {filteredProducts.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell>
-                        <div>
+                      <div>
                           <div className="font-medium flex items-center gap-2">
                             {product.suppliers.business_name}
                             {product.suppliers.is_platform_seller && (
-                              <Badge variant="default" className="text-xs">Platform</Badge>
+                              <Badge variant="default" className="text-xs bg-primary text-primary-foreground">
+                                Platform-Owned
+                              </Badge>
                             )}
                           </div>
                           {!product.suppliers.stripe_onboarding_complete && !product.suppliers.is_platform_seller && (
