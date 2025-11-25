@@ -55,10 +55,10 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         </p>
         
         {product.sellerName && (
-          <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 mb-2 text-xs">
             <Store className="h-3.5 w-3.5" />
-            <span>
-              Sold by <span className="font-medium text-foreground">{product.sellerName}</span>
+            <span className={product.isPlatformSeller ? 'font-medium text-primary' : 'text-muted-foreground'}>
+              {product.isPlatformSeller ? '✓ ' : ''}Sold by <span className="font-medium">{product.sellerName}</span>
             </span>
           </div>
         )}

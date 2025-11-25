@@ -81,48 +81,62 @@ serve(async (req) => {
     );
 
     // Check if cart has mixed sellers (platform + vendors or multiple vendors)
-    const hasPlatformItems = cartItems.some((item: CartItem) => item.isPlatformSeller);
-    const hasVendorItems = cartItems.some((item: CartItem) => !item.isPlatformSeller);
+    const DONEEZ_SUPPLIER_ID = 'a52d5eb4-0504-482f-b87d-c7aedce36fda';
+    const hasPlatformItems = cartItems.some((item: CartItem) => 
+      item.isPlatformSeller || item.supplierId === DONEEZ_SUPPLIER_ID
+    );
+    const hasVendorItems = cartItems.some((item: CartItem) => 
+      !item.isPlatformSeller && item.supplierId !== DONEEZ_SUPPLIER_ID
+    );
     
     if (hasPlatformItems && hasVendorItems) {
       throw new Error("Cannot checkout with items from both DoneEZ and vendors. Please checkout separately.");
     }
 
-    // Get supplier info if vendor items
+    // Get supplier info if vendor items (skip for DoneEZ platform seller)
     let stripeConnectAccountId: string | undefined;
     let platformFeePercent = 0.15; // 15% platform fee for vendor sales
     
     if (hasVendorItems) {
       const supplierId = cartItems[0].supplierId;
       
-      // Verify all items are from same vendor
-      const allSameVendor = cartItems.every((item: CartItem) => item.supplierId === supplierId);
-      if (!allSameVendor) {
-        throw new Error("Cannot checkout with items from multiple vendors. Please checkout separately.");
+      // Skip Stripe Connect logic if this is the DoneEZ platform seller
+      if (supplierId === DONEEZ_SUPPLIER_ID) {
+        console.log("Processing DoneEZ platform order - no Stripe Connect needed");
+      } else {
+        // Verify all items are from same vendor
+        const allSameVendor = cartItems.every((item: CartItem) => item.supplierId === supplierId);
+        if (!allSameVendor) {
+          throw new Error("Cannot checkout with items from multiple vendors. Please checkout separately.");
+        }
+
+        // Fetch supplier's Stripe Connect account
+        const adminClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+        );
+
+        const { data: supplier, error: supplierError } = await adminClient
+          .from("suppliers")
+          .select("stripe_connect_account_id, stripe_onboarding_complete, is_platform_seller")
+          .eq("id", supplierId)
+          .single();
+
+        if (supplierError || !supplier) {
+          throw new Error("Supplier not found");
+        }
+
+        // Skip Stripe Connect requirements for platform seller
+        if (!supplier.is_platform_seller) {
+          if (!supplier.stripe_onboarding_complete || !supplier.stripe_connect_account_id) {
+            throw new Error("Vendor has not completed Stripe setup. Please try another vendor.");
+          }
+          stripeConnectAccountId = supplier.stripe_connect_account_id;
+          console.log("Processing vendor payment to connected account:", stripeConnectAccountId);
+        } else {
+          console.log("Platform seller detected - processing direct payment");
+        }
       }
-
-      // Fetch supplier's Stripe Connect account
-      const adminClient = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-      );
-
-      const { data: supplier, error: supplierError } = await adminClient
-        .from("suppliers")
-        .select("stripe_connect_account_id, stripe_onboarding_complete")
-        .eq("id", supplierId)
-        .single();
-
-      if (supplierError || !supplier) {
-        throw new Error("Supplier not found");
-      }
-
-      if (!supplier.stripe_onboarding_complete || !supplier.stripe_connect_account_id) {
-        throw new Error("Vendor has not completed Stripe setup. Please try another vendor.");
-      }
-
-      stripeConnectAccountId = supplier.stripe_connect_account_id;
-      console.log("Processing vendor payment to connected account:", stripeConnectAccountId);
     }
 
     // Create line items for Stripe

@@ -60,43 +60,21 @@ export default function SupplierProductUpload() {
 
   const fetchPlatformSupplier = async () => {
     try {
-      // Query for the DoneEZ platform supplier specifically
+      // Use the official DoneEZ platform supplier ID
+      const DONEEZ_SUPPLIER_ID = 'a52d5eb4-0504-482f-b87d-c7aedce36fda';
+      
+      // Verify it exists
       const { data, error } = await supabase
         .from('suppliers')
-        .select('id')
-        .eq('is_platform_seller', true)
-        .eq('business_name', 'DoneEZ')
-        .eq('status', 'approved')
+        .select('id, business_name, is_platform_seller')
+        .eq('id', DONEEZ_SUPPLIER_ID)
         .maybeSingle();
 
       if (!error && data) {
-        setPlatformSupplierId(data.id);
-        console.log('DoneEZ platform supplier found:', data.id);
-      } else if (!error && !data) {
-        // Create DoneEZ platform supplier if it doesn't exist
-        const { data: newSupplier, error: insertError } = await supabase
-          .from('suppliers')
-          .insert({
-            user_id: null,
-            business_name: 'DoneEZ',
-            contact_name: 'DoneEZ Platform',
-            email: 'platform@doneez.com',
-            phone: '1-800-DONEEZ',
-            business_address: 'Platform Address',
-            city: 'Platform City',
-            state: 'CA',
-            zip: '00000',
-            status: 'approved',
-            is_platform_seller: true,
-            stripe_onboarding_complete: true,
-          })
-          .select('id')
-          .single();
-
-        if (!insertError && newSupplier) {
-          setPlatformSupplierId(newSupplier.id);
-          console.log('DoneEZ platform supplier created:', newSupplier.id);
-        }
+        setPlatformSupplierId(DONEEZ_SUPPLIER_ID);
+        console.log('Using DoneEZ platform supplier:', DONEEZ_SUPPLIER_ID);
+      } else {
+        console.error('DoneEZ platform supplier not found');
       }
     } catch (error) {
       console.error('Error fetching DoneEZ platform supplier:', error);

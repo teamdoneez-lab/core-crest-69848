@@ -288,10 +288,10 @@ export default function ProductDetailPage() {
                 </Badge>
                 {product.sellerName && (
                   <Badge 
-                    variant="outline" 
-                    className={product.isPlatformSeller ? 'bg-primary/10 text-primary border-primary/20' : ''}
+                    variant={product.isPlatformSeller ? 'default' : 'outline'}
+                    className={product.isPlatformSeller ? 'bg-primary text-primary-foreground' : ''}
                   >
-                    Sold by {product.sellerName}
+                    {product.isPlatformSeller ? '✓ ' : ''}Sold by {product.sellerName}
                   </Badge>
                 )}
               </div>

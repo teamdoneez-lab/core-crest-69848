@@ -153,55 +153,38 @@ export default function AdminProductForm() {
 
   const fetchPlatformSupplier = async () => {
     try {
-      // Query for the DoneEZ platform supplier specifically
+      // Use the official DoneEZ platform supplier ID
+      const DONEEZ_SUPPLIER_ID = 'a52d5eb4-0504-482f-b87d-c7aedce36fda';
+      
+      // Verify it exists and is correctly configured
       const { data, error } = await supabase
         .from('suppliers')
-        .select('id')
-        .eq('is_platform_seller', true)
-        .eq('business_name', 'DoneEZ')
-        .eq('status', 'approved')
+        .select('id, business_name, is_platform_seller, status')
+        .eq('id', DONEEZ_SUPPLIER_ID)
         .single();
 
-      if (error) {
-        // If not found, create it
-        if (error.code === 'PGRST116') {
-          const { data: newSupplier, error: createError } = await supabase
-            .from('suppliers')
-            .insert({
-              business_name: 'DoneEZ',
-              contact_name: 'DoneEZ Platform',
-              business_address: 'Platform Headquarters',
-              city: 'Online',
-              state: 'CA',
-              zip: '00000',
-              email: 'platform@doneez.com',
-              phone: '0000000000',
-              is_platform_seller: true,
-              stripe_connect_account_id: null,
-              status: 'approved',
-              stripe_onboarding_complete: true,
-            })
-            .select('id')
-            .single();
-
-          if (createError) {
-            console.error('Error creating DoneEZ platform supplier:', createError);
-            toast({
-              title: 'Error',
-              description: 'Failed to create DoneEZ platform supplier',
-              variant: 'destructive',
-            });
-          } else {
-            setPlatformSupplierId(newSupplier.id);
-            console.log('DoneEZ platform supplier created:', newSupplier.id);
-          }
-        } else {
-          throw error;
-        }
-      } else if (data) {
-        setPlatformSupplierId(data.id);
-        console.log('DoneEZ platform supplier found:', data.id);
+      if (error || !data) {
+        console.error('DoneEZ platform supplier not found:', error);
+        toast({
+          title: 'Error',
+          description: 'DoneEZ platform supplier not found. Please run setup-doneez-platform-supplier.sql',
+          variant: 'destructive',
+        });
+        return;
       }
+
+      // Verify it's properly configured
+      if (!data.is_platform_seller || data.status !== 'approved') {
+        console.warn('DoneEZ supplier misconfigured:', data);
+        toast({
+          title: 'Warning',
+          description: 'DoneEZ supplier exists but is not properly configured',
+          variant: 'destructive',
+        });
+      }
+
+      setPlatformSupplierId(DONEEZ_SUPPLIER_ID);
+      console.log('Using DoneEZ platform supplier:', DONEEZ_SUPPLIER_ID);
     } catch (error) {
       console.error('Error fetching DoneEZ platform supplier:', error);
       toast({
