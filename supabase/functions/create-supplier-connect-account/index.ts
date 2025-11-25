@@ -43,8 +43,27 @@ serve(async (req) => {
     });
 
     let accountId = supplier.stripe_connect_account_id;
+    let needsNewAccount = false;
 
-    // Create STANDARD connect account
+    // Check if existing account is rejected or restricted
+    if (accountId) {
+      try {
+        const existingAccount = await stripe.accounts.retrieve(accountId);
+        if (existingAccount.charges_enabled === false || 
+            existingAccount.payouts_enabled === false ||
+            existingAccount.requirements?.disabled_reason) {
+          console.log(`Account ${accountId} is rejected/restricted, creating new account`);
+          needsNewAccount = true;
+          accountId = null;
+        }
+      } catch (err) {
+        console.log(`Failed to retrieve account ${accountId}, creating new account:`, err);
+        needsNewAccount = true;
+        accountId = null;
+      }
+    }
+
+    // Create STANDARD connect account if needed
     if (!accountId) {
       const account = await stripe.accounts.create({
         type: "standard",
@@ -60,7 +79,10 @@ serve(async (req) => {
 
       await supabase
         .from("suppliers")
-        .update({ stripe_connect_account_id: accountId })
+        .update({ 
+          stripe_connect_account_id: accountId,
+          stripe_onboarding_complete: false 
+        })
         .eq("id", supplier.id);
     }
 
