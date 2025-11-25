@@ -42,6 +42,8 @@ interface ServiceRequest {
   urgency?: string;
   address: string;
   zip: string;
+  latitude?: number;
+  longitude?: number;
   contact_email: string;
   contact_phone: string;
   status: string;
@@ -106,7 +108,7 @@ export default function ServiceRequests() {
         return;
       }
 
-      // Get pro's profile to find their location
+      // Get pro's profile to find their location (for distance display only)
       const { data: proProfile, error: proError } = await supabase
         .from('pro_profiles')
         .select('latitude, longitude')
@@ -117,55 +119,83 @@ export default function ServiceRequests() {
         console.error('Error fetching pro profile:', proError);
       }
 
-      // Build query with filters
-      let query = supabase
-        .from('service_requests')
+      // Query leads table first, then join to service_requests
+      // This ensures we only see requests where we have a lead
+      let leadsQuery = supabase
+        .from('leads')
         .select(`
-          *,
-          service_categories (
-            name
-          ),
-          quotes!quotes_request_id_fkey (
+          request_id,
+          service_requests!inner (
             id,
+            vehicle_make,
+            model,
+            year,
+            trim,
+            mileage,
+            appointment_pref,
+            urgency,
+            address,
+            zip,
+            contact_email,
+            contact_phone,
             status,
-            pro_id
+            notes,
+            image_url,
+            created_at,
+            latitude,
+            longitude,
+            service_categories (
+              name
+            ),
+            quotes!quotes_request_id_fkey (
+              id,
+              status,
+              pro_id
+            )
           )
-        `, { count: 'exact' });
+        `, { count: 'exact' })
+        .eq('pro_id', user.id);
 
-      // Apply status filter
+      // Apply status filter on service_requests
       if (filters.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
+        leadsQuery = leadsQuery.eq('service_requests.status', filters.status);
       }
 
-      // Apply date filters
+      // Apply date filters on service_requests
       if (filters.dateFrom) {
-        query = query.gte('created_at', new Date(filters.dateFrom).toISOString());
+        leadsQuery = leadsQuery.gte('service_requests.created_at', new Date(filters.dateFrom).toISOString());
       }
       
       if (filters.dateTo) {
         const endDate = new Date(filters.dateTo);
         endDate.setHours(23, 59, 59, 999);
-        query = query.lte('created_at', endDate.toISOString());
+        leadsQuery = leadsQuery.lte('service_requests.created_at', endDate.toISOString());
       }
 
-      // If location filter is active, fetch all results for client-side distance filtering
-      // Otherwise use server-side pagination
+      // Fetch data with pagination
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+      
+      const { data: leadsData, error, count } = await leadsQuery
+        .order('service_requests(created_at)', { ascending: false })
+        .range(from, to);
+
+      if (error) {
+        console.error('Error fetching service requests via leads:', error);
+        setLoading(false);
+        return;
+      }
+
+      // Transform the data structure: extract service_requests from leads
+      const transformedRequests = (leadsData || [])
+        .map(lead => lead.service_requests)
+        .filter(Boolean) as ServiceRequest[];
+
+      // If location filter is active, apply client-side distance filtering
       if (filters.location && proProfile?.latitude && proProfile?.longitude) {
-        // Fetch all results with a high limit for location filtering
-        const { data: allData, error, count } = await query
-          .order('created_at', { ascending: false })
-          .limit(10000); // Fetch up to 10,000 results
-
-        if (error) {
-          console.error('Error fetching service requests:', error);
-          setLoading(false);
-          return;
-        }
-
         const radiusMiles = 100;
         
-        // Apply radius filtering
-        const filteredData = (allData || []).filter(request => {
+        const filteredData = transformedRequests.filter(request => {
           if (!request.latitude || !request.longitude) return false;
           
           // Calculate distance using Haversine formula
@@ -183,30 +213,10 @@ export default function ServiceRequests() {
           return distance <= radiusMiles;
         });
 
-        // Apply pagination to filtered results
-        const totalFiltered = filteredData.length;
-        const from = (currentPage - 1) * itemsPerPage;
-        const to = from + itemsPerPage;
-        const paginatedData = filteredData.slice(from, to);
-
-        setRequests(paginatedData);
-        setTotalCount(totalFiltered);
+        setRequests(filteredData);
+        setTotalCount(filteredData.length);
       } else {
-        // Use server-side pagination when no location filtering
-        const from = (currentPage - 1) * itemsPerPage;
-        const to = from + itemsPerPage - 1;
-        
-        const { data, error, count } = await query
-          .order('created_at', { ascending: false })
-          .range(from, to);
-
-        if (error) {
-          console.error('Error fetching service requests:', error);
-          setLoading(false);
-          return;
-        }
-
-        setRequests(data || []);
+        setRequests(transformedRequests);
         setTotalCount(count || 0);
       }
     } catch (error) {
