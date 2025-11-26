@@ -226,6 +226,40 @@ export default function SupplierDashboard() {
     }
   };
 
+  const handleClearStripeAccount = async () => {
+    if (!supplier?.id) return;
+    
+    setStripeLoading(true);
+    try {
+      const { error } = await supabase
+        .from('suppliers')
+        .update({ 
+          stripe_connect_account_id: null,
+          stripe_onboarding_complete: false 
+        })
+        .eq('id', supplier.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Stripe Account Cleared",
+        description: "You can now restart the Stripe setup process.",
+      });
+
+      // Refresh supplier data
+      await fetchSupplierData();
+    } catch (error) {
+      console.error('Error clearing Stripe account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear Stripe account. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       approved: 'default',
@@ -364,9 +398,22 @@ export default function SupplierDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={handleStripeSetup} disabled={stripeLoading}>
-              {stripeLoading ? 'Connecting...' : 'Complete Stripe Setup'}
-            </Button>
+            <div className="flex gap-3">
+              <Button onClick={handleStripeSetup} disabled={stripeLoading}>
+                {stripeLoading ? 'Connecting...' : 'Complete Stripe Setup'}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleClearStripeAccount} 
+                disabled={stripeLoading}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Reset Account
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground mt-3">
+              If you're experiencing issues with a rejected Stripe account, click "Reset Account" to clear it and start fresh.
+            </p>
           </CardContent>
         </Card>
       )}
