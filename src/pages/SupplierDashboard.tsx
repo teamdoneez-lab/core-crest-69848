@@ -276,7 +276,11 @@ export default function SupplierDashboard() {
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      
+      // If session is missing, user is already logged out - treat as success
+      if (error && error.message !== 'Auth session missing!') {
+        throw error;
+      }
       
       toast({
         title: "Logged out successfully",
@@ -286,10 +290,11 @@ export default function SupplierDashboard() {
       navigate('/auth');
     } catch (error) {
       console.error('Error logging out:', error);
+      // Even if logout fails, redirect to auth page to prevent stuck state
+      navigate('/auth');
       toast({
-        title: "Logout failed",
-        description: "There was an error logging out. Please try again.",
-        variant: "destructive",
+        title: "Logged out",
+        description: "You have been logged out.",
       });
     }
   };
