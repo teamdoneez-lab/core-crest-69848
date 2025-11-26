@@ -119,183 +119,110 @@ export default function SupplierProductUpload() {
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      toast({ title: 'Error', description: 'Please select a file', variant: 'destructive' });
-      return;
-    }
+  if (!file) {
+    toast({
+      title: 'Error',
+      description: 'Please select a file',
+      variant: 'destructive'
+    });
+    return;
+  }
 
-    setLoading(true);
-    try {
-      // Get supplier ID
-      let supplierId: string;
-      
-      if (soldByPlatform && platformSupplierId) {
-        supplierId = platformSupplierId;
-      } else {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Not authenticated');
+  setLoading(true);
 
-        const { data: supplier, error: supplierError } = await supabase
-          .from('suppliers')
-          .select('id, status')
-          .eq('user_id', user.id)
-          .single();
+  try {
+    // Get supplier ID
+    let supplierId: string;
 
-        if (supplierError) throw supplierError;
-        if (supplier.status !== 'approved') {
-          toast({ 
-            title: 'Error', 
-            description: 'Your supplier account must be approved first', 
-            variant: 'destructive' 
-          });
-          return;
-        }
-        supplierId = supplier.id;
+    if (soldByPlatform && platformSupplierId) {
+      supplierId = platformSupplierId;
+    } else {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: supplier, error: supplierError } = await supabase
+        .from('suppliers')
+        .select('id, status')
+        .eq('user_id', user.id)
+        .single();
+
+      if (supplierError) throw supplierError;
+
+      if (supplier.status !== 'approved') {
+        toast({
+          title: 'Error',
+          description: 'Your supplier account must be approved first',
+          variant: 'destructive'
+        });
+        return;
       }
 
-      // Parse CSV
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async (results) => {
-          const products: ProductRow[] = results.data as ProductRow[];
-          
-          if (products.length === 0) {
-            toast({ title: 'Error', description: 'No products found in CSV', variant: 'destructive' });
-            return;
-          }
-
-          // Validate and insert products
-          const productsToInsert = products.map(product => ({
-            supplier_id: supplierId,
-            sku: product.sku,
-            part_name: product.part_name,
-            oem_cross_ref: product.oem_cross_ref || null,
-            condition: product.condition,
-            warranty_months: parseInt(String(product.warranty_months)) || 0,
-            price: parseFloat(String(product.price)),
-            quantity: parseInt(String(product.quantity)),
-            category: product.category,
-            region: product.region || null,
-            image_url: product.image_url || null,
-            description: product.description || null,
-            is_active: true,
-            admin_approved: false,
-          }));
-
-          const { error: insertError } = await supabase
-            .from('supplier_products')
-            .insert(productsToInsert);
-
-          if (insertError) throw insertError;
-
-          toast({ 
-            title: 'Success!', 
-            description: `Uploaded ${products.length} products. They will be visible after admin approval.` 
-          });
-          navigate('/supplier-dashboard');
-        },
-        error: (error) => {
-          console.error('CSV parsing error:', error);
-          toast({ title: 'Error', description: 'Failed to parse CSV file', variant: 'destructive' });
-        }
-      });
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } finally {
-      setLoading(false);
+      supplierId = supplier.id;
     }
-  };
 
-  return (
-    <div className="container max-w-3xl py-10">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <FileSpreadsheet className="h-8 w-8 text-primary" />
-            <div>
-              <CardTitle className="text-2xl">Upload Product Inventory</CardTitle>
-              <CardDescription>
-                Upload your product catalog via CSV file
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            {isAdmin && platformSupplierId && (
-              <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                <Switch
-                  id="platform-seller"
-                  checked={soldByPlatform}
-                  onCheckedChange={setSoldByPlatform}
-                />
-                <div className="flex-1">
-                  <Label htmlFor="platform-seller" className="text-base font-semibold cursor-pointer">
-                    Sold by Platform (DoneEZ)
-                  </Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Enable this to list products under the platform's name. No Stripe Connect setup required.
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={downloadTemplate}>
-                <Download className="mr-2 h-4 w-4" />
-                Download CSV Template
-              </Button>
-            </div>
+    // Convert Papa.parse into a synchronous promise
+    const parseCSV = (file: File) =>
+      new Promise<any[]>((resolve, reject) => {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => resolve(results.data),
+          error: (err) => reject(err)
+        });
+      });
 
-            <div className="border-2 border-dashed rounded-lg p-8 text-center space-y-4">
-              <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
-              <div>
-                <p className="text-lg font-medium">Upload CSV File</p>
-                <p className="text-sm text-muted-foreground">
-                  Drag and drop or click to browse
-                </p>
-              </div>
-              <input
-                type="file"
-                accept=".csv,text/csv,application/vnd.ms-excel,application/csv"
-                onChange={handleFileChange}
-                className="hidden"
-                id="csv-upload"
-              />
-              <label htmlFor="csv-upload">
-                <Button variant="outline" asChild>
-                  <span>Select CSV File</span>
-                </Button>
-              </label>
-              {file && (
-                <p className="text-sm text-muted-foreground">
-                  Selected: {file.name}
-                </p>
-              )}
-            </div>
-          </div>
+    const parsedRows = await parseCSV(file);
 
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold">CSV Requirements:</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Required columns: sku, part_name, condition, price, quantity, category</li>
-              <li>Condition must be: new, refurbished, or used</li>
-              <li>Price in decimal format (e.g., 199.99)</li>
-              <li>Products will require admin approval before going live</li>
-            </ul>
-          </div>
+    if (!parsedRows || parsedRows.length === 0) {
+      throw new Error('No products found in CSV');
+    }
 
-          <Button 
-            onClick={handleUpload} 
-            disabled={!file || loading} 
-            className="w-full"
-          >
-            {loading ? 'Uploading...' : 'Upload Products'}
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+    // Build safe product rows
+    const productsToInsert = parsedRows.map((product: any) => ({
+      supplier_id: supplierId,
+      sku: product.sku?.trim(),
+      part_name: product.part_name?.trim(),
+      condition: product.condition?.trim(),
+      price: parseFloat(product.price),
+      quantity: parseInt(product.quantity),
+      category: product.category?.trim(),
+
+      // Optional fields — only included if present
+      oem_cross_ref: product.oem_cross_ref || null,
+      warranty_months: product.warranty_months ? parseInt(product.warranty_months) : 0,
+      region: product.region || null,
+      image_url: product.image_url || null,
+      description: product.description || null,
+
+      is_active: true,
+      admin_approved: false
+    }));
+
+    // Insert to Supabase
+    const { error: insertError } = await supabase
+      .from('supplier_products')
+      .insert(productsToInsert);
+
+    if (insertError) {
+      console.error('Insert error:', insertError);
+      throw new Error(insertError.message);
+    }
+
+    toast({
+      title: 'Success!',
+      description: `Uploaded ${productsToInsert.length} products. They will appear after admin approval.`
+    });
+
+    navigate('/supplier-dashboard');
+
+  } catch (error: any) {
+    console.error('Upload error:', error);
+    toast({
+      title: 'Upload failed',
+      description: error.message || 'Unknown error',
+      variant: 'destructive'
+    });
+  } finally {
+    setLoading(false);
+  }
+};
