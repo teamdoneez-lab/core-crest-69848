@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Package, DollarSign, TrendingUp, AlertCircle, Upload, ShoppingCart, CheckCircle, LogOut, RefreshCw } from 'lucide-react';
+import { Package, DollarSign, TrendingUp, AlertCircle, Upload, ShoppingCart, CheckCircle, LogOut, RefreshCw, Edit } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
+import { ProductEditModal } from '@/components/supplier/ProductEditModal';
 
 interface SupplierData {
   id: string;
@@ -33,6 +34,7 @@ interface SupplierProduct {
   is_active: boolean;
   created_at: string;
   description?: string;
+  images?: string[];
 }
 
 export default function SupplierDashboard() {
@@ -44,6 +46,7 @@ export default function SupplierDashboard() {
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(true);
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<SupplierProduct | null>(null);
   const [stats, setStats] = useState({
     totalProducts: 0,
     activeProducts: 0,
@@ -540,6 +543,7 @@ export default function SupplierDashboard() {
                         <TableHead>Price</TableHead>
                         <TableHead>Quantity</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -569,6 +573,16 @@ export default function SupplierDashboard() {
                             </span>
                           </TableCell>
                           <TableCell>{getProductStatusBadge(product)}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingProduct(product)}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -601,6 +615,18 @@ export default function SupplierDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {editingProduct && (
+        <ProductEditModal
+          open={!!editingProduct}
+          onOpenChange={(open) => !open && setEditingProduct(null)}
+          product={editingProduct}
+          onSuccess={() => {
+            fetchProducts();
+            setEditingProduct(null);
+          }}
+        />
+      )}
     </div>
   );
 }
