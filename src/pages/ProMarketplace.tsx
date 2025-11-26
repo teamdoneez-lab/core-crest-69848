@@ -73,12 +73,19 @@ export default function ProMarketplace() {
         
         // Get the first valid image from either images array or image_url
         let productImage = fallbackImage;
+        let productImages: string[] = [];
         const productAny = product as any; // Temporary until migration is run
         if (productAny.images && Array.isArray(productAny.images) && productAny.images.length > 0) {
-          const firstValidImage = productAny.images.find((img: string) => isValidImageUrl(img));
-          if (firstValidImage) productImage = firstValidImage;
+          const validImages = productAny.images.filter((img: string) => isValidImageUrl(img));
+          if (validImages.length > 0) {
+            productImages = validImages;
+            productImage = validImages[0];
+          }
         } else if (isValidImageUrl(product.image_url)) {
           productImage = product.image_url;
+          productImages = [product.image_url];
+        } else {
+          productImages = [fallbackImage];
         }
         
         return {
@@ -87,6 +94,7 @@ export default function ProMarketplace() {
           price: Number(product.price),
           category: product.category,
           image: productImage,
+          images: productImages,
           description: product.description || '',
           inStock: (product.quantity || 0) > 0,
           sku: product.sku,

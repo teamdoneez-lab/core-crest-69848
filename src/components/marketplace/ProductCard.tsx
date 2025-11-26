@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Product } from '@/contexts/CartContext';
-import { ShoppingCart, Store } from 'lucide-react';
+import { ShoppingCart, Store, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProductCardProps {
   product: Product;
@@ -12,19 +14,79 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const productHandle = product.id;
+  const images = product.images && product.images.length > 0 ? product.images : [product.image];
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const hasMultipleImages = images.length > 1;
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
 
   return (
     <Card className="h-full flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
-      <Link to={`/pro-marketplace/product/${productHandle}`} className="block">
+      <Link to={`/pro-marketplace/product/${productHandle}`} className="block group">
         <div className="aspect-square relative overflow-hidden bg-muted">
           <img
-            src={product.image}
-            alt={product.name}
+            src={images[currentImageIndex]}
+            alt={`${product.name} - Image ${currentImageIndex + 1}`}
             loading="lazy"
-            className={`w-full h-full object-cover transition-transform hover:scale-105 ${
-              !product.inStock ? 'grayscale opacity-60' : ''
-            }`}
+            className={cn(
+              "w-full h-full object-cover transition-transform group-hover:scale-105",
+              !product.inStock && "grayscale opacity-60"
+            )}
           />
+          
+          {/* Navigation Arrows */}
+          {hasMultipleImages && (
+            <>
+              <button
+                onClick={handlePrevImage}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background text-foreground rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={handleNextImage}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background text-foreground rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </>
+          )}
+
+          {/* Image Indicators */}
+          {hasMultipleImages && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {images.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCurrentImageIndex(index);
+                  }}
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full transition-all",
+                    index === currentImageIndex
+                      ? "bg-primary w-4"
+                      : "bg-background/60 hover:bg-background/80"
+                  )}
+                  aria-label={`View image ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
+
           {!product.inStock && (
             <Badge 
               variant="destructive" 
