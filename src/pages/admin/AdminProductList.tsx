@@ -1,88 +1,81 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Navigation } from '@/components/Navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { Search, Plus, Pencil, Trash2, Package, Upload } from 'lucide-react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { RoleGuard } from '@/components/RoleGuard';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Product {
   id: string;
-  part_name: string;
   sku: string;
+  part_name: string;
   price: number;
-  quantity: number;
   category: string;
-  image_url: string | null;
-  is_active: boolean;
+  images: string[] | null;
+  created_at: string;
 }
 
 export default function AdminProductList() {
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [platformSupplierId, setPlatformSupplierId] = useState<string | null>(null);
 
+  // Load platform supplier
   useEffect(() => {
     fetchPlatformSupplier();
   }, []);
 
+  // Load products after supplier ID is known
   useEffect(() => {
-    if (platformSupplierId) {
-      fetchProducts();
-    }
+    if (platformSupplierId) fetchProducts();
   }, [platformSupplierId]);
 
   const fetchPlatformSupplier = async () => {
     try {
       const { data, error } = await supabase
-        .from('suppliers')
-        .select('id')
-        .eq('is_platform_seller', true)
+        .from("suppliers")
+        .select("id")
+        .eq("is_platform_seller", true)
         .maybeSingle();
 
       if (error) throw error;
-      if (data) {
-        setPlatformSupplierId(data.id);
-      }
+
+      if (data) setPlatformSupplierId(data.id);
     } catch (error) {
-      console.error('Error fetching platform supplier:', error);
+      console.error("Error loading supplier:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to load platform supplier',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load platform supplier.",
+        variant: "destructive",
       });
     }
   };
 
   const fetchProducts = async () => {
-    if (!platformSupplierId) return;
-    
     try {
       setLoading(true);
+
       const { data, error } = await supabase
-        .from('supplier_products')
-        .select('*')
-        .eq('supplier_id', platformSupplierId)
-        .order('created_at', { ascending: false });
+        .from("supplier_products")
+        .select("id, sku, part_name, price, category, images, created_at")
+        .eq("supplier_id", platformSupplierId!)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
+
       setProducts(data || []);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error("Error loading products:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to load products',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load products.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -93,166 +86,101 @@ export default function AdminProductList() {
     if (!deleteProduct) return;
 
     try {
-      const { error } = await supabase
-        .from('supplier_products')
-        .delete()
-        .eq('id', deleteProduct.id);
+      const { error } = await supabase.from("supplier_products").delete().eq("id", deleteProduct.id);
 
       if (error) throw error;
 
       toast({
-        title: 'Success',
-        description: 'Product deleted successfully',
+        title: "Success",
+        description: "Product deleted successfully.",
       });
-      
+
       fetchProducts();
       setDeleteProduct(null);
     } catch (error) {
-      console.error('Error deleting product:', error);
+      console.error("Delete error:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to delete product',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to delete product.",
+        variant: "destructive",
       });
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.part_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter((product) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      product.part_name.toLowerCase().includes(q) ||
+      product.sku.toLowerCase().includes(q) ||
+      product.category.toLowerCase().includes(q)
+    );
+  });
 
   return (
-    <RoleGuard allowedRoles={['admin']} redirectTo="/">
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        
-        <div className="container mx-auto py-8 px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">DoneEZ Products</h1>
-              <p className="text-muted-foreground">Manage platform-owned product listings</p>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate('/admin/doneez/products/bulk-upload')}>
-                <Upload className="mr-2 h-4 w-4" />
-                Bulk Upload CSV
-              </Button>
-              <Button onClick={() => navigate('/admin/doneez/products/new')}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add New Product
-              </Button>
-            </div>
-          </div>
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex justify-between mb-6">
+        <h1 className="text-2xl font-bold">Platform Products</h1>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Product List
-                </CardTitle>
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search products..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading products...</div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {searchQuery ? 'No products found matching your search' : 'No products yet. Add your first product!'}
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Image</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>SKU</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Stock</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredProducts.map((product) => (
-                        <TableRow key={product.id}>
-                          <TableCell>
-                            <img
-                              src={product.image_url || 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=100&h=100&fit=crop'}
-                              alt={product.part_name}
-                              className="w-12 h-12 object-cover rounded"
-                            />
-                          </TableCell>
-                          <TableCell className="font-medium">{product.part_name}</TableCell>
-                          <TableCell className="text-muted-foreground">{product.sku}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{product.category}</Badge>
-                          </TableCell>
-                          <TableCell>${product.price.toFixed(2)}</TableCell>
-                          <TableCell>{product.quantity}</TableCell>
-                          <TableCell>
-                            <Badge variant={product.is_active ? 'default' : 'secondary'}>
-                              {product.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                  onClick={() => navigate(`/admin/doneez/products/edit/${product.id}`)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDeleteProduct(product)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <AlertDialog open={!!deleteProduct} onOpenChange={() => setDeleteProduct(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Product</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete "{deleteProduct?.part_name}"? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Button onClick={() => navigate("/admin/add-product")}>Add Product</Button>
       </div>
-    </RoleGuard>
+
+      <Input
+        placeholder="Search products..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="mb-6"
+      />
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : filteredProducts.length === 0 ? (
+        <p>No products found.</p>
+      ) : (
+        <div className="space-y-4">
+          {filteredProducts.map((product) => (
+            <Card key={product.id} className="p-4">
+              <CardContent className="flex items-center justify-between gap-4">
+                {/* IMAGE */}
+                <img
+                  src={product.images?.[0] ? product.images[0] + "?width=160" : "/no-image.png"}
+                  alt={product.part_name}
+                  className="w-20 h-20 rounded object-cover border"
+                />
+
+                {/* PRODUCT INFO */}
+                <div className="flex-1">
+                  <p className="font-semibold">{product.part_name}</p>
+                  <p className="text-sm text-muted-foreground">{product.sku}</p>
+                  <p className="font-medium">${product.price}</p>
+                  <p className="text-xs text-muted-foreground">{product.category}</p>
+                </div>
+
+                {/* ACTIONS */}
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => navigate(`/admin/edit-product/${product.id}`)}>
+                    Edit
+                  </Button>
+
+                  <Button variant="destructive" onClick={() => setDeleteProduct(product)}>
+                    Delete
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {deleteProduct && (
+        <div className="mt-4 flex gap-2">
+          <Button variant="destructive" onClick={handleDelete}>
+            Confirm Delete: {deleteProduct.part_name}
+          </Button>
+          <Button variant="outline" onClick={() => setDeleteProduct(null)}>
+            Cancel
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
