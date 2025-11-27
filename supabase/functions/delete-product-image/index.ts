@@ -6,20 +6,26 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  console.log('delete-product-image function invoked');
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Creating Supabase client...');
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    console.log('Parsing request body...');
     const { sku, imageUrl } = await req.json();
+    console.log('Received:', { sku, imageUrl });
 
     if (!sku || !imageUrl) {
+      console.error('Missing required fields');
       return new Response(
         JSON.stringify({ error: 'SKU and image URL are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
