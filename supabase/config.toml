@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.process-appointment-cancellation]
 verify_jwt = true
+
+[functions.delete-product-image]
+verify_jwt = true
