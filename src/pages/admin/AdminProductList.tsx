@@ -56,30 +56,20 @@ export default function AdminProductList() {
       });
     }
   };
-
   const fetchProducts = async () => {
     try {
       setLoading(true);
 
       const { data, error } = await supabase
         .from("supplier_products")
-        .select(
-          `
-    id,
-    sku,
-    part_name,
-    price,
-    category,
-    images,
-    created_at
-  ` as any,
-        ) // <-- bypass stale TypeScript schema
+        .select("id, sku, part_name, price, category, images, created_at")
         .eq("supplier_id", platformSupplierId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      setProducts(data || []);
+      // Force-cast here (NOT on the select)
+      setProducts((data as unknown as Product[]) || []);
     } catch (error) {
       console.error("Error loading products:", error);
       toast({
@@ -91,7 +81,6 @@ export default function AdminProductList() {
       setLoading(false);
     }
   };
-
   const handleDelete = async () => {
     if (!deleteProduct) return;
 
