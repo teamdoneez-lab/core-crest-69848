@@ -63,8 +63,18 @@ export default function AdminProductList() {
 
       const { data, error } = await supabase
         .from("supplier_products")
-        .select("id, sku, part_name, price, category, images, created_at")
-        .eq("supplier_id", platformSupplierId!)
+        .select(
+          `
+    id,
+    sku,
+    part_name,
+    price,
+    category,
+    images,
+    created_at
+  ` as any,
+        ) // <-- bypass stale TypeScript schema
+        .eq("supplier_id", platformSupplierId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -142,9 +152,9 @@ export default function AdminProductList() {
               <CardContent className="flex items-center justify-between gap-4">
                 {/* IMAGE */}
                 <img
-                  src={product.images?.[0] ? product.images[0] + "?width=160" : "/no-image.png"}
+                  src={product.images?.[0] ? `${product.images[0]}?width=160` : "/no-image.png"}
                   alt={product.part_name}
-                  className="w-20 h-20 rounded object-cover border"
+                  className="w-20 h-20 rounded object-cover border bg-muted"
                 />
 
                 {/* PRODUCT INFO */}
