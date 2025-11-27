@@ -1,13 +1,14 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
-import { Upload, X, Star, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Star, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProductEditModalProps {
@@ -37,6 +38,9 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
   const [dragActive, setDragActive] = useState(false);
   const [primaryImageIndex, setPrimaryImageIndex] = useState(0);
   const [existingImages, setExistingImages] = useState<string[]>(product.images || []);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const validateFile = (file: File): string | null => {
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -115,14 +119,48 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
     });
   };
 
-  const removeExistingImage = (index: number) => {
-    setExistingImages(prev => {
-      const newImages = [...prev];
-      newImages.splice(index, 1);
-      return newImages;
-    });
-    if (primaryImageIndex >= existingImages.length - 1) {
-      setPrimaryImageIndex(Math.max(0, existingImages.length - 2));
+  const handleDeleteImageClick = (imageUrl: string) => {
+    setImageToDelete(imageUrl);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteImage = async () => {
+    if (!imageToDelete) return;
+    
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-product-image', {
+        body: { sku: product.sku, imageUrl: imageToDelete }
+      });
+
+      if (error) throw error;
+
+      // Update local state
+      setExistingImages(prev => prev.filter(url => url !== imageToDelete));
+      
+      // Adjust primary image index if needed
+      const deletedIndex = existingImages.indexOf(imageToDelete);
+      if (primaryImageIndex === deletedIndex) {
+        setPrimaryImageIndex(0);
+      } else if (primaryImageIndex > deletedIndex) {
+        setPrimaryImageIndex(prev => prev - 1);
+      }
+
+      toast({
+        title: 'Image deleted',
+        description: 'The image has been removed successfully',
+      });
+    } catch (error: any) {
+      console.error('Error deleting image:', error);
+      toast({
+        title: 'Delete failed',
+        description: error.message || 'Failed to delete image',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteConfirmOpen(false);
+      setImageToDelete(null);
     }
   };
 
@@ -241,9 +279,10 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
                       size="icon"
                       variant="destructive"
                       className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => removeExistingImage(index)}
+                      onClick={() => handleDeleteImageClick(url)}
+                      disabled={deleting}
                     >
-                      <X className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                     <Button
                       size="icon"
@@ -344,6 +383,28 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
           </div>
         </div>
       </DialogContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Image</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this image? This action cannot be undone and will permanently delete the image from storage.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteImage}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete Image'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
