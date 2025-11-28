@@ -143,38 +143,31 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
     if (!imageToDelete) return;
 
     setDeleting(true);
+
     try {
       const { data, error } = await supabase.functions.invoke("delete-product-image", {
-        body: {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           sku: product.sku,
           imageUrl: imageToDelete,
-        },
+        }),
       });
 
       if (error || data?.error) {
         throw new Error(error?.message || data?.error || "Unknown delete error");
       }
 
-      // Update local state
       setExistingImages((prev) => prev.filter((url) => url !== imageToDelete));
-
-      const deletedIndex = existingImages.indexOf(imageToDelete);
-
-      if (primaryImageIndex === deletedIndex) {
-        setPrimaryImageIndex(0);
-      } else if (primaryImageIndex > deletedIndex) {
-        setPrimaryImageIndex((prev) => prev - 1);
-      }
 
       toast({
         title: "Image deleted",
         description: "The image has been removed successfully",
       });
-    } catch (error: any) {
-      console.error("Error deleting image:", error);
+    } catch (err: any) {
       toast({
         title: "Delete failed",
-        description: error.message || "Failed to delete image",
+        description: err.message,
         variant: "destructive",
       });
     } finally {
