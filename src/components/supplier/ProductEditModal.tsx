@@ -1,15 +1,24 @@
-import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Progress } from '@/components/ui/progress';
-import { toast } from '@/hooks/use-toast';
-import { Upload, X, Star, Image as ImageIcon, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "@/hooks/use-toast";
+import { Upload, X, Star, Image as ImageIcon, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ProductEditModalProps {
   open: boolean;
@@ -43,75 +52,81 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
   const [deleting, setDeleting] = useState(false);
 
   const validateFile = (file: File): string | null => {
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
-      return 'Only JPG, PNG, and WEBP images are allowed';
+      return "Only JPG, PNG, and WEBP images are allowed";
     }
     if (file.size > 5 * 1024 * 1024) {
-      return 'Image size must be less than 5MB';
+      return "Image size must be less than 5MB";
     }
     return null;
   };
 
-  const handleFiles = useCallback((files: FileList) => {
-    const totalImages = existingImages.length + imageUploads.length;
-    const filesArray = Array.from(files);
-    
-    if (totalImages + filesArray.length > 5) {
-      toast({
-        title: 'Too many images',
-        description: 'You can upload a maximum of 5 images per product',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const handleFiles = useCallback(
+    (files: FileList) => {
+      const totalImages = existingImages.length + imageUploads.length;
+      const filesArray = Array.from(files);
 
-    const newUploads: ImageUpload[] = [];
-    
-    for (const file of filesArray) {
-      const error = validateFile(file);
-      if (error) {
+      if (totalImages + filesArray.length > 5) {
         toast({
-          title: 'Invalid file',
-          description: `${file.name}: ${error}`,
-          variant: 'destructive',
+          title: "Too many images",
+          description: "You can upload a maximum of 5 images per product",
+          variant: "destructive",
         });
-        continue;
+        return;
       }
 
-      newUploads.push({
-        file,
-        preview: URL.createObjectURL(file),
-        progress: 0,
-        uploaded: false,
-      });
-    }
+      const newUploads: ImageUpload[] = [];
 
-    setImageUploads(prev => [...prev, ...newUploads]);
-  }, [imageUploads.length, existingImages.length]);
+      for (const file of filesArray) {
+        const error = validateFile(file);
+        if (error) {
+          toast({
+            title: "Invalid file",
+            description: `${file.name}: ${error}`,
+            variant: "destructive",
+          });
+          continue;
+        }
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+        newUploads.push({
+          file,
+          preview: URL.createObjectURL(file),
+          progress: 0,
+          uploaded: false,
+        });
+      }
 
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFiles(e.dataTransfer.files);
-    }
-  }, [handleFiles]);
+      setImageUploads((prev) => [...prev, ...newUploads]);
+    },
+    [imageUploads.length, existingImages.length],
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+      }
+    },
+    [handleFiles],
+  );
 
   const handleDrag = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+    if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
-    } else if (e.type === 'dragleave') {
+    } else if (e.type === "dragleave") {
       setDragActive(false);
     }
   }, []);
 
   const removeImageUpload = (index: number) => {
-    setImageUploads(prev => {
+    setImageUploads((prev) => {
       const newUploads = [...prev];
       URL.revokeObjectURL(newUploads[index].preview);
       newUploads.splice(index, 1);
@@ -126,36 +141,43 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
 
   const confirmDeleteImage = async () => {
     if (!imageToDelete) return;
-    
+
     setDeleting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('delete-product-image', {
-        body: { sku: product.sku, imageUrl: imageToDelete }
+      const { data, error } = await supabase.functions.invoke("delete-product-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sku: product.sku,
+          imageUrl: imageToDelete,
+        }),
       });
 
-      if (error) throw error;
+      if (error || data?.error) {
+        throw new Error(error?.message || data?.error || "Unknown delete error");
+      }
 
       // Update local state
-      setExistingImages(prev => prev.filter(url => url !== imageToDelete));
-      
-      // Adjust primary image index if needed
+      setExistingImages((prev) => prev.filter((url) => url !== imageToDelete));
+
       const deletedIndex = existingImages.indexOf(imageToDelete);
+
       if (primaryImageIndex === deletedIndex) {
         setPrimaryImageIndex(0);
       } else if (primaryImageIndex > deletedIndex) {
-        setPrimaryImageIndex(prev => prev - 1);
+        setPrimaryImageIndex((prev) => prev - 1);
       }
 
       toast({
-        title: 'Image deleted',
-        description: 'The image has been removed successfully',
+        title: "Image deleted",
+        description: "The image has been removed successfully",
       });
     } catch (error: any) {
-      console.error('Error deleting image:', error);
+      console.error("Error deleting image:", error);
       toast({
-        title: 'Delete failed',
-        description: error.message || 'Failed to delete image',
-        variant: 'destructive',
+        title: "Delete failed",
+        description: error.message || "Failed to delete image",
+        variant: "destructive",
       });
     } finally {
       setDeleting(false);
@@ -165,22 +187,20 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
   };
 
   const uploadImage = async (upload: ImageUpload, index: number): Promise<string> => {
-    const fileExt = upload.file.name.split('.').pop();
+    const fileExt = upload.file.name.split(".").pop();
     const fileName = `${product.sku}-${Date.now()}-${index}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(filePath, upload.file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
+    const { error: uploadError } = await supabase.storage.from("product-images").upload(filePath, upload.file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
 
     if (uploadError) throw uploadError;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(filePath);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("product-images").getPublicUrl(filePath);
 
     return publicUrl;
   };
@@ -190,11 +210,11 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
     try {
       // Upload all new images
       const uploadedUrls: string[] = [];
-      
+
       for (let i = 0; i < imageUploads.length; i++) {
         const upload = imageUploads[i];
         if (!upload.uploaded) {
-          setImageUploads(prev => {
+          setImageUploads((prev) => {
             const updated = [...prev];
             updated[i] = { ...updated[i], progress: 50 };
             return updated;
@@ -203,7 +223,7 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
           const url = await uploadImage(upload, i);
           uploadedUrls.push(url);
 
-          setImageUploads(prev => {
+          setImageUploads((prev) => {
             const updated = [...prev];
             updated[i] = { ...updated[i], progress: 100, uploaded: true, url };
             return updated;
@@ -213,7 +233,7 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
 
       // Combine existing and new images, with primary image first
       let allImages = [...existingImages, ...uploadedUrls];
-      
+
       // Reorder to put primary image first
       if (primaryImageIndex > 0 && primaryImageIndex < allImages.length) {
         const primary = allImages[primaryImageIndex];
@@ -222,25 +242,25 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
 
       // Update product in database
       const { error: updateError } = await supabase
-        .from('supplier_products')
+        .from("supplier_products")
         .update({ images: allImages } as any)
-        .eq('id', product.id);
+        .eq("id", product.id);
 
       if (updateError) throw updateError;
 
       toast({
-        title: 'Success',
-        description: 'Product images updated successfully',
+        title: "Success",
+        description: "Product images updated successfully",
       });
 
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error uploading images:', error);
+      console.error("Error uploading images:", error);
       toast({
-        title: 'Upload failed',
-        description: error.message || 'Failed to upload images',
-        variant: 'destructive',
+        title: "Upload failed",
+        description: error.message || "Failed to upload images",
+        variant: "destructive",
       });
     } finally {
       setUploading(false);
@@ -269,11 +289,7 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
                 {existingImages.map((url, index) => (
                   <div key={url} className="relative group">
                     <div className="aspect-square rounded-lg border-2 border-border overflow-hidden bg-muted">
-                      <img
-                        src={url}
-                        alt={`Product ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={url} alt={`Product ${index + 1}`} className="w-full h-full object-cover" />
                     </div>
                     <Button
                       size="icon"
@@ -307,11 +323,7 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
                 {imageUploads.map((upload, index) => (
                   <div key={index} className="relative group">
                     <div className="aspect-square rounded-lg border-2 border-border overflow-hidden bg-muted">
-                      <img
-                        src={upload.preview}
-                        alt={`Upload ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={upload.preview} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
                       {upload.progress > 0 && upload.progress < 100 && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                           <Progress value={upload.progress} className="w-3/4" />
@@ -343,13 +355,11 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
               className={cn(
                 "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
                 dragActive ? "border-primary bg-primary/5" : "border-border",
-                !canAddMore && "opacity-50 cursor-not-allowed"
+                !canAddMore && "opacity-50 cursor-not-allowed",
               )}
             >
               <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-sm font-medium mb-2">
-                Drag and drop images here, or click to browse
-              </p>
+              <p className="text-sm font-medium mb-2">Drag and drop images here, or click to browse</p>
               <p className="text-xs text-muted-foreground mb-4">
                 JPG, PNG, or WEBP • Max 5MB per image • {5 - totalImages} remaining
               </p>
@@ -377,8 +387,11 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={uploading || (imageUploads.length === 0 && existingImages.length === product.images?.length)}>
-              {uploading ? 'Saving...' : 'Save Changes'}
+            <Button
+              onClick={handleSave}
+              disabled={uploading || (imageUploads.length === 0 && existingImages.length === product.images?.length)}
+            >
+              {uploading ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </div>
@@ -390,7 +403,8 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Image</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove this image? This action cannot be undone and will permanently delete the image from storage.
+              Are you sure you want to remove this image? This action cannot be undone and will permanently delete the
+              image from storage.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -400,7 +414,7 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? 'Deleting...' : 'Delete Image'}
+              {deleting ? "Deleting..." : "Delete Image"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
