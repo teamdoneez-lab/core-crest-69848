@@ -147,7 +147,9 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
     try {
       const { data, error } = await supabase.functions.invoke("delete-product-image", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           sku: product.sku,
           imageUrl: imageToDelete,
