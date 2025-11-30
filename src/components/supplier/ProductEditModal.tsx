@@ -401,7 +401,7 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
 
-            {/* IMPORTANT FIX HERE — use asChild + Button */}
+            {/* IMPORTANT — THE FIX */}
             <AlertDialogAction asChild>
               <Button
                 onClick={confirmDeleteImage}
