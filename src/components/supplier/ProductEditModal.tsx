@@ -394,18 +394,22 @@ export function ProductEditModal({ open, onOpenChange, product, onSuccess }: Pro
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Image</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove this image? This action cannot be undone and will permanently delete the
-              image from storage.
+              Are you sure you want to delete this image? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteImage}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? "Deleting..." : "Delete Image"}
+
+            {/* IMPORTANT FIX HERE — use asChild + Button */}
+            <AlertDialogAction asChild>
+              <Button
+                onClick={confirmDeleteImage}
+                disabled={deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? "Deleting..." : "Delete Image"}
+              </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
