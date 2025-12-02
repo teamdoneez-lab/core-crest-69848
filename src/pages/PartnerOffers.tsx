@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
@@ -9,15 +9,68 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Tag, ExternalLink } from 'lucide-react';
-import { MOCK_PARTNER_OFFERS, PartnerOffer } from '@/data/mockPartnerOffers';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+interface PartnerOffer {
+  id: string;
+  partner_name: string;
+  offer_title: string;
+  description: string;
+  offer_type: 'pro_perk' | 'exclusive' | 'limited_time';
+  cta_label: string;
+  cta_url: string;
+  tags: string[];
+  promo_code: string | null;
+  image_url: string | null;
+  is_featured: boolean;
+  is_active: boolean;
+  start_date: string;
+  end_date: string | null;
+}
 
 export default function PartnerOffers() {
   const { user } = useAuth();
   const { isPro, loading } = useRole();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [offers, setOffers] = useState<PartnerOffer[]>([]);
+  const [fetchingOffers, setFetchingOffers] = useState(true);
+
+  // Fetch offers from database
+  useEffect(() => {
+    const fetchOffers = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('partner_offers')
+          .select('*')
+          .eq('is_active', true)
+          .lte('start_date', new Date().toISOString())
+          .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`)
+          .order('is_featured', { ascending: false })
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setOffers(data || []);
+      } catch (error: any) {
+        console.error('Error fetching partner offers:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to load partner offers. Please try again.',
+        });
+      } finally {
+        setFetchingOffers(false);
+      }
+    };
+
+    fetchOffers();
+  }, [user, toast]);
 
   // Redirect if not authenticated or not a pro
   if (!loading && !user) {
@@ -31,38 +84,38 @@ export default function PartnerOffers() {
   }
 
   const filteredOffers = useMemo(() => {
-    let offers = MOCK_PARTNER_OFFERS;
+    let filtered = offers;
 
     // Apply category filter
     if (filterCategory !== 'all') {
-      offers = offers.filter(offer => offer.category === filterCategory);
+      filtered = filtered.filter(offer => offer.offer_type === filterCategory);
     }
 
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      offers = offers.filter(
+      filtered = filtered.filter(
         offer =>
-          offer.name.toLowerCase().includes(query) ||
-          offer.title.toLowerCase().includes(query) ||
+          offer.partner_name.toLowerCase().includes(query) ||
+          offer.offer_title.toLowerCase().includes(query) ||
           offer.description.toLowerCase().includes(query) ||
           offer.tags.some(tag => tag.toLowerCase().includes(query))
       );
     }
 
-    return offers;
-  }, [searchQuery, filterCategory]);
+    return filtered;
+  }, [offers, searchQuery, filterCategory]);
 
-  const featuredOffers = filteredOffers.filter(offer => offer.category === 'featured');
-  const softwareOffers = filteredOffers.filter(offer => offer.category === 'software');
-  const businessOffers = filteredOffers.filter(offer => offer.category === 'business');
-  const perksOffers = filteredOffers.filter(offer => offer.category === 'perks');
+  const featuredOffers = filteredOffers.filter(offer => offer.is_featured);
+  const proPerkOffers = filteredOffers.filter(offer => offer.offer_type === 'pro_perk');
+  const exclusiveOffers = filteredOffers.filter(offer => offer.offer_type === 'exclusive');
+  const limitedTimeOffers = filteredOffers.filter(offer => offer.offer_type === 'limited_time');
 
   const scrollToOffers = () => {
     document.getElementById('offers-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (loading) {
+  if (loading || fetchingOffers) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
@@ -117,10 +170,9 @@ export default function PartnerOffers() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Offers</SelectItem>
-                <SelectItem value="featured">Featured</SelectItem>
-                <SelectItem value="software">Software Tools</SelectItem>
-                <SelectItem value="business">Business Services</SelectItem>
-                <SelectItem value="perks">Pro Perks</SelectItem>
+                <SelectItem value="pro_perk">Pro Perks</SelectItem>
+                <SelectItem value="exclusive">Exclusive</SelectItem>
+                <SelectItem value="limited_time">Limited Time</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -141,34 +193,34 @@ export default function PartnerOffers() {
           </section>
         )}
 
-        {/* Software Tools */}
-        {softwareOffers.length > 0 && (
+        {/* Exclusive Offers */}
+        {exclusiveOffers.length > 0 && (
           <section className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold tracking-tight mb-2">Software Tools</h2>
+              <h2 className="text-3xl font-bold tracking-tight mb-2">Exclusive Offers</h2>
               <p className="text-muted-foreground">
-                Discover apps to manage scheduling, communication, invoicing, and customer retention
+                Special partner deals available exclusively to Pro members
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {softwareOffers.map((offer) => (
+              {exclusiveOffers.map((offer) => (
                 <OfferCard key={offer.id} offer={offer} />
               ))}
             </div>
           </section>
         )}
 
-        {/* Business Services */}
-        {businessOffers.length > 0 && (
+        {/* Limited Time Offers */}
+        {limitedTimeOffers.length > 0 && (
           <section className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold tracking-tight mb-2">Business Services</h2>
+              <h2 className="text-3xl font-bold tracking-tight mb-2">Limited Time Offers</h2>
               <p className="text-muted-foreground">
-                Access financing, insurance, and business growth tools from trusted partners
+                Act fast! These deals won't last long
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {businessOffers.map((offer) => (
+              {limitedTimeOffers.map((offer) => (
                 <OfferCard key={offer.id} offer={offer} />
               ))}
             </div>
@@ -176,7 +228,7 @@ export default function PartnerOffers() {
         )}
 
         {/* Pro Member Perks */}
-        {perksOffers.length > 0 && (
+        {proPerkOffers.length > 0 && (
           <section className="space-y-6">
             <div>
               <h2 className="text-3xl font-bold tracking-tight mb-2">Pro Member Perks</h2>
@@ -185,7 +237,7 @@ export default function PartnerOffers() {
               </p>
             </div>
             <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory">
-              {perksOffers.map((offer) => (
+              {proPerkOffers.map((offer) => (
                 <div key={offer.id} className="min-w-[320px] snap-start">
                   <OfferCard offer={offer} />
                 </div>
@@ -216,24 +268,44 @@ export default function PartnerOffers() {
 
 // Offer Card Component
 function OfferCard({ offer }: { offer: PartnerOffer }) {
+  const offerTypeBadge = {
+    pro_perk: 'Pro Perk',
+    exclusive: 'Exclusive',
+    limited_time: 'Limited Time',
+  }[offer.offer_type];
+
   return (
     <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
       <CardHeader>
         <div className="flex items-start justify-between mb-4">
-          <div className="text-5xl">{offer.logo}</div>
-          {offer.badge && (
-            <Badge variant="secondary" className="text-xs">
-              {offer.badge}
-            </Badge>
+          {offer.image_url ? (
+            <img 
+              src={offer.image_url} 
+              alt={offer.partner_name}
+              className="h-12 w-12 object-contain rounded"
+            />
+          ) : (
+            <div className="h-12 w-12 bg-muted rounded flex items-center justify-center text-2xl">
+              {offer.partner_name.charAt(0)}
+            </div>
           )}
+          <Badge variant="secondary" className="text-xs">
+            {offerTypeBadge}
+          </Badge>
         </div>
-        <CardTitle className="text-xl">{offer.title}</CardTitle>
+        <CardTitle className="text-xl">{offer.offer_title}</CardTitle>
         <CardDescription className="text-sm font-medium text-foreground/70">
-          {offer.name}
+          {offer.partner_name}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1">
         <p className="text-sm text-muted-foreground mb-4">{offer.description}</p>
+        {offer.promo_code && (
+          <div className="mb-4 p-2 bg-muted rounded text-center">
+            <p className="text-xs text-muted-foreground">Promo Code</p>
+            <p className="font-mono font-bold">{offer.promo_code}</p>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           {offer.tags.map((tag) => (
             <Badge key={tag} variant="outline" className="text-xs">
@@ -245,8 +317,8 @@ function OfferCard({ offer }: { offer: PartnerOffer }) {
       </CardContent>
       <CardFooter>
         <Button className="w-full" asChild>
-          <a href={offer.ctaLink} target="_blank" rel="noopener noreferrer">
-            {offer.ctaText}
+          <a href={offer.cta_url} target="_blank" rel="noopener noreferrer">
+            {offer.cta_label}
             <ExternalLink className="ml-2 h-4 w-4" />
           </a>
         </Button>

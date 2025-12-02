@@ -46,6 +46,7 @@ import AdminProductList from "./pages/admin/AdminProductList";
 import AdminProductForm from "./pages/admin/AdminProductForm";
 import AdminBulkUpload from "./pages/admin/AdminBulkUpload";
 import AdminCategories from "./pages/admin/AdminCategories";
+import AdminPartnerOffers from "./pages/admin/AdminPartnerOffers";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => (
             <Route path="/admin/doneez/products/edit/:productId" element={<AdminProductForm />} />
             <Route path="/admin/doneez/products/bulk-upload" element={<AdminBulkUpload />} />
             <Route path="/admin/doneez/categories" element={<AdminCategories />} />
+            <Route path="/admin/partner-offers" element={<AdminPartnerOffers />} />
             <Route path="/customer-profile" element={<CustomerProfile />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/faq" element={<FAQ />} />
