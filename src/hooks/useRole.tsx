@@ -27,28 +27,16 @@ export function useRole() {
 
   const fetchUserProfile = async () => {
     try {
-      // Fetch profile data
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user?.id)
         .maybeSingle();
 
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
+      if (error) {
+        console.error('Error fetching profile:', error);
         setLoading(false);
         return;
-      }
-
-      // Fetch user role from user_roles table
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (roleError) {
-        console.error('Error fetching role:', roleError);
       }
 
       if (!profileData) {
@@ -57,11 +45,7 @@ export function useRole() {
         return;
       }
 
-      // Combine profile with role from user_roles table
-      setProfile({
-        ...profileData,
-        role: roleData?.role || 'customer'
-      });
+      setProfile(profileData);
     } catch (error) {
       console.error('Unexpected error fetching profile:', error);
     } finally {

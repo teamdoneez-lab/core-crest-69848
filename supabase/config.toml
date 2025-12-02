@@ -1,1 +1,85 @@
-project_id = "sdwljakvlfjbzeeplwln"
+project_id = "cxraykdmlshcntqjumpc"
+
+[functions.send-request-confirmation]
+verify_jwt = true
+
+[functions.check-expired-appointments]
+verify_jwt = false
+
+[functions.send-auth-emails]
+verify_jwt = false
+
+[functions.create-pro-user]
+verify_jwt = true
+
+[functions.create-quote-checkout]
+verify_jwt = true
+
+[functions.create-referral-checkout]
+verify_jwt = true
+
+[functions.refund-referral-fee]
+verify_jwt = true
+
+[functions.verify-quote-payment]
+verify_jwt = true
+
+[functions.verify-referral-payment]
+verify_jwt = true
+
+[functions.send-quote-email]
+verify_jwt = true
+
+[functions.send-quote-selected-email]
+verify_jwt = true
+
+[functions.notify-job-completed]
+verify_jwt = true
+
+[functions.send-booking-confirmation]
+verify_jwt = true
+
+[functions.delete-customer]
+verify_jwt = true
+
+[functions.delete-pro]
+verify_jwt = true
+
+[functions.create-supplier-connect-account]
+verify_jwt = true
+
+[functions.verify-supplier-stripe-status]
+verify_jwt = true
+
+[functions.send-supplier-notification]
+verify_jwt = true
+
+[functions.select-pro]
+verify_jwt = true
+
+[functions.send-appointment-status-email]
+verify_jwt = true
+
+[functions.create-marketplace-checkout]
+verify_jwt = true
+
+[functions.verify-marketplace-payment]
+verify_jwt = false
+
+[functions.send-appointment-confirmed]
+verify_jwt = false
+
+[functions.send-lead-notification]
+verify_jwt = false
+
+[functions.geocode-address]
+verify_jwt = false
+
+[functions.check-expired-quotes]
+verify_jwt = false
+
+[functions.process-appointment-cancellation]
+verify_jwt = true
+
+[functions.delete-product-image]
+verify_jwt = true

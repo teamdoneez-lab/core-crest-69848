@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Package, List, Plus, Upload, Tag, Home, Gift } from 'lucide-react';
+import { Package, List, Plus, Upload, Tag, Home } from 'lucide-react';
 
 const menuItems = [
   {
@@ -17,11 +17,6 @@ const menuItems = [
       { title: 'Bulk Upload', icon: Upload, href: '/admin/doneez/products/bulk-upload' },
       { title: 'Categories', icon: Tag, href: '/admin/doneez/categories' },
     ],
-  },
-  {
-    title: 'Partner Offers',
-    icon: Gift,
-    href: '/admin/partner-offers',
   },
 ];
 
