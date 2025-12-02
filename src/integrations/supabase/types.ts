@@ -14,16 +14,97 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      partner_offers: {
+        Row: {
+          created_at: string | null
+          cta_label: string
+          cta_url: string
+          description: string
+          end_date: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          offer_title: string
+          offer_type: Database["public"]["Enums"]["offer_type"]
+          partner_name: string
+          promo_code: string | null
+          start_date: string | null
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          cta_label: string
+          cta_url: string
+          description: string
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          offer_title: string
+          offer_type: Database["public"]["Enums"]["offer_type"]
+          partner_name: string
+          promo_code?: string | null
+          start_date?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          cta_label?: string
+          cta_url?: string
+          description?: string
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          offer_title?: string
+          offer_type?: Database["public"]["Enums"]["offer_type"]
+          partner_name?: string
+          promo_code?: string | null
+          start_date?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "pro" | "customer"
+      offer_type: "pro_perk" | "exclusive" | "limited_time"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +231,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "pro", "customer"],
+      offer_type: ["pro_perk", "exclusive", "limited_time"],
+    },
   },
 } as const
