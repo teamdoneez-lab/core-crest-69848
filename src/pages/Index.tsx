@@ -319,7 +319,7 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="hero-section relative w-full h-[700px] md:h-[750px] lg:h-[800px] overflow-hidden">
+      <section className="hero-section relative w-full h-[90vh] min-h-[600px] max-h-[900px] overflow-hidden">
         {/* Background Image */}
         <img 
           src={heroImage} 
@@ -330,20 +330,20 @@ const Index = () => {
         {/* Gradient Overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent"></div>
         
-        {/* Content Container */}
+        {/* Content Container - Optimized vertical centering */}
         <div className="relative z-10 h-full max-w-7xl mx-auto px-6 lg:px-8 flex items-center">
-          <div className="max-w-2xl pt-16 md:pt-20">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight font-playfair text-white leading-tight mb-6">
+          <div className="max-w-2xl -mt-8 sm:-mt-12 md:-mt-16">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight font-playfair text-white leading-[1.1] mb-5 sm:mb-6">
               Auto Service, The Easy Way
             </h1>
-            <p className="text-xl sm:text-2xl text-white/95 font-medium mb-8">
+            <p className="text-xl sm:text-2xl md:text-3xl text-white/95 font-medium mb-8 sm:mb-10">
               Compare, Book & Done.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/auth">
                 <Button 
                   size="lg" 
-                  className="w-full sm:w-auto text-base sm:text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-elegant hover:shadow-glow transition-all duration-300"
+                  className="w-full sm:w-auto text-base sm:text-lg px-8 py-6 sm:py-7 bg-primary hover:bg-primary/90 text-primary-foreground shadow-elegant hover:shadow-glow transition-all duration-300"
                 >
                   Get Started
                 </Button>
@@ -352,7 +352,7 @@ const Index = () => {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="w-full sm:w-auto text-base sm:text-lg px-8 py-6 border-2 border-white text-white hover:bg-white/20 backdrop-blur-sm transition-all duration-300"
+                  className="w-full sm:w-auto text-base sm:text-lg px-8 py-6 sm:py-7 border-2 border-white text-white hover:bg-white/20 backdrop-blur-sm transition-all duration-300"
                 >
                   Join as a Professional
                 </Button>
