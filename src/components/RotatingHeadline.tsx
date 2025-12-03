@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 
 const headlines = [
-  "Auto Repair",
-  "Auto Body",
-  "Car Customization",
-  "Auto Detailing",
+  "Auto Repair Services",
+  "Auto Body Repair",
   "Tire & Wheel Services",
+  "Auto Detailing Services",
+  "Performance & Customization",
 ];
 
 export const RotatingHeadline = () => {
@@ -26,14 +26,12 @@ export const RotatingHeadline = () => {
   }, []);
 
   return (
-    <div className="min-h-[1.2em] lg:min-h-[1.15em]">
-      <span
-        className={`inline-block whitespace-nowrap transition-opacity duration-300 ${
-          isVisible ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        {headlines[currentIndex]}
-      </span>
-    </div>
+    <span
+      className={`block transition-opacity duration-300 ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
+      {headlines[currentIndex]}
+    </span>
   );
 };
