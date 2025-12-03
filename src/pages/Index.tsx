@@ -333,15 +333,15 @@ const Index = () => {
         
         {/* Content Container - Optimized vertical centering */}
         <div className="relative z-10 h-full max-w-7xl mx-auto px-6 lg:px-8 flex items-center">
-          <div className="max-w-2xl -mt-8 sm:-mt-12 md:-mt-16">
+          <div className="max-w-2xl lg:max-w-4xl -mt-8 sm:-mt-12 md:-mt-16">
             {/* Rotating headline with fixed width container to prevent layout shift */}
-            <div className="mb-2 sm:mb-3">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight font-playfair text-white leading-[1.1]">
+            <div className="mb-2 sm:mb-3 lg:h-[1.15em] lg:overflow-visible">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] xl:text-7xl font-bold tracking-tight font-playfair text-white leading-[1.1]">
                 <RotatingHeadline />
               </h1>
             </div>
             {/* Fixed subtitle */}
-            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight font-playfair text-white leading-[1.1] mb-5 sm:mb-6">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] xl:text-7xl font-bold tracking-tight font-playfair text-white leading-[1.1] mb-5 sm:mb-6">
               The Easy Way
             </h2>
             {/* Supporting tagline */}
