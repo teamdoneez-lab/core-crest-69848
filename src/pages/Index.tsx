@@ -63,19 +63,9 @@ const Index = () => {
   }, []);
 
   const fetchServiceCategories = async () => {
-    try {
-      const { data: categoriesData } = await supabase
-        .from('service_categories')
-        .select('*')
-        .eq('active', true)
-        .order('name');
-
-      if (categoriesData) {
-        setCategories(categoriesData);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
+    // Service categories table not yet created - using empty array
+    // This will be populated once the service_categories table is created
+    setCategories([]);
   };
 
   // If user is authenticated, show personalized dashboard
