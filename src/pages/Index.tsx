@@ -31,6 +31,7 @@ import mechanicWorking from '@/assets/mechanic-working.jpg';
 import heroDaytime from '@/assets/hero-clean.jpg';
 import heroNighttime from '@/assets/hero-nighttime.jpg';
 import { Footer } from '@/components/Footer';
+import { RotatingHeadline } from '@/components/RotatingHeadline';
 
 interface ServiceCategory {
   id: string;
@@ -333,11 +334,19 @@ const Index = () => {
         {/* Content Container - Optimized vertical centering */}
         <div className="relative z-10 h-full max-w-7xl mx-auto px-6 lg:px-8 flex items-center">
           <div className="max-w-2xl -mt-8 sm:-mt-12 md:-mt-16">
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight font-playfair text-white leading-[1.1] mb-5 sm:mb-6">
-              Auto Service, The Easy Way
-            </h1>
-            <p className="text-xl sm:text-2xl md:text-3xl text-white/95 font-medium mb-8 sm:mb-10">
-              Compare, Book & Done.
+            {/* Rotating headline with fixed width container to prevent layout shift */}
+            <div className="mb-2 sm:mb-3">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight font-playfair text-white leading-[1.1]">
+                <RotatingHeadline />
+              </h1>
+            </div>
+            {/* Fixed subtitle */}
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight font-playfair text-white leading-[1.1] mb-5 sm:mb-6">
+              The Easy Way
+            </h2>
+            {/* Supporting tagline */}
+            <p className="text-lg sm:text-xl md:text-2xl text-white/90 font-medium mb-8 sm:mb-10">
+              Compare. Book. Done.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/auth">
