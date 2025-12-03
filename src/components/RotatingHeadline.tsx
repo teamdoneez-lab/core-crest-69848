@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 
 const headlines = [
-  "Auto Repair Services",
-  "Auto Body Repair",
+  "Auto Repair",
+  "Auto Body",
+  "Car Customization",
+  "Auto Detailing",
   "Tire & Wheel Services",
-  "Auto Detailing Services",
-  "Performance & Customization",
 ];
 
 export const RotatingHeadline = () => {
@@ -19,16 +19,18 @@ export const RotatingHeadline = () => {
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % headlines.length);
         setIsVisible(true);
-      }, 300);
-    }, 2500);
+      }, 400);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
     <span
-      className={`block transition-opacity duration-300 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
+      className={`block transition-all duration-400 ease-in-out whitespace-nowrap ${
+        isVisible 
+          ? 'opacity-100 translate-y-0' 
+          : 'opacity-0 -translate-y-2'
       }`}
     >
       {headlines[currentIndex]}
