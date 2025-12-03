@@ -55,13 +55,14 @@ serve(async (req) => {
       throw new Error("Unauthorized");
     }
 
-    // Check if user is admin using the has_role security definer function
-    const { data: isAdmin, error: roleError } = await supabaseAdmin.rpc('has_role', {
-      _user_id: user.id,
-      _role: 'admin'
-    });
+    // Check if user is admin
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
 
-    if (roleError || !isAdmin) {
+    if (profileError || profile?.role !== "admin") {
       throw new Error("Unauthorized - Admin access required");
     }
 
@@ -91,31 +92,19 @@ serve(async (req) => {
 
     const userId = authData.user.id;
 
-    // Update profile with name and phone
+    // Update profile with pro role
     const { error: profileUpdateError } = await supabaseAdmin
       .from("profiles")
       .update({
         name: requestData.name,
         phone: requestData.phone || null,
+        role: "pro",
       })
       .eq("id", userId);
 
     if (profileUpdateError) {
       console.error("Profile update error:", profileUpdateError);
       throw new Error(profileUpdateError.message);
-    }
-
-    // Assign pro role in user_roles table
-    const { error: roleInsertError } = await supabaseAdmin
-      .from("user_roles")
-      .insert({
-        user_id: userId,
-        role: "pro",
-      });
-
-    if (roleInsertError) {
-      console.error("Role assignment error:", roleInsertError);
-      throw new Error(roleInsertError.message);
     }
 
     // Create pro profile
