@@ -49,63 +49,9 @@ export default function ProductDetailPage() {
     try {
       setProductLoading(true);
       setImageError(false);
-      const { data, error } = await supabase
-        .from('supplier_products')
-        .select(`
-          *,
-          suppliers:supplier_id (
-            business_name,
-            is_platform_seller
-          )
-        `)
-        .eq('id', productHandle)
-        .eq('admin_approved', true)
-        .eq('is_active', true)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        // Fallback image for automotive parts
-        const fallbackImage = 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=1200&h=1200&fit=crop&q=80';
-        
-        // Check if image URL is valid (not a placeholder)
-        const isValidImageUrl = (url: string | null) => {
-          if (!url) return false;
-          if (url.includes('example.com')) return false; // Placeholder domain
-          if (url.includes('placeholder')) return false;
-          if (url.trim() === '') return false;
-          return true;
-        };
-
-        // Use fallback immediately if URL is invalid
-        const productImageUrl = isValidImageUrl(data.image_url) ? data.image_url : fallbackImage;
-        
-        // Support for multiple images - currently single image, structured for future expansion
-        const productImages = [productImageUrl];
-
-        const supplier = Array.isArray(data.suppliers) ? data.suppliers[0] : data.suppliers;
-        
-        const mappedProduct: Product = {
-          id: data.id,
-          name: data.part_name,
-          price: Number(data.price),
-          category: data.category,
-          image: productImages[0], // Primary image
-          images: productImages, // All images for gallery
-          description: data.description || '',
-          inStock: (data.quantity || 0) > 0,
-          sku: data.sku,
-          condition: data.condition,
-          quantity: data.quantity || 0,
-          supplierId: data.supplier_id,
-          sellerName: supplier?.is_platform_seller ? 'DoneEZ' : supplier?.business_name || 'Unknown',
-          isPlatformSeller: supplier?.is_platform_seller || false,
-        };
-        setProduct(mappedProduct);
-        
-        console.log('Product loaded with image:', productImageUrl);
-      }
+      // supplier_products table not yet created - set null to show not found
+      setProduct(null);
+      console.log('Products table not yet available');
     } catch (error) {
       console.error('Error fetching product:', error);
       setProduct(null);
