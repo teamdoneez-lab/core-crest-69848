@@ -26,9 +26,9 @@ export const RotatingHeadline = () => {
   }, []);
 
   return (
-    <div className="min-h-[1.2em]">
+    <div className="min-h-[1.2em] lg:min-h-[1.15em]">
       <span
-        className={`inline-block transition-opacity duration-300 ${
+        className={`inline-block whitespace-nowrap transition-opacity duration-300 ${
           isVisible ? 'opacity-100' : 'opacity-0'
         }`}
       >
