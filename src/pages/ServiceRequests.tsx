@@ -1,27 +1,943 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
-import { Navigation } from "@/components/Navigation";
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { RoleGuard } from '@/components/RoleGuard';
+import { Navigation } from '@/components/Navigation';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ChevronLeft, ChevronRight, Filter, X, FileText, Download, Search } from 'lucide-react';
+import { QuoteForm } from '@/components/pro/QuoteForm';
+import { QuoteConfirmation } from '@/components/pro/QuoteConfirmation';
 
-const ServiceRequests = () => {
-  return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <div className="container mx-auto py-8 px-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Service Requests</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Coming Soon</h3>
-            <p className="text-muted-foreground">
-              Service requests feature is being set up. Please check back later.
-            </p>
-          </CardContent>
-        </Card>
+interface PendingQuote {
+  id: string;
+  estimated_price: number;
+  description: string;
+  status: string;
+  confirmation_timer_expires_at: string | null;
+  confirmation_timer_minutes: number | null;
+  request_id: string;
+  service_requests: {
+    vehicle_make: string;
+    model: string;
+    year: number;
+    urgency: string;
+  };
+}
+
+interface ServiceRequest {
+  id: string;
+  vehicle_make: string;
+  model: string;
+  year: number;
+  trim?: string;
+  mileage?: number;
+  appointment_pref: string;
+  urgency?: string;
+  address: string;
+  zip: string;
+  latitude?: number;
+  longitude?: number;
+  contact_email: string;
+  contact_phone: string;
+  status: string;
+  notes?: string;
+  image_url?: string;
+  created_at: string;
+  service_categories: {
+    name: string;
+  };
+  quotes?: Array<{
+    id: string;
+    status: string;
+    pro_id: string;
+  }>;
+}
+
+export default function ServiceRequests() {
+  const { user } = useAuth();
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [pendingQuotes, setPendingQuotes] = useState<PendingQuote[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  // Filters
+  const [filters, setFilters] = useState({
+    location: '',
+    status: 'all',
+    dateFrom: '',
+    dateTo: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Quote modal
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  
+  // Details modal
+  const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
+  // Image modal
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchPendingQuotes();
+      fetchServiceRequests();
+    }
+  }, [user, currentPage, filters]);
+
+  const fetchServiceRequests = async () => {
+    try {
+      setLoading(true);
+      
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      // Get pro's profile to find their location (for distance display only)
+      const { data: proProfile, error: proError } = await supabase
+        .from('pro_profiles')
+        .select('latitude, longitude')
+        .eq('pro_id', user.id)
+        .maybeSingle();
+
+      if (proError) {
+        console.error('Error fetching pro profile:', proError);
+      }
+
+      // Query leads table first, then join to service_requests
+      // This ensures we only see requests where we have a lead
+      let leadsQuery = supabase
+        .from('leads')
+        .select(`
+          request_id,
+          service_requests!inner (
+            id,
+            vehicle_make,
+            model,
+            year,
+            trim,
+            mileage,
+            appointment_pref,
+            urgency,
+            address,
+            zip,
+            contact_email,
+            contact_phone,
+            status,
+            notes,
+            image_url,
+            created_at,
+            latitude,
+            longitude,
+            service_categories (
+              name
+            ),
+            quotes!quotes_request_id_fkey (
+              id,
+              status,
+              pro_id
+            )
+          )
+        `, { count: 'exact' })
+        .eq('pro_id', user.id);
+
+      // Apply status filter on service_requests
+      if (filters.status && filters.status !== 'all') {
+        leadsQuery = leadsQuery.eq('service_requests.status', filters.status);
+      }
+
+      // Apply date filters on service_requests
+      if (filters.dateFrom) {
+        leadsQuery = leadsQuery.gte('service_requests.created_at', new Date(filters.dateFrom).toISOString());
+      }
+      
+      if (filters.dateTo) {
+        const endDate = new Date(filters.dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        leadsQuery = leadsQuery.lte('service_requests.created_at', endDate.toISOString());
+      }
+
+      // Fetch data with pagination
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+      
+      const { data: leadsData, error, count } = await leadsQuery
+        .order('service_requests(created_at)', { ascending: false })
+        .range(from, to);
+
+      if (error) {
+        console.error('Error fetching service requests via leads:', error);
+        setLoading(false);
+        return;
+      }
+
+      // Transform the data structure: extract service_requests from leads
+      const transformedRequests = (leadsData || [])
+        .map(lead => lead.service_requests)
+        .filter(Boolean) as ServiceRequest[];
+
+      // If location filter is active, apply client-side distance filtering
+      if (filters.location && proProfile?.latitude && proProfile?.longitude) {
+        const radiusMiles = 100;
+        
+        const filteredData = transformedRequests.filter(request => {
+          if (!request.latitude || !request.longitude) return false;
+          
+          // Calculate distance using Haversine formula
+          const R = 3959; // Earth's radius in miles
+          const dLat = (request.latitude - proProfile.latitude) * Math.PI / 180;
+          const dLon = (request.longitude - proProfile.longitude) * Math.PI / 180;
+          const a = 
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(proProfile.latitude * Math.PI / 180) * 
+            Math.cos(request.latitude * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const distance = R * c;
+          
+          return distance <= radiusMiles;
+        });
+
+        setRequests(filteredData);
+        setTotalCount(filteredData.length);
+      } else {
+        setRequests(transformedRequests);
+        setTotalCount(count || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching service requests:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchServiceRequests();
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      location: '',
+      status: 'all',
+      dateFrom: '',
+      dateTo: ''
+    });
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'quote_requested': return 'bg-yellow-100 text-yellow-800';
+      case 'pending_confirmation': return 'bg-blue-100 text-blue-800';
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'declined': return 'bg-gray-100 text-gray-800';
+      case 'expired': return 'bg-orange-100 text-orange-800';
+      case 'cancelled_by_customer':
+      case 'cancelled_after_requote':
+      case 'cancelled_off_platform': return 'bg-red-100 text-red-800';
+      case 'no_show': return 'bg-amber-100 text-amber-800';
+      case 'completed': return 'bg-emerald-100 text-emerald-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getAppointmentPrefLabel = (pref: string) => {
+    switch (pref) {
+      case 'asap': return 'ASAP';
+      case 'scheduled': return 'Scheduled';
+      case 'flexible': return 'Flexible';
+      default: return pref;
+    }
+  };
+
+  const getUrgencyConfig = (urgency?: string) => {
+    switch (urgency) {
+      case 'asap':
+        return { label: 'ASAP', variant: 'destructive' as const };
+      case 'within_week':
+        return { label: 'Within 1 week', variant: 'default' as const };
+      case 'within_month':
+        return { label: 'Within 1 month', variant: 'secondary' as const };
+      case 'flexible':
+        return { label: 'Flexible', variant: 'outline' as const };
+      default:
+        return { label: 'Not specified', variant: 'outline' as const };
+    }
+  };
+
+  const handleQuoteClick = (requestId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedRequestId(requestId);
+    setIsQuoteModalOpen(true);
+  };
+
+  const handleQuoteSuccess = () => {
+    setIsQuoteModalOpen(false);
+    setSelectedRequestId(null);
+    fetchServiceRequests();
+    fetchPendingQuotes();
+  };
+
+  const fetchPendingQuotes = async () => {
+    if (!user?.id) return;
+    
+    const { data, error } = await supabase
+      .from('quotes')
+      .select(`
+        id,
+        estimated_price,
+        description,
+        status,
+        confirmation_timer_expires_at,
+        confirmation_timer_minutes,
+        request_id,
+        service_requests (
+          vehicle_make,
+          model,
+          year,
+          urgency
+        )
+      `)
+      .eq('pro_id', user.id)
+      .eq('status', 'pending_confirmation')
+      .order('confirmation_timer_expires_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching pending quotes:', error);
+      return;
+    }
+
+    // Filter and auto-expire quotes that are past their expiration time
+    const now = new Date();
+    const validQuotes = [];
+    const expiredQuotes = [];
+
+    for (const quote of data || []) {
+      // Double-check status isn't declined (extra safety)
+      if (quote.status === 'declined') {
+        continue;
+      }
+      
+      if (quote.confirmation_timer_expires_at) {
+        const expiresAt = new Date(quote.confirmation_timer_expires_at);
+        if (expiresAt <= now) {
+          expiredQuotes.push(quote);
+        } else {
+          validQuotes.push(quote);
+        }
+      } else {
+        validQuotes.push(quote);
+      }
+    }
+
+    // Update expired quotes in the database
+    if (expiredQuotes.length > 0) {
+      for (const expiredQuote of expiredQuotes) {
+        await supabase
+          .from('quotes')
+          .update({ status: 'expired' })
+          .eq('id', expiredQuote.id);
+
+        // Update referral fee if exists
+        await supabase
+          .from('referral_fees')
+          .update({ status: 'expired' })
+          .eq('quote_id', expiredQuote.id);
+      }
+    }
+
+    setPendingQuotes(validQuotes);
+  };
+
+  const handleCardClick = (request: ServiceRequest) => {
+    setSelectedRequest(request);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsImageModalOpen(true);
+  };
+
+  const handleDownloadImage = () => {
+    if (selectedImage) {
+      const link = document.createElement('a');
+      link.href = selectedImage;
+      link.download = `service-request-image-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div>Loading...</div>
       </div>
-    </div>
-  );
-};
+    );
+  }
 
-export default ServiceRequests;
+  return (
+    <RoleGuard allowedRoles={['pro']}>
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="mx-auto max-w-6xl p-6">
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Service Requests</h1>
+                <p className="text-muted-foreground">
+                  Available service requests in your area ({totalCount} total)
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
+                <Filter className="h-4 w-4" />
+                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              </Button>
+            </div>
+
+            {/* Filters */}
+            {showFilters && (
+              <Card className="mb-6">
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location Search (100 mile radius)</Label>
+                      <Input
+                        id="location"
+                        placeholder="Enter any text to search..."
+                        value={filters.location}
+                        onChange={(e) => {
+                          setFilters({ ...filters, location: e.target.value });
+                        }}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select
+                        value={filters.status}
+                        onValueChange={(value) => {
+                          setFilters({ ...filters, status: value });
+                          setCurrentPage(1);
+                        }}
+                      >
+                        <SelectTrigger id="status">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Status</SelectItem>
+                          <SelectItem value="quote_requested">Awaiting Quotes</SelectItem>
+                          <SelectItem value="pending_confirmation">Pending Confirmation</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="expired">Expired</SelectItem>
+                          <SelectItem value="declined">Declined</SelectItem>
+                          <SelectItem value="cancelled_by_customer">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="dateFrom">From Date</Label>
+                      <Input
+                        id="dateFrom"
+                        type="date"
+                        value={filters.dateFrom}
+                        onChange={(e) => {
+                          setFilters({ ...filters, dateFrom: e.target.value });
+                          setCurrentPage(1);
+                        }}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="dateTo">To Date</Label>
+                      <Input
+                        id="dateTo"
+                        type="date"
+                        value={filters.dateTo}
+                        onChange={(e) => {
+                          setFilters({ ...filters, dateTo: e.target.value });
+                          setCurrentPage(1);
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-2">
+                    <Button
+                      onClick={handleSearch}
+                      className="flex items-center gap-2"
+                    >
+                      <Search className="h-4 w-4" />
+                      Search
+                    </Button>
+                    {(filters.location || filters.status !== 'all' || filters.dateFrom || filters.dateTo) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFilters}
+                        className="flex items-center gap-2"
+                      >
+                        <X className="h-4 w-4" />
+                        Clear Filters
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Pending Quote Confirmations */}
+          {pendingQuotes.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-4">🎉 Quotes Selected by Customers</h2>
+              <p className="text-muted-foreground mb-6">
+                Customers have selected your quotes! Confirm now to secure these appointments.
+              </p>
+              <div className="space-y-4">
+                {pendingQuotes.map((quote) => (
+                  <QuoteConfirmation 
+                    key={quote.id} 
+                    quote={quote} 
+                    onConfirmed={() => {
+                      fetchServiceRequests();
+                      fetchPendingQuotes();
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {requests.length === 0 ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium mb-2">No service requests found</h3>
+                  <p className="text-muted-foreground">
+                    Check back later for new requests in your service area.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-5">
+              {requests.map((request) => {
+                // Check if the current pro has already sent a quote for this request
+                const hasQuote = request.quotes?.some(q => q.pro_id === user?.id);
+                const urgencyConfig = getUrgencyConfig(request.urgency);
+                
+                return (
+                  <Card 
+                    key={request.id} 
+                    className="bg-card border-border/50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                    onClick={() => handleCardClick(request)}
+                  >
+                    <div className="p-6">
+                      {/* Header Section with Title and CTA */}
+                      <div className="flex items-start justify-between gap-4 mb-5">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 flex-wrap mb-2">
+                            <h3 className="text-xl font-bold text-foreground">
+                              {request.vehicle_make} {request.model} {request.year}
+                              {request.trim && ` ${request.trim}`}
+                            </h3>
+                            <Badge variant={urgencyConfig.variant} className="font-semibold">
+                              {urgencyConfig.label}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {request.service_categories.name}
+                            </span>
+                            <span className="text-muted-foreground">•</span>
+                            <span className="text-sm text-muted-foreground">{request.zip}</span>
+                            <Badge 
+                              variant={hasQuote ? 'default' : 'outline'} 
+                              className={hasQuote ? '' : 'text-xs'}
+                            >
+                              {hasQuote ? '✓ Quote Sent' : request.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        {/* CTA Button - Consistent Top Right Position */}
+                        {!hasQuote && (
+                          <Button 
+                            onClick={(e) => handleQuoteClick(request.id, e)}
+                            className="flex-shrink-0"
+                            size="default"
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Send Quote
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Key Information Grid */}
+                      <div className="grid md:grid-cols-2 gap-6 py-4 border-t border-border/50">
+                        {/* Left Column - Vehicle & Contact */}
+                        <div className="space-y-3">
+                          {request.mileage && (
+                            <div>
+                              <span className="text-sm font-semibold text-foreground">Mileage:</span>
+                              <span className="text-sm text-muted-foreground ml-2">
+                                {request.mileage.toLocaleString()} miles
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-sm font-semibold text-foreground">Contact:</span>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              {request.contact_email}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-semibold text-foreground">Phone:</span>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              {request.contact_phone}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Right Column - Location & Timing */}
+                        <div className="space-y-3">
+                          <div>
+                            <span className="text-sm font-semibold text-foreground block mb-1">Location:</span>
+                            <span className="text-sm text-muted-foreground">
+                              {request.address}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-semibold text-foreground">Preference:</span>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              {getAppointmentPrefLabel(request.appointment_pref)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Additional Notes */}
+                      {request.notes && (
+                        <div className="mt-4 pt-4 border-t border-border/50">
+                          <h4 className="text-sm font-semibold text-foreground mb-2">Additional Notes:</h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{request.notes}</p>
+                        </div>
+                      )}
+
+                      {/* Image */}
+                      {request.image_url && (
+                        <div className="mt-4 pt-4 border-t border-border/50">
+                          <h4 className="text-sm font-semibold text-foreground mb-3">Uploaded Image:</h4>
+                          <img 
+                            src={request.image_url} 
+                            alt="Vehicle issue" 
+                            className="w-full max-w-md rounded-lg border border-border shadow-sm object-contain max-h-48 cursor-pointer hover:opacity-90 hover:scale-[1.02] transition-all"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleImageClick(request.image_url!);
+                            }}
+                          />
+                          <p className="text-xs text-muted-foreground mt-2 italic">Click to enlarge</p>
+                        </div>
+                      )}
+
+                      {/* Footer Timestamp */}
+                      <div className="mt-4 pt-3 border-t border-border/50">
+                        <p className="text-xs text-muted-foreground">
+                          Submitted on {new Date(request.created_at).toLocaleDateString()} at {new Date(request.created_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Details Modal */}
+          <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Service Request Details</DialogTitle>
+                <DialogDescription>
+                  Complete information about this repair request
+                </DialogDescription>
+              </DialogHeader>
+              {selectedRequest && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Vehicle Information</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Make & Model</p>
+                        <p className="font-medium">{selectedRequest.vehicle_make} {selectedRequest.model}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Year</p>
+                        <p className="font-medium">{selectedRequest.year}</p>
+                      </div>
+                      {selectedRequest.trim && (
+                        <div>
+                          <p className="text-muted-foreground">Trim</p>
+                          <p className="font-medium">{selectedRequest.trim}</p>
+                        </div>
+                      )}
+                      {selectedRequest.mileage && (
+                        <div>
+                          <p className="text-muted-foreground">Mileage</p>
+                          <p className="font-medium">{selectedRequest.mileage.toLocaleString()} miles</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Service Details</h3>
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Service Category</p>
+                        <p className="font-medium">{selectedRequest.service_categories.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Status</p>
+                        <Badge className={getStatusColor(selectedRequest.status)}>
+                          {selectedRequest.status}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Appointment Preference</p>
+                        <p className="font-medium">{getAppointmentPrefLabel(selectedRequest.appointment_pref)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedRequest.notes && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3">Repair Description</h3>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedRequest.notes}</p>
+                    </div>
+                  )}
+
+                  {selectedRequest.image_url && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3">Uploaded Image</h3>
+                      <img 
+                        src={selectedRequest.image_url} 
+                        alt="Vehicle issue" 
+                        className="w-full rounded-lg border max-h-96 object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => handleImageClick(selectedRequest.image_url!)}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Click to enlarge</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Customer Contact</h3>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Email</p>
+                        <p className="font-medium">{selectedRequest.contact_email}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Phone</p>
+                        <p className="font-medium">{selectedRequest.contact_phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Address</p>
+                        <p className="font-medium">{selectedRequest.address}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">ZIP Code</p>
+                        <p className="font-medium">{selectedRequest.zip}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Request Timeline</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Submitted on {new Date(selectedRequest.created_at).toLocaleDateString()} at {new Date(selectedRequest.created_at).toLocaleTimeString()}
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t flex justify-end">
+                    {selectedRequest && !selectedRequest.quotes?.some(q => q.pro_id === user?.id) && (
+                      <Button 
+                        onClick={(e) => {
+                          setIsDetailsModalOpen(false);
+                          handleQuoteClick(selectedRequest.id, e);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        Send Quote
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Quote Modal */}
+          <Dialog open={isQuoteModalOpen} onOpenChange={setIsQuoteModalOpen}>
+            <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col p-0">
+              <DialogHeader className="px-6 pt-6 pb-3 border-b sticky top-0 bg-background z-10">
+                <DialogTitle className="text-xl">Submit Quote</DialogTitle>
+                <DialogDescription>
+                  Review job details and submit your quote
+                </DialogDescription>
+              </DialogHeader>
+              <ScrollArea className="flex-1">
+                <div className="px-6 py-5">
+                  {selectedRequestId && (
+                    <QuoteForm 
+                      requestId={selectedRequestId} 
+                      onSuccess={handleQuoteSuccess}
+                    />
+                  )}
+                </div>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+
+          {/* Pagination */}
+          {totalCount > 0 && (
+            <div className="mt-8 flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} results
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="items-per-page" className="text-sm text-muted-foreground">
+                    Per page:
+                  </Label>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={(value) => {
+                      setItemsPerPage(Number(value));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger id="items-per-page" className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="min-w-[40px]"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Image Modal */}
+        <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <span>Service Request Image</span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={handleDownloadImage}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            {selectedImage && (
+              <div className="relative">
+                <img 
+                  src={selectedImage} 
+                  alt="Vehicle issue full size" 
+                  className="w-full h-auto rounded-lg"
+                />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </RoleGuard>
+  );
+}
