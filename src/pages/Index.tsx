@@ -63,19 +63,8 @@ const Index = () => {
   }, []);
 
   const fetchServiceCategories = async () => {
-    try {
-      const { data: categoriesData } = await supabase
-        .from('service_categories')
-        .select('*')
-        .eq('active', true)
-        .order('name');
-
-      if (categoriesData) {
-        setCategories(categoriesData);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
+    // Service categories table not yet created - using empty array
+    setCategories([]);
   };
 
   // If user is authenticated, show personalized dashboard
@@ -334,20 +323,22 @@ const Index = () => {
         {/* Content Container - Optimized vertical centering */}
         <div className="relative z-10 h-full max-w-7xl mx-auto px-6 lg:px-8 flex items-center">
           <div className="max-w-2xl lg:max-w-4xl -mt-8 sm:-mt-12 md:-mt-16">
-            {/* Rotating headline with fixed width container to prevent layout shift */}
-            <div className="mb-2 sm:mb-3 lg:h-[1.15em] lg:overflow-visible">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] xl:text-7xl font-bold tracking-tight font-playfair text-white leading-[1.1]">
+            {/* Hero Headlines Container - Fixed height to prevent layout shift */}
+            <div className="mb-5 sm:mb-6">
+              {/* Rotating headline - separate h1 element */}
+              <h1 className="hero-rotating text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-6xl font-bold tracking-tight font-playfair text-white leading-[1.15] min-h-[1.3em]">
                 <RotatingHeadline />
               </h1>
+              {/* Static headline - separate h1 element */}
+              <h1 className="hero-static text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-6xl font-bold tracking-tight font-playfair text-white leading-[1.15]">
+                The Easy Way
+              </h1>
             </div>
-            {/* Fixed subtitle */}
-            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] xl:text-7xl font-bold tracking-tight font-playfair text-white leading-[1.1] mb-5 sm:mb-6">
-              The Easy Way
-            </h2>
             {/* Supporting tagline */}
             <p className="text-lg sm:text-xl md:text-2xl text-white/90 font-medium mb-8 sm:mb-10">
               Compare. Book. Done.
             </p>
+            {/* CTA buttons - fixed position */}
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/auth">
                 <Button 

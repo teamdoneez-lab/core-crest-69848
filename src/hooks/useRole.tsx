@@ -45,7 +45,13 @@ export function useRole() {
         return;
       }
 
-      setProfile(profileData);
+      // Add default role since profiles table doesn't have role column
+      setProfile({
+        id: profileData.id,
+        name: profileData.name || '',
+        phone: profileData.phone || undefined,
+        role: 'customer' // Default role
+      });
     } catch (error) {
       console.error('Unexpected error fetching profile:', error);
     } finally {
@@ -69,6 +75,7 @@ export function useRole() {
     hasAnyRole,
     isCustomer: hasRole('customer'),
     isPro: hasRole('pro'),
-    isAdmin: hasRole('admin')
+    isAdmin: hasRole('admin'),
+    isSupplier: hasRole('supplier'),
   };
 }
