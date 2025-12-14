@@ -96,26 +96,27 @@ export function useRole() {
     }
   };
 
+  const roles = state.roles || [];
+  const primaryRole = roles.length > 0 ? roles[0] : null;
+
   const hasRole = (role: UserRole): boolean => {
-    return state.roles.includes(role);
+    return roles.includes(role);
   };
 
   const hasAnyRole = (allowedRoles: UserRole[]): boolean => {
-    return state.roles.some(role => allowedRoles.includes(role));
+    return roles.some(r => allowedRoles.includes(r));
   };
 
-  const primaryRole = state.roles[0] || null;
-
   return {
-    roles: state.roles,
+    roles,
     role: primaryRole,
     profile: state.profile,
     loading: state.loading || authLoading,
     error: state.error,
     hasRole,
     hasAnyRole,
-    isCustomer: hasRole('customer'),
-    isPro: hasRole('pro'),
-    isAdmin: hasRole('admin'),
+    isCustomer: roles.includes('customer') || roles.length === 0,
+    isPro: roles.includes('pro'),
+    isAdmin: roles.includes('admin'),
   };
 }
