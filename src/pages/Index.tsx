@@ -86,44 +86,40 @@ const Index = () => {
 
           {isCustomer && (
             <div className="grid gap-6">
-              <Card className="bg-gradient-card shadow-xl border-0">
-                <CardHeader className="text-center pb-4">
-                  <CardTitle className="text-2xl bg-gradient-primary bg-clip-text text-transparent">Quick Actions</CardTitle>
-                  <CardDescription className="text-lg">
-                    Professional auto services at your fingertips
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Link to="/request-service">
-                      <Card className="group cursor-pointer transition-all duration-500 hover:shadow-xl hover:scale-105 hover:bg-gradient-subtle border-2 hover:border-primary/20">
-                        <CardContent className="p-8 text-center">
-                          <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-elegant">
-                            <Car className="h-8 w-8 text-white drop-shadow-lg" />
-                          </div>
-                          <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">Request Service</h3>
-                          <p className="text-muted-foreground group-hover:text-primary/80 transition-colors">
-                            Get your vehicle serviced by verified professionals
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                    <Link to="/appointments">
-                      <Card className="group cursor-pointer transition-all duration-500 hover:shadow-xl hover:scale-105 hover:bg-gradient-subtle border-2 hover:border-primary/20">
-                        <CardContent className="p-8 text-center">
-                          <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-elegant">
-                            <Calendar className="h-8 w-8 text-white drop-shadow-lg" />
-                          </div>
-                          <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">My Appointments</h3>
-                          <p className="text-muted-foreground group-hover:text-primary/80 transition-colors">
-                            View and manage your scheduled services
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="text-center mt-6 mb-3">
+                <h2 className="text-2xl font-semibold text-foreground">Quick Actions</h2>
+                <p className="text-muted-foreground text-base mt-1">
+                  Professional auto services at your fingernails
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Link to="/request-service">
+                  <Card className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border hover:border-primary/20">
+                    <CardContent className="p-8 text-center">
+                      <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <Car className="h-8 w-8 text-primary-foreground" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">Request Service</h3>
+                      <p className="text-muted-foreground group-hover:text-primary/80 transition-colors">
+                        Get your vehicle serviced by verified professionals
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+                <Link to="/appointments">
+                  <Card className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border hover:border-primary/20">
+                    <CardContent className="p-8 text-center">
+                      <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <Calendar className="h-8 w-8 text-primary-foreground" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">My Appointments</h3>
+                      <p className="text-muted-foreground group-hover:text-primary/80 transition-colors">
+                        View and manage your scheduled services
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </div>
 
               <Card>
                 <CardHeader>
