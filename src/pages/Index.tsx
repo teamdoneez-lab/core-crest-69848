@@ -74,7 +74,7 @@ const Index = () => {
         <Navigation />
         <div className="mx-auto max-w-6xl p-6">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2 bg-gradient-primary bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold mb-2 text-primary">
               {isAdmin && 'Admin Dashboard'}
               {isPro && 'Professional Dashboard'}
               {isCustomer && 'Customer Dashboard'}
