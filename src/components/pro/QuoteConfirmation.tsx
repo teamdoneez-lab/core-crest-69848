@@ -23,6 +23,43 @@ interface QuoteConfirmationProps {
 }
 
 export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps) {
+  const handlePayReferralFee = async () => {
+    try {
+      const res = await fetch("https://<replit>/api/referral-fee/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ appointment_id: quote.id }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to create referral fee checkout session:", await res.text());
+        return;
+      }
+
+      const data = await res.json();
+      const checkoutUrl = data?.checkout_url;
+
+      if (!checkoutUrl || typeof checkoutUrl !== "string") {
+        console.error("Missing checkout_url in response:", data);
+        return;
+      }
+
+      // iframe-safe redirect
+      if (typeof window !== "undefined" && window.top && window.top !== window.self) {
+        window.top.location.href = checkoutUrl;
+      } else {
+        window.location.href = checkoutUrl;
+      }
+
+      // optional local callback (won't run if redirect happens immediately, but harmless)
+      onConfirmed();
+    } catch (err) {
+      console.error("Error starting referral fee checkout:", err);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -30,16 +67,16 @@ export function QuoteConfirmation({ quote, onConfirmed }: QuoteConfirmationProps
           <CheckCircle className="h-5 w-5" />
           Quote Confirmation
         </CardTitle>
-        <CardDescription>
-          Confirm your quote for this service request
-        </CardDescription>
+        <CardDescription>Confirm your quote for this service request</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="text-center py-8 text-muted-foreground">
-          <CheckCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/40" />
-          <p>Quote confirmation requires database setup.</p>
-          <p className="text-sm mt-2">The quotes table needs to be created.</p>
-        </div>
+        <button
+          type="button"
+          onClick={handlePayReferralFee}
+          className="w-full inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          Pay referral fee
+        </button>
       </CardContent>
     </Card>
   );
