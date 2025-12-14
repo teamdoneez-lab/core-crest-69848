@@ -2,80 +2,75 @@ import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-type UserRole = 'customer' | 'pro' | 'admin' | 'supplier';
+type UserRole = 'customer' | 'pro' | 'admin';
 
 interface Profile {
   id: string;
-  role: UserRole;
-  name: string;
-  phone?: string;
+  name: string | null;
+  phone: string | null;
 }
 
 export function useRole() {
   const { user, loading: authLoading } = useAuth();
+  const [roles, setRoles] = useState<UserRole[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      fetchUserProfile();
+      fetchUserData();
     } else {
+      setRoles([]);
       setProfile(null);
       setLoading(false);
     }
   }, [user]);
 
-  const fetchUserProfile = async () => {
+  const fetchUserData = async () => {
     try {
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user?.id)
-        .maybeSingle();
+      // Fetch roles and profile in parallel
+      const [rolesResult, profileResult] = await Promise.all([
+        supabase.from('user_roles').select('role').eq('user_id', user?.id),
+        supabase.from('profiles').select('id, name, phone').eq('id', user?.id).maybeSingle()
+      ]);
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        setLoading(false);
-        return;
+      if (rolesResult.error) {
+        console.error('Error fetching roles:', rolesResult.error);
+      }
+      if (profileResult.error) {
+        console.error('Error fetching profile:', profileResult.error);
       }
 
-      if (!profileData) {
-        console.warn('No profile found for user:', user?.id);
-        setLoading(false);
-        return;
-      }
-
-      // Add default role since profiles table doesn't have role column
-      setProfile({
-        id: profileData.id,
-        name: profileData.name || '',
-        phone: profileData.phone || undefined,
-        role: 'customer' // Default role
-      });
+      const userRoles = (rolesResult.data?.map(r => r.role) || []) as UserRole[];
+      setRoles(userRoles.length > 0 ? userRoles : ['customer']);
+      setProfile(profileResult.data);
     } catch (error) {
-      console.error('Unexpected error fetching profile:', error);
+      console.error('Unexpected error fetching user data:', error);
+      setRoles(['customer']);
     } finally {
       setLoading(false);
     }
   };
 
   const hasRole = (role: UserRole): boolean => {
-    return profile?.role === role;
+    return roles.includes(role);
   };
 
-  const hasAnyRole = (roles: UserRole[]): boolean => {
-    return profile ? roles.includes(profile.role) : false;
+  const hasAnyRole = (allowedRoles: UserRole[]): boolean => {
+    return roles.some(role => allowedRoles.includes(role));
   };
+
+  const primaryRole = roles[0] || 'customer';
 
   return {
+    roles,
+    role: primaryRole,
     profile,
-    role: profile?.role || null,
     loading: loading || authLoading,
     hasRole,
     hasAnyRole,
-    isCustomer: hasRole('customer'),
+    isCustomer: hasRole('customer') || roles.length === 0,
     isPro: hasRole('pro'),
     isAdmin: hasRole('admin'),
-    isSupplier: hasRole('supplier'),
   };
 }

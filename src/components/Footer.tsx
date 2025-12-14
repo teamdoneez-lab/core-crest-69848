@@ -5,8 +5,8 @@ import logo from '@/assets/logo-new.png';
 
 export function Footer() {
   const { user } = useAuth();
-  const { hasRole } = useRole();
-  const isSupplier = user && hasRole('supplier');
+  // Supplier role check removed - not in current database schema
+  const isSupplier = false;
 
   return (
     <footer className="border-t bg-background/95 backdrop-blur">
