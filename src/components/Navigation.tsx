@@ -15,7 +15,7 @@ import { useState } from 'react';
 
 export function Navigation() {
   const { user, signOut } = useAuth();
-  const { profile, role, isCustomer, isPro, isAdmin } = useRole();
+  const { profile, isCustomer, isPro, isAdmin } = useRole();
   const unreadCount = useUnreadMessages();
   const { hasNewPhotos, hasPhotoRequests } = usePhotoNotifications();
   const location = useLocation();
@@ -245,7 +245,7 @@ export function Navigation() {
           <div className="flex items-center gap-2 flex-shrink-0">
             {isPro && <CartPanel />}
             <Badge variant="secondary" className="text-xs whitespace-nowrap">
-              {role || 'customer'}
+              {profile?.role || 'customer'}
             </Badge>
             {!isMobile && (
               <Button 

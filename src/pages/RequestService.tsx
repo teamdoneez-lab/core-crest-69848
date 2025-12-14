@@ -60,8 +60,15 @@ export default function RequestService() {
   }, []);
 
   const fetchCategories = async () => {
-    // service_categories table not yet created - using empty array
-    setCategories([]);
+    const { data } = await supabase
+      .from('service_categories')
+      .select('id, name')
+      .eq('active', true)
+      .order('name');
+    
+    if (data) {
+      setCategories(data);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,7 +76,125 @@ export default function RequestService() {
     setIsLoading(true);
 
     try {
-      // service_requests table not yet created - show placeholder message
+      // Normalize ZIP code to first 5 digits only
+      const normalizedZip = formData.zip.trim().substring(0, 5);
+      
+      // Validate form data
+      const validatedData = serviceRequestSchema.parse({
+        ...formData,
+        zip: normalizedZip,
+        year: Number(formData.year),
+        mileage: formData.mileage ? Number(formData.mileage) : undefined
+      });
+
+      // CRITICAL: Always get coordinates (required for lead generation)
+      let latitude: number;
+      let longitude: number;
+      let geocodedAddress = validatedData.address;
+
+      try {
+        // Try edge function first
+        const { data: geocodeData, error: geocodeError } = await supabase.functions.invoke('geocode-address', {
+          body: { address: validatedData.address }
+        });
+
+        if (!geocodeError && geocodeData?.latitude && geocodeData?.longitude) {
+          latitude = geocodeData.latitude;
+          longitude = geocodeData.longitude;
+          geocodedAddress = geocodeData.formatted_address || validatedData.address;
+          console.log('Address geocoded successfully:', { latitude, longitude });
+        } else {
+          throw new Error('Geocode function failed');
+        }
+      } catch (geocodeError) {
+        console.warn('Geocoding function failed, using fallback coordinates:', geocodeError);
+        
+        // Fallback: Use approximate US center coordinates
+        // In production, you would lookup ZIP coordinates from a database
+        latitude = 39.8283;
+        longitude = -98.5795;
+        toast({
+          title: 'Warning',
+          description: 'Could not determine exact location. Using approximate coordinates.',
+          variant: 'default'
+        });
+      }
+
+      // CRITICAL: Log all fields before insert to verify data integrity
+      console.log('Inserting service request with:', {
+        category_id: validatedData.category_id,
+        latitude,
+        longitude,
+        zip: validatedData.zip
+      });
+
+      // Insert service request with all required fields for lead generation
+      const { data: newRequest, error } = await supabase
+        .from('service_requests')
+        .insert({
+          customer_id: user?.id!,
+          category_id: validatedData.category_id, // REQUIRED for lead matching
+          vehicle_make: validatedData.vehicle_make,
+          model: validatedData.model,
+          year: validatedData.year,
+          trim: validatedData.trim,
+          mileage: validatedData.mileage,
+          appointment_pref: validatedData.appointment_pref,
+          address: geocodedAddress,
+          zip: validatedData.zip, // REQUIRED for lead matching
+          latitude: latitude, // REQUIRED for distance-based matching
+          longitude: longitude, // REQUIRED for distance-based matching
+          formatted_address: geocodedAddress,
+          contact_email: validatedData.contact_email,
+          contact_phone: validatedData.contact_phone,
+          notes: validatedData.notes,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Generate leads for nearby pros using RPC function
+      try {
+        const { data: leadsData, error: leadsError } = await supabase.rpc('generate_leads_for_request', {
+          p_request_id: newRequest.id
+        });
+
+        if (leadsError) {
+          console.error('Failed to generate leads:', leadsError);
+          toast({
+            title: 'Warning',
+            description: 'Request created but pro matching may be delayed.',
+            variant: 'default'
+          });
+        } else {
+          console.log(`Generated ${leadsData || 0} leads for request ${newRequest.id}`);
+        }
+      } catch (leadsError) {
+        console.error('Lead generation failed:', leadsError);
+      }
+
+      // Send confirmation email
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-request-confirmation', {
+          body: { requestId: newRequest.id }
+        });
+
+        if (emailError) {
+          console.error('Failed to send confirmation email:', emailError);
+        }
+      } catch (emailError) {
+        console.error('Email notification failed:', emailError);
+      }
+
       toast({
         title: 'Success!',
         description: 'Your service request has been submitted.'
@@ -77,11 +202,20 @@ export default function RequestService() {
 
       navigate('/request-confirmation');
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to submit request. Please try again.',
-        variant: 'destructive'
-      });
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast({
+          title: 'Validation Error',
+          description: firstError.message,
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to submit request. Please try again.',
+          variant: 'destructive'
+        });
+      }
     } finally {
       setIsLoading(false);
     }

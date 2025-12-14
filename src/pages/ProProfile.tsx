@@ -104,17 +104,46 @@ export default function ProProfile() {
   }, [user]);
 
   const fetchProProfile = async () => {
-    // pro_profiles table not yet created - using placeholder data
+    const { data: proData } = await supabase.from("pro_profiles").select("*").eq("pro_id", user?.id).single();
+
     const { data: profileData } = await supabase.from("profiles").select("name").eq("id", user?.id).single();
-    
-    setFormData((prev) => ({
-      ...prev,
-      name: profileData?.name || "",
-    }));
+
+    if (proData) {
+      setProfile(proData);
+
+      let selectedServices: string[] = [];
+      if (proData.notes) {
+        try {
+          selectedServices = JSON.parse(proData.notes).selectedServices || [];
+        } catch {}
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        name: profileData?.name || "",
+        business_name: proData.business_name,
+        phone: proData.phone || "",
+        address: proData.address || "",
+        website: proData.website || "",
+        description: proData.description || "",
+        zip_code: proData.zip_code || "",
+        city: proData.city || "",
+        state: proData.state || "",
+        service_radius: proData.service_radius || 25,
+        selectedServices,
+      }));
+    }
   };
 
   const fetchProServiceAreas = async () => {
-    // pro_service_areas table not yet created - using empty state
+    const { data } = await supabase.from("pro_service_areas").select("zip").eq("pro_id", user?.id);
+
+    if (data) {
+      setFormData((prev) => ({
+        ...prev,
+        service_areas: data.map((x) => x.zip).join(", "),
+      }));
+    }
   };
 
   // -----------------------------------------------------
@@ -182,13 +211,69 @@ export default function ProProfile() {
         service_areas: formData.service_areas.trim(),
       });
 
-      // Save name only - other tables not yet created
+      const zipCodes = validatedData.service_areas
+        .split(",")
+        .map((x) => x.trim())
+        .filter((x) => x.length > 0);
+
+      // Save name
       const { error: nameErr } = await supabase
         .from("profiles")
         .update({ name: validatedData.name })
         .eq("id", user?.id);
 
       if (nameErr) throw nameErr;
+
+      // Save profile
+      const { error: profileErr } = await supabase.from("pro_profiles").upsert({
+        pro_id: user?.id,
+        business_name: validatedData.business_name,
+        phone: validatedData.phone || null,
+        address: validatedData.address || null,
+        website: validatedData.website || null,
+        description: validatedData.description || null,
+        zip_code: validatedData.zip_code || null,
+        city: validatedData.city || null,
+        state: validatedData.state || null,
+        service_radius: validatedData.service_radius,
+      });
+
+      if (profileErr) throw profileErr;
+
+      // ---------------------------
+      // CALL GEOCODE IF ZIP OR ADDRESS CHANGED
+      // ---------------------------
+      const zipChanged = validatedData.zip_code !== profile?.zip_code;
+      const addressChanged = validatedData.address !== profile?.address;
+
+      if (zipChanged || addressChanged) {
+        await geocodeAddress({
+          pro_id: user!.id,
+          zip_code: validatedData.zip_code || "",
+          address: validatedData.address || "",
+        });
+      }
+
+      // Store selected services
+      await supabase
+        .from("pro_profiles")
+        .update({
+          notes: JSON.stringify({
+            selectedServices: validatedData.selectedServices,
+          }),
+        })
+        .eq("pro_id", user?.id);
+
+      // Reset service areas
+      await supabase.from("pro_service_areas").delete().eq("pro_id", user?.id);
+
+      if (zipCodes.length > 0) {
+        const inserts = zipCodes.map((zip) => ({
+          pro_id: user?.id,
+          zip,
+        }));
+        await supabase.from("pro_service_areas").insert(inserts);
+      }
 
       toast({
         title: "Success!",

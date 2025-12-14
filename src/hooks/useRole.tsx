@@ -6,14 +6,14 @@ type UserRole = 'customer' | 'pro' | 'admin' | 'supplier';
 
 interface Profile {
   id: string;
-  name: string | null;
-  phone: string | null;
+  role: UserRole;
+  name: string;
+  phone?: string;
 }
 
 export function useRole() {
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,42 +21,31 @@ export function useRole() {
       fetchUserProfile();
     } else {
       setProfile(null);
-      setRole(null);
       setLoading(false);
     }
   }, [user]);
 
   const fetchUserProfile = async () => {
     try {
-      // Fetch profile
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('id, name, phone')
+        .select('*')
         .eq('id', user?.id)
         .maybeSingle();
 
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
+      if (error) {
+        console.error('Error fetching profile:', error);
         setLoading(false);
         return;
       }
 
-      if (profileData) {
-        setProfile(profileData);
+      if (!profileData) {
+        console.warn('No profile found for user:', user?.id);
+        setLoading(false);
+        return;
       }
 
-      // Fetch role from user_roles table
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (roleError) {
-        console.error('Error fetching role:', roleError);
-      } else if (roleData) {
-        setRole(roleData.role as UserRole);
-      }
+      setProfile(profileData);
     } catch (error) {
       console.error('Unexpected error fetching profile:', error);
     } finally {
@@ -64,17 +53,17 @@ export function useRole() {
     }
   };
 
-  const hasRole = (r: UserRole): boolean => {
-    return role === r;
+  const hasRole = (role: UserRole): boolean => {
+    return profile?.role === role;
   };
 
   const hasAnyRole = (roles: UserRole[]): boolean => {
-    return role ? roles.includes(role) : false;
+    return profile ? roles.includes(profile.role) : false;
   };
 
   return {
     profile,
-    role,
+    role: profile?.role || null,
     loading: loading || authLoading,
     hasRole,
     hasAnyRole,

@@ -86,9 +86,15 @@ export default function ProOnboarding() {
   }, []);
 
   const fetchCategories = async () => {
-    // service_categories table not yet created - using empty array
-    // This will be populated once the table is created
-    setCategories([]);
+    const { data } = await supabase
+      .from('service_categories')
+      .select('id, name')
+      .eq('active', true)
+      .order('name');
+    
+    if (data) {
+      setCategories(data);
+    }
   };
 
   const handleNext = () => {
@@ -175,7 +181,86 @@ export default function ProOnboarding() {
 
     setIsLoading(true);
     try {
-      // Database tables not yet created - show placeholder message
+      // Create or update professional profile with all data
+      const servicesData = {
+        selectedServices: services.selectedServices,
+        serviceType: businessDetails.serviceType
+      };
+
+      const { error: proProfileError } = await supabase
+        .from('pro_profiles')
+        .upsert({
+          pro_id: user?.id,
+          business_name: businessDetails.businessName,
+          phone: businessDetails.businessPhone,
+          address: businessDetails.businessAddress,
+          website: businessDetails.businessWebsite || null,
+          description: businessDetails.businessDescription,
+          zip_code: location.zipCode,
+          city: location.city,
+          state: location.state,
+          service_radius: location.serviceRadius,
+          profile_complete: true,
+          is_verified: false, // Will be verified by admin
+          notes: JSON.stringify(servicesData)
+        });
+
+      if (proProfileError) throw proProfileError;
+
+      // Add primary service area (ZIP code)
+      await supabase
+        .from('pro_service_areas')
+        .delete()
+        .eq('pro_id', user?.id);
+
+      const { error: areaError } = await supabase
+        .from('pro_service_areas')
+        .insert({
+          pro_id: user?.id,
+          zip: location.zipCode
+        });
+
+      if (areaError) throw areaError;
+
+      // Add ALL service categories to pro_service_categories
+      // Since the onboarding collects individual services, we'll add all categories
+      await supabase
+        .from('pro_service_categories')
+        .delete()
+        .eq('pro_id', user?.id);
+
+      const { data: allCategories, error: fetchCategoriesError } = await supabase
+        .from('service_categories')
+        .select('id')
+        .eq('active', true);
+
+      if (fetchCategoriesError) {
+        console.error('Error fetching categories:', fetchCategoriesError);
+        throw fetchCategoriesError;
+      }
+
+      if (allCategories && allCategories.length > 0) {
+        const categoryInserts = allCategories.map(cat => ({
+          pro_id: user?.id,
+          category_id: cat.id
+        }));
+
+        console.log('Inserting categories:', categoryInserts);
+
+        const { error: categoryError } = await supabase
+          .from('pro_service_categories')
+          .insert(categoryInserts);
+
+        if (categoryError) {
+          console.error('Error inserting categories:', categoryError);
+          throw categoryError;
+        }
+
+        console.log('Successfully inserted', allCategories.length, 'service categories');
+      } else {
+        console.warn('No active service categories found to insert');
+      }
+
       toast({
         title: 'Registration Complete!',
         description: 'Your professional profile has been created. Pending admin verification.'

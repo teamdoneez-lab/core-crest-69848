@@ -41,10 +41,73 @@ export default function ProMarketplace() {
   const fetchProducts = async () => {
     try {
       setProductsLoading(true);
-      // supplier_products table not yet created - using empty array
-      // This will be populated once the table is created
-      setProducts([]);
-      console.log('Products table not yet available');
+      const { data, error } = await supabase
+        .from('supplier_products')
+        .select(`
+          *,
+          suppliers:supplier_id (
+            business_name,
+            is_platform_seller
+          )
+        `)
+        .eq('admin_approved', true)
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      // Fallback image for automotive parts
+      const fallbackImage = 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=1200&h=1200&fit=crop&q=80';
+      
+      // Check if image URL is valid (not a placeholder)
+      const isValidImageUrl = (url: string | null) => {
+        if (!url) return false;
+        if (url.includes('example.com')) return false; // Placeholder domain
+        if (url.includes('placeholder')) return false;
+        if (url.trim() === '') return false;
+        return true;
+      };
+
+      // Map database products to Product interface
+      const mappedProducts: Product[] = (data || []).map(product => {
+        const supplier = Array.isArray(product.suppliers) ? product.suppliers[0] : product.suppliers;
+        
+        // Get the first valid image from either images array or image_url
+        let productImage = fallbackImage;
+        let productImages: string[] = [];
+        const productAny = product as any; // Temporary until migration is run
+        if (productAny.images && Array.isArray(productAny.images) && productAny.images.length > 0) {
+          const validImages = productAny.images.filter((img: string) => isValidImageUrl(img));
+          if (validImages.length > 0) {
+            productImages = validImages;
+            productImage = validImages[0];
+          }
+        } else if (isValidImageUrl(product.image_url)) {
+          productImage = product.image_url;
+          productImages = [product.image_url];
+        } else {
+          productImages = [fallbackImage];
+        }
+        
+        return {
+          id: product.id,
+          name: product.part_name,
+          price: Number(product.price),
+          category: product.category,
+          image: productImage,
+          images: productImages,
+          description: product.description || '',
+          inStock: (product.quantity || 0) > 0,
+          sku: product.sku,
+          condition: product.condition,
+          quantity: product.quantity || 0,
+          supplierId: product.supplier_id,
+          sellerName: supplier?.is_platform_seller ? 'DoneEZ' : supplier?.business_name || 'Unknown',
+          isPlatformSeller: supplier?.is_platform_seller || false,
+        };
+      });
+
+      setProducts(mappedProducts);
+      console.log(`Loaded ${mappedProducts.length} products with validated images`);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast({

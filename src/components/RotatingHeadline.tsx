@@ -19,21 +19,21 @@ export const RotatingHeadline = () => {
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % headlines.length);
         setIsVisible(true);
-      }, 400);
-    }, 3000);
+      }, 300);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <span
-      className={`block transition-all duration-400 ease-in-out whitespace-nowrap ${
-        isVisible 
-          ? 'opacity-100 translate-y-0' 
-          : 'opacity-0 -translate-y-2'
-      }`}
-    >
-      {headlines[currentIndex]}
-    </span>
+    <div className="min-h-[1.2em] lg:min-h-[1.15em]">
+      <span
+        className={`inline-block whitespace-nowrap transition-opacity duration-300 ${
+          isVisible ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        {headlines[currentIndex]}
+      </span>
+    </div>
   );
 };
