@@ -74,7 +74,7 @@ const Index = () => {
         <Navigation />
         <div className="mx-auto max-w-6xl p-6">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2 bg-gradient-primary bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold mb-2 text-primary">
               {isAdmin && 'Admin Dashboard'}
               {isPro && 'Professional Dashboard'}
               {isCustomer && 'Customer Dashboard'}
@@ -88,7 +88,7 @@ const Index = () => {
             <div className="grid gap-6">
               <Card className="bg-gradient-card shadow-xl border-0">
                 <CardHeader className="text-center pb-4">
-                  <CardTitle className="text-2xl bg-gradient-primary bg-clip-text text-transparent">Quick Actions</CardTitle>
+                  <CardTitle className="text-2xl text-primary">Quick Actions</CardTitle>
                   <CardDescription className="text-lg">
                     Professional auto services at your fingertips
                   </CardDescription>
