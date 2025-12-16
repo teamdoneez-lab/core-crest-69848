@@ -12,7 +12,7 @@ export default function FAQ() {
       <PublicNavigation />
       <div className="mx-auto max-w-4xl p-6 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-primary">
             Frequently Asked Questions
           </h1>
           <p className="text-xl text-muted-foreground">
