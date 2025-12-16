@@ -10,7 +10,7 @@ export default function HowItWorks() {
       <PublicNavigation />
       <div className="mx-auto max-w-6xl p-6 py-16">
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-primary">
             How It Works
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
