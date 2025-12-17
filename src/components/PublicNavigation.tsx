@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import logo from '@/assets/logo-new.png';
+import logo from '@/assets/logo-modern.png';
 
 export function PublicNavigation() {
   return (

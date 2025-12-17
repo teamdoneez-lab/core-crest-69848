@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { MessageSquare, Menu } from 'lucide-react';
 import { CartPanel } from '@/components/marketplace/CartPanel';
-import logo from '@/assets/logo-new.png';
+import logo from '@/assets/logo-modern.png';
 import { useState } from 'react';
 
 export function Navigation() {
