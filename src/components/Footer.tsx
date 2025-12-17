@@ -15,7 +15,7 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="flex items-center mb-4">
-              <img src={logo} alt="DoneEZ" className="h-12 w-auto mr-2" />
+              <img src={logo} alt="DoneEZ" className="h-10 w-auto mr-2" />
             </div>
             <p className="text-muted-foreground leading-relaxed">
               Professional automotive services delivered to your doorstep. Simple, fast, and reliable.
