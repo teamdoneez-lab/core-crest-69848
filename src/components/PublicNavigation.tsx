@@ -9,7 +9,12 @@ export function PublicNavigation() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link to="/">
-              <img src={logo} alt="DoneEZ" className="h-10 w-auto mr-2 cursor-pointer" />
+              <img
+                src={logo}
+                alt="DoneEZ auto repair marketplace logo"
+                className="h-12 w-auto object-contain mr-2 cursor-pointer select-none"
+                draggable={false}
+              />
             </Link>
           </div>
           
