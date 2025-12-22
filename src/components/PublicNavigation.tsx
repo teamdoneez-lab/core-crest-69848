@@ -9,11 +9,12 @@ export function PublicNavigation() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link to="/" className="relative">
+            <Link to="/" className="relative flex items-center">
               <img
                 src={santaHat}
                 alt=""
-                className="absolute -top-3 -left-1 h-8 w-auto z-10 pointer-events-none select-none"
+                className="absolute -top-2 left-0 h-7 w-auto z-10 pointer-events-none select-none drop-shadow-sm"
+                style={{ transform: 'rotate(-15deg)' }}
                 draggable={false}
               />
               <img

@@ -237,7 +237,8 @@ export function Navigation() {
             <img
               src={santaHat}
               alt=""
-              className="absolute -top-3 -left-1 h-8 w-auto z-10 pointer-events-none select-none"
+              className="absolute -top-2 left-0 h-7 w-auto z-10 pointer-events-none select-none drop-shadow-sm"
+              style={{ transform: 'rotate(-15deg)' }}
               draggable={false}
             />
             <img
