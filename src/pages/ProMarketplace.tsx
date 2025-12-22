@@ -41,7 +41,7 @@ export default function ProMarketplace() {
   const fetchProducts = async () => {
     try {
       setProductsLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('supplier_products')
         .select(`
           *,

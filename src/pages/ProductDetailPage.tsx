@@ -49,7 +49,7 @@ export default function ProductDetailPage() {
     try {
       setProductLoading(true);
       setImageError(false);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('supplier_products')
         .select(`
           *,

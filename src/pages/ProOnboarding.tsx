@@ -86,7 +86,7 @@ export default function ProOnboarding() {
   }, []);
 
   const fetchCategories = async () => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('service_categories')
       .select('id, name')
       .eq('active', true)
@@ -187,7 +187,7 @@ export default function ProOnboarding() {
         serviceType: businessDetails.serviceType
       };
 
-      const { error: proProfileError } = await supabase
+      const { error: proProfileError } = await (supabase as any)
         .from('pro_profiles')
         .upsert({
           pro_id: user?.id,
@@ -208,12 +208,12 @@ export default function ProOnboarding() {
       if (proProfileError) throw proProfileError;
 
       // Add primary service area (ZIP code)
-      await supabase
+      await (supabase as any)
         .from('pro_service_areas')
         .delete()
         .eq('pro_id', user?.id);
 
-      const { error: areaError } = await supabase
+      const { error: areaError } = await (supabase as any)
         .from('pro_service_areas')
         .insert({
           pro_id: user?.id,
@@ -224,12 +224,12 @@ export default function ProOnboarding() {
 
       // Add ALL service categories to pro_service_categories
       // Since the onboarding collects individual services, we'll add all categories
-      await supabase
+      await (supabase as any)
         .from('pro_service_categories')
         .delete()
         .eq('pro_id', user?.id);
 
-      const { data: allCategories, error: fetchCategoriesError } = await supabase
+      const { data: allCategories, error: fetchCategoriesError } = await (supabase as any)
         .from('service_categories')
         .select('id')
         .eq('active', true);
@@ -247,7 +247,7 @@ export default function ProOnboarding() {
 
         console.log('Inserting categories:', categoryInserts);
 
-        const { error: categoryError } = await supabase
+        const { error: categoryError } = await (supabase as any)
           .from('pro_service_categories')
           .insert(categoryInserts);
 

@@ -104,9 +104,9 @@ export default function ProProfile() {
   }, [user]);
 
   const fetchProProfile = async () => {
-    const { data: proData } = await supabase.from("pro_profiles").select("*").eq("pro_id", user?.id).single();
+    const { data: proData } = await (supabase as any).from("pro_profiles").select("*").eq("pro_id", user?.id).single();
 
-    const { data: profileData } = await supabase.from("profiles").select("name").eq("id", user?.id).single();
+    const { data: profileData } = await (supabase as any).from("profiles").select("name").eq("id", user?.id).single();
 
     if (proData) {
       setProfile(proData);
@@ -136,7 +136,7 @@ export default function ProProfile() {
   };
 
   const fetchProServiceAreas = async () => {
-    const { data } = await supabase.from("pro_service_areas").select("zip").eq("pro_id", user?.id);
+    const { data } = await (supabase as any).from("pro_service_areas").select("zip").eq("pro_id", user?.id);
 
     if (data) {
       setFormData((prev) => ({
@@ -217,7 +217,7 @@ export default function ProProfile() {
         .filter((x) => x.length > 0);
 
       // Save name
-      const { error: nameErr } = await supabase
+      const { error: nameErr } = await (supabase as any)
         .from("profiles")
         .update({ name: validatedData.name })
         .eq("id", user?.id);
@@ -225,7 +225,7 @@ export default function ProProfile() {
       if (nameErr) throw nameErr;
 
       // Save profile
-      const { error: profileErr } = await supabase.from("pro_profiles").upsert({
+      const { error: profileErr } = await (supabase as any).from("pro_profiles").upsert({
         pro_id: user?.id,
         business_name: validatedData.business_name,
         phone: validatedData.phone || null,
@@ -255,7 +255,7 @@ export default function ProProfile() {
       }
 
       // Store selected services
-      await supabase
+      await (supabase as any)
         .from("pro_profiles")
         .update({
           notes: JSON.stringify({
@@ -265,14 +265,14 @@ export default function ProProfile() {
         .eq("pro_id", user?.id);
 
       // Reset service areas
-      await supabase.from("pro_service_areas").delete().eq("pro_id", user?.id);
+      await (supabase as any).from("pro_service_areas").delete().eq("pro_id", user?.id);
 
       if (zipCodes.length > 0) {
         const inserts = zipCodes.map((zip) => ({
           pro_id: user?.id,
           zip,
         }));
-        await supabase.from("pro_service_areas").insert(inserts);
+        await (supabase as any).from("pro_service_areas").insert(inserts);
       }
 
       toast({
