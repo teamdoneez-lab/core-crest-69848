@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { MessageSquare, Menu } from 'lucide-react';
 import { CartPanel } from '@/components/marketplace/CartPanel';
 import logo from '@/assets/logo.png';
+import santaHat from '@/assets/santa-hat.png';
 import { useState } from 'react';
 
 export function Navigation() {
@@ -232,7 +233,13 @@ export function Navigation() {
     <nav className="border-b bg-background">
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center flex-shrink-0">
+          <Link to="/" className="flex items-center flex-shrink-0 relative">
+            <img
+              src={santaHat}
+              alt=""
+              className="absolute -top-3 -left-1 h-8 w-auto z-10 pointer-events-none select-none"
+              draggable={false}
+            />
             <img
               src={logo}
               alt="DoneEZ auto repair marketplace logo"

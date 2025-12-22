@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import logo from '@/assets/logo.png';
+import santaHat from '@/assets/santa-hat.png';
 
 export function PublicNavigation() {
   return (
@@ -8,7 +9,13 @@ export function PublicNavigation() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link to="/">
+            <Link to="/" className="relative">
+              <img
+                src={santaHat}
+                alt=""
+                className="absolute -top-3 -left-1 h-8 w-auto z-10 pointer-events-none select-none"
+                draggable={false}
+              />
               <img
                 src={logo}
                 alt="DoneEZ auto repair marketplace logo"
