@@ -26,7 +26,7 @@ import {
   Zap,
   Target
 } from 'lucide-react';
-import logo from '@/assets/logo-new.png';
+import logo from '@/assets/logo-modern.png';
 import mechanicWorking from '@/assets/mechanic-working.jpg';
 import heroDaytime from '@/assets/hero-clean.jpg';
 import heroNighttime from '@/assets/hero-nighttime.jpg';
