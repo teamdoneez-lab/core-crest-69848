@@ -4,12 +4,12 @@ import logo from '@/assets/logo-modern.png';
 
 export function PublicNavigation() {
   return (
-    <nav className="border-b bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 shadow-sm">
+    <nav className="border-b bg-background sticky top-0 z-50 shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link to="/">
-              <img src={logo} alt="DoneEZ" className="h-8 sm:h-10 w-auto mr-2 drop-shadow-md cursor-pointer" />
+              <img src={logo} alt="DoneEZ" className="h-10 sm:h-12 w-auto mr-2 cursor-pointer" />
             </Link>
           </div>
           
