@@ -47,6 +47,7 @@ interface ServiceRequestData {
 export default function ServiceRequestFlow() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const db = supabase as any;
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [makes, setMakes] = useState<string[]>([]);
@@ -282,7 +283,7 @@ export default function ServiceRequestFlow() {
       }
 
       // Fetch service categories to map the selected services
-      const { data: categories, error: categoriesError } = await supabase
+      const { data: categories, error: categoriesError } = await db
         .from("service_categories")
         .select("id, name")
         .eq("active", true);
@@ -357,7 +358,7 @@ export default function ServiceRequestFlow() {
         zip: normalizedZip
       });
 
-      const { error, data: request } = await supabase
+      const { error, data: request } = await db
         .from("service_requests")
         .insert({
           customer_id: user.id,
@@ -393,7 +394,7 @@ export default function ServiceRequestFlow() {
 
       // Generate leads for professionals
       console.log("Generating leads for request:", request.id);
-      const { data: rpcData, error: rpcError } = await supabase.rpc('generate_leads_for_request', {
+      const { data: rpcData, error: rpcError } = await db.rpc('generate_leads_for_request', {
         p_request_id: request.id
       });
 
@@ -404,7 +405,7 @@ export default function ServiceRequestFlow() {
         console.log("Leads generated successfully. RPC result:", rpcData);
         
         // Verify leads were created
-        const { data: leadsCheck, error: leadsError } = await supabase
+        const { data: leadsCheck, error: leadsError } = await db
           .from('leads')
           .select('id')
           .eq('request_id', request.id);
