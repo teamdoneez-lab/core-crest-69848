@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import logo from '@/assets/logo-modern.png';
+import logo from '@/assets/logo.png';
 
 export function PublicNavigation() {
   return (
@@ -9,11 +9,7 @@ export function PublicNavigation() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link to="/">
-              <img 
-                src={logo} 
-                alt="DoneEZ" 
-                className="h-12 sm:h-14 w-auto mr-2 cursor-pointer mix-blend-multiply" 
-              />
+              <img src={logo} alt="DoneEZ" className="h-10 w-auto mr-2 cursor-pointer" />
             </Link>
           </div>
           

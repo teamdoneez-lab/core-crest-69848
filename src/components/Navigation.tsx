@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { MessageSquare, Menu } from 'lucide-react';
 import { CartPanel } from '@/components/marketplace/CartPanel';
-import logo from '@/assets/logo-modern.png';
+import logo from '@/assets/logo.png';
 import { useState } from 'react';
 
 export function Navigation() {
@@ -233,11 +233,7 @@ export function Navigation() {
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center flex-shrink-0">
-            <img 
-              src={logo} 
-              alt="DoneEZ" 
-              className="h-14 w-auto mix-blend-multiply" 
-            />
+            <img src={logo} alt="DoneEZ" className="h-10 w-auto" />
           </Link>
             
           {!isMobile ? (
