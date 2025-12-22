@@ -233,7 +233,11 @@ export function Navigation() {
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center flex-shrink-0">
-            <img src={logo} alt="DoneEZ" className="h-12 w-auto" />
+            <img 
+              src={logo} 
+              alt="DoneEZ" 
+              className="h-14 w-auto mix-blend-multiply" 
+            />
           </Link>
             
           {!isMobile ? (
