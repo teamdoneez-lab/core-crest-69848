@@ -38,6 +38,7 @@ interface ServiceCategory {
 export default function RequestService() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const db = supabase as any;
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -60,7 +61,7 @@ export default function RequestService() {
   }, []);
 
   const fetchCategories = async () => {
-    const { data } = await supabase
+    const { data } = await db
       .from('service_categories')
       .select('id, name')
       .eq('active', true)
@@ -129,7 +130,7 @@ export default function RequestService() {
       });
 
       // Insert service request with all required fields for lead generation
-      const { data: newRequest, error } = await supabase
+      const { data: newRequest, error } = await db
         .from('service_requests')
         .insert({
           customer_id: user?.id!,
@@ -152,8 +153,6 @@ export default function RequestService() {
         })
         .select()
         .single();
-
-      if (error) {
         toast({
           title: 'Error',
           description: error.message,
@@ -164,7 +163,7 @@ export default function RequestService() {
 
       // Generate leads for nearby pros using RPC function
       try {
-        const { data: leadsData, error: leadsError } = await supabase.rpc('generate_leads_for_request', {
+        const { data: leadsData, error: leadsError } = await db.rpc('generate_leads_for_request', {
           p_request_id: newRequest.id
         });
 

@@ -40,6 +40,7 @@ interface SupplierProduct {
 export default function SupplierDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const db = supabase as any;
   const [searchParams] = useSearchParams();
   const [supplier, setSupplier] = useState<SupplierData | null>(null);
   const [products, setProducts] = useState<SupplierProduct[]>([]);
@@ -91,7 +92,7 @@ export default function SupplierDashboard() {
 
   const fetchSupplierData = async () => {
     try {
-      const { data: supplierData, error: supplierError } = await supabase
+      const { data: supplierData, error: supplierError } = await db
         .from('suppliers')
         .select('*')
         .eq('user_id', user?.id)
@@ -101,12 +102,12 @@ export default function SupplierDashboard() {
       setSupplier(supplierData);
 
       // Fetch product stats
-      const { count: totalProducts } = await supabase
+      const { count: totalProducts } = await db
         .from('supplier_products')
         .select('*', { count: 'exact', head: true })
         .eq('supplier_id', supplierData.id);
 
-      const { count: activeProducts } = await supabase
+      const { count: activeProducts } = await db
         .from('supplier_products')
         .select('*', { count: 'exact', head: true })
         .eq('supplier_id', supplierData.id)
@@ -114,13 +115,13 @@ export default function SupplierDashboard() {
         .eq('admin_approved', true);
 
       // Fetch order stats
-      const { count: pendingOrders } = await supabase
+      const { count: pendingOrders } = await db
         .from('supplier_orders')
         .select('*', { count: 'exact', head: true })
         .eq('supplier_id', supplierData.id)
         .eq('status', 'pending');
 
-      const { data: revenueData } = await supabase
+      const { data: revenueData } = await db
         .from('supplier_orders')
         .select('supplier_payout')
         .eq('supplier_id', supplierData.id)
@@ -234,7 +235,7 @@ export default function SupplierDashboard() {
     
     setStripeLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from('suppliers')
         .update({ 
           stripe_connect_account_id: null,
@@ -304,7 +305,7 @@ export default function SupplierDashboard() {
     
     setProductsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('supplier_products')
         .select('*')
         .eq('supplier_id', supplier.id)
