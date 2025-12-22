@@ -156,8 +156,8 @@ export default function AdminProductForm() {
       // Use the official DoneEZ platform supplier ID
       const DONEEZ_SUPPLIER_ID = 'a52d5eb4-0504-482f-b87d-c7aedce36fda';
       
-      // Verify it exists and is correctly configured
-      const { data, error } = await supabase
+      const db = supabase as any;
+      const { data, error } = await db
         .from('suppliers')
         .select('id, business_name, is_platform_seller, status')
         .eq('id', DONEEZ_SUPPLIER_ID)
@@ -200,7 +200,8 @@ export default function AdminProductForm() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const db = supabase as any;
+      const { data, error } = await db
         .from('supplier_products')
         .select('*')
         .eq('id', productId)
@@ -385,9 +386,10 @@ export default function AdminProductForm() {
         admin_approved: true,
       };
 
+      const db = supabase as any;
       if (productId) {
         // Update existing product
-        const { error } = await supabase
+        const { error } = await db
           .from('supplier_products')
           .update(productData)
           .eq('id', productId);
@@ -400,7 +402,7 @@ export default function AdminProductForm() {
         });
       } else {
         // Create new product
-        const { error } = await supabase
+        const { error } = await db
           .from('supplier_products')
           .insert(productData);
 

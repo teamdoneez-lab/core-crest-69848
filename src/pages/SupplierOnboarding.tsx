@@ -65,9 +65,10 @@ export default function SupplierOnboarding() {
     }
 
     setLoading(true);
+    const db = supabase as any;
     try {
       // Create supplier profile
-      const { data: supplier, error: supplierError } = await supabase
+      const { data: supplier, error: supplierError } = await db
         .from('suppliers')
         .insert({
           user_id: user.id,
@@ -105,7 +106,7 @@ export default function SupplierOnboarding() {
             .from('service-images')
             .getPublicUrl(fileName);
 
-          await supabase.from('supplier_documents').insert({
+          await db.from('supplier_documents').insert({
             supplier_id: supplier.id,
             document_type: 'resale_license',
             file_url: publicUrl,

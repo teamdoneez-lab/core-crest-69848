@@ -153,6 +153,8 @@ export default function RequestService() {
         })
         .select()
         .single();
+
+      if (error) {
         toast({
           title: 'Error',
           description: error.message,
