@@ -133,7 +133,7 @@ export default function ProDashboard() {
 
   const checkProfileComplete = async () => {
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("pro_profiles")
         .select("profile_complete")
         .eq("pro_id", user?.id)
@@ -208,7 +208,7 @@ export default function ProDashboard() {
   };
 
   const fetchPendingQuotes = async () => {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("quotes")
       .select(
         `
@@ -242,7 +242,7 @@ export default function ProDashboard() {
   const fetchLeads = async () => {
     try {
       // 1) Get pro location (lat/lon) from pro_profiles
-      const { data: profile, error: profileError } = await (supabase as any)
+      const { data: profile, error: profileError } = await supabase
         .from("pro_profiles")
         .select("latitude, longitude")
         .eq("pro_id", user?.id)
@@ -253,7 +253,7 @@ export default function ProDashboard() {
       }
 
       // 2) Load open customer requests from service_requests
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("service_requests")
         .select(
           `
@@ -314,7 +314,7 @@ export default function ProDashboard() {
   };
 
   const fetchJobs = async () => {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("service_requests")
       .select(
         `
@@ -359,7 +359,7 @@ export default function ProDashboard() {
   const handleAcceptLead = async (leadId: string) => {
     try {
       // 1. Attempt to lock the service request for this pro
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("service_requests")
         .update({
           accepted_pro_id: user?.id,
@@ -399,7 +399,7 @@ export default function ProDashboard() {
 
   const handleDeclineLead = async (leadId: string) => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("service_requests")
         .update({ status: "declined" })
         .eq("id", leadId)

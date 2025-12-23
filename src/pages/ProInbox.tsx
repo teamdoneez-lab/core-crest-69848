@@ -87,7 +87,7 @@ const AppointmentSchedule = ({ lead, onScheduled }: AppointmentScheduleProps) =>
       const appointmentTime = new Date(date);
       appointmentTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-      const { data, error } = await (supabase as any).rpc('schedule_appointment', {
+      const { data, error } = await supabase.rpc('schedule_appointment', {
         request_id: lead.service_requests.id,
         appointment_time: appointmentTime.toISOString(),
         appointment_notes: notes || null
@@ -305,13 +305,13 @@ const ProInbox = () => {
         console.error('Payment succeeded but appointment confirmation failed:', data);
         
         // Fetch payment details for the friendly error message
-        const { data: feeData } = await (supabase as any)
+        const { data: feeData } = await supabase
           .from('referral_fees')
           .select('amount, paid_at')
           .eq('request_id', requestId)
           .single();
 
-        const { data: requestData } = await (supabase as any)
+        const { data: requestData } = await supabase
           .from('service_requests')
           .select('vehicle_make, model, year')
           .eq('id', requestId)
@@ -349,14 +349,14 @@ const ProInbox = () => {
       
       // Try to fetch payment details even on error to see if payment went through
       try {
-        const { data: feeData } = await (supabase as any)
+        const { data: feeData } = await supabase
           .from('referral_fees')
           .select('amount, paid_at, status')
           .eq('request_id', requestId)
           .eq('stripe_session_id', sessionId)
           .single();
 
-        const { data: requestData } = await (supabase as any)
+        const { data: requestData } = await supabase
           .from('service_requests')
           .select('vehicle_make, model, year')
           .eq('id', requestId)
@@ -427,7 +427,7 @@ const ProInbox = () => {
   const fetchLeads = async () => {
     try {
       // First, fetch leads with basic info (masked data)
-      const { data: leadsData, error: leadsError } = await (supabase as any)
+      const { data: leadsData, error: leadsError } = await supabase
         .from('leads')
         .select(`
           id,
@@ -450,7 +450,7 @@ const ProInbox = () => {
       // Fetch full details for each request using the secure function
       const leadsWithDetails = await Promise.all(
         (leadsData || []).map(async (lead) => {
-          const { data: requestDetails, error: detailsError } = await (supabase as any)
+          const { data: requestDetails, error: detailsError } = await supabase
             .rpc('get_service_request_details', { request_id: lead.request_id })
             .single();
 
@@ -460,22 +460,22 @@ const ProInbox = () => {
           }
 
           // Fetch category and appointment info
-          const { data: category } = await (supabase as any)
+          const { data: category } = await supabase
             .from('service_categories')
             .select('name')
-            .eq('id', requestDetails?.category_id)
+            .eq('id', requestDetails.category_id)
             .single();
 
-          const { data: appointment } = await (supabase as any)
+          const { data: appointment } = await supabase
             .from('appointments')
             .select('id, starts_at, notes')
-            .eq('request_id', requestDetails?.id)
+            .eq('request_id', requestDetails.id)
             .maybeSingle();
 
           return {
             ...lead,
             service_requests: {
-              ...(requestDetails || {}),
+              ...requestDetails,
               service_categories: category,
               appointments: appointment ? appointment : undefined
             }
@@ -554,7 +554,7 @@ const ProInbox = () => {
 
   const handleStatusUpdate = async (requestId: string, newStatus: string) => {
     try {
-      const { data, error } = await (supabase as any).rpc('update_request_status', {
+      const { data, error } = await supabase.rpc('update_request_status', {
         request_id: requestId,
         new_status: newStatus
       });
@@ -598,7 +598,7 @@ const ProInbox = () => {
 
   const updateLeadStatus = async (leadId: string, status: 'declined') => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('leads')
         .update({ status })
         .eq('id', leadId);
@@ -873,7 +873,7 @@ const ProInbox = () => {
                                 <Button 
                                   onClick={async () => {
                                     // Get quote for this request
-                                    const { data: quotes } = await (supabase as any)
+                                    const { data: quotes } = await supabase
                                       .from('quotes')
                                       .select('id')
                                       .eq('request_id', request.id)

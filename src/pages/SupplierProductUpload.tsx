@@ -66,8 +66,7 @@ export default function SupplierProductUpload() {
       const DONEEZ_SUPPLIER_ID = "a52d5eb4-0504-482f-b87d-c7aedce36fda";
 
       // Verify it exists
-      const db = supabase as any;
-      const { data, error } = await db
+      const { data, error } = await supabase
         .from("suppliers")
         .select("id, business_name, is_platform_seller")
         .eq("id", DONEEZ_SUPPLIER_ID)
@@ -156,7 +155,6 @@ export default function SupplierProductUpload() {
     }
 
     setLoading(true);
-    const db = supabase as any;
 
     try {
       // Get supplier ID
@@ -170,7 +168,7 @@ export default function SupplierProductUpload() {
         } = await supabase.auth.getUser();
         if (!user) throw new Error("Not authenticated");
 
-        const { data: supplier, error: supplierError } = await db
+        const { data: supplier, error: supplierError } = await supabase
           .from("suppliers")
           .select("id, status")
           .eq("user_id", user.id)
@@ -229,7 +227,7 @@ export default function SupplierProductUpload() {
       }));
 
       // Insert to Supabase
-      const { error: insertError } = await db.from("supplier_products").insert(productsToInsert);
+      const { error: insertError } = await supabase.from("supplier_products").insert(productsToInsert);
 
       if (insertError) {
         console.error("Insert error:", insertError);

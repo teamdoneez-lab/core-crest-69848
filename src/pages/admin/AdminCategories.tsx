@@ -68,10 +68,9 @@ export default function AdminCategories() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const db = supabase as any;
       
       // Get platform supplier
-      const { data: supplier } = await db
+      const { data: supplier } = await supabase
         .from('suppliers')
         .select('id')
         .eq('is_platform_seller', true)
@@ -80,7 +79,7 @@ export default function AdminCategories() {
       if (!supplier) return;
 
       // Get all DoneEZ products and count by category
-      const { data: products, error } = await db
+      const { data: products, error } = await supabase
         .from('supplier_products')
         .select('category')
         .eq('supplier_id', supplier.id);

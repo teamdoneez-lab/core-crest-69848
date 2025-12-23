@@ -37,9 +37,8 @@ export default function AdminProductList() {
   }, [platformSupplierId]);
 
   const fetchPlatformSupplier = async () => {
-    const db = supabase as any;
     try {
-      const { data, error } = await db
+      const { data, error } = await supabase
         .from("suppliers")
         .select("id")
         .eq("is_platform_seller", true)
@@ -58,11 +57,10 @@ export default function AdminProductList() {
     }
   };
   const fetchProducts = async () => {
-    const db = supabase as any;
     try {
       setLoading(true);
 
-      const { data, error } = await db
+      const { data, error } = await supabase
         .from("supplier_products")
         .select("id, sku, part_name, price, category, images, created_at")
         .eq("supplier_id", platformSupplierId)
@@ -85,10 +83,9 @@ export default function AdminProductList() {
   };
   const handleDelete = async () => {
     if (!deleteProduct) return;
-    const db = supabase as any;
 
     try {
-      const { error } = await db.from("supplier_products").delete().eq("id", deleteProduct.id);
+      const { error } = await supabase.from("supplier_products").delete().eq("id", deleteProduct.id);
 
       if (error) throw error;
 

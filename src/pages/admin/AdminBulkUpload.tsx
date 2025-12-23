@@ -37,10 +37,9 @@ export default function AdminBulkUpload() {
     setSupplierLoading(true);
     try {
       console.log('Fetching platform supplier...');
-      const db = supabase as any;
       
       // Fetch existing platform supplier
-      const { data, error } = await db
+      const { data, error } = await supabase
         .from('suppliers')
         .select('id, business_name')
         .eq('is_platform_seller', true)
@@ -122,7 +121,6 @@ export default function AdminBulkUpload() {
   };
 
   const handleUpload = async () => {
-    const db = supabase as any;
     console.log('Upload initiated', { 
       hasFile: !!file, 
       fileName: file?.name,
@@ -226,7 +224,7 @@ export default function AdminBulkUpload() {
         try {
           console.log('Inserting products into database...', { count: products.length });
           
-          const { data, error } = await db
+          const { data, error } = await supabase
             .from('supplier_products')
             .insert(products)
             .select();

@@ -62,7 +62,6 @@ interface ServiceRequest {
 
 export default function ServiceRequests() {
   const { user } = useAuth();
-  const db = supabase as any;
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [pendingQuotes, setPendingQuotes] = useState<PendingQuote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,7 +109,7 @@ export default function ServiceRequests() {
       }
 
       // Get pro's profile to find their location (for distance display only)
-      const { data: proProfile, error: proError } = await db
+      const { data: proProfile, error: proError } = await supabase
         .from('pro_profiles')
         .select('latitude, longitude')
         .eq('pro_id', user.id)
@@ -122,7 +121,7 @@ export default function ServiceRequests() {
 
       // Query leads table first, then join to service_requests
       // This ensures we only see requests where we have a lead
-      let leadsQuery = db
+      let leadsQuery = supabase
         .from('leads')
         .select(`
           request_id,
@@ -300,7 +299,7 @@ export default function ServiceRequests() {
   const fetchPendingQuotes = async () => {
     if (!user?.id) return;
     
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('quotes')
       .select(`
         id,
@@ -352,13 +351,13 @@ export default function ServiceRequests() {
     // Update expired quotes in the database
     if (expiredQuotes.length > 0) {
       for (const expiredQuote of expiredQuotes) {
-        await db
+        await supabase
           .from('quotes')
           .update({ status: 'expired' })
           .eq('id', expiredQuote.id);
 
         // Update referral fee if exists
-        await db
+        await supabase
           .from('referral_fees')
           .update({ status: 'expired' })
           .eq('quote_id', expiredQuote.id);

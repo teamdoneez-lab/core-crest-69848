@@ -86,7 +86,7 @@ const MyRequests = () => {
       setLoading(true);
       
       // Build base query
-      let query = (supabase as any)
+      let query = supabase
         .from('service_requests')
         .select(`
           *,
@@ -156,7 +156,7 @@ const MyRequests = () => {
 
   const handleCancelRequest = async (requestId: string) => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('service_requests')
         .update({ status: 'cancelled' })
         .eq('id', requestId)
@@ -183,7 +183,7 @@ const MyRequests = () => {
   const handleDeleteRequest = async (requestId: string) => {
     try {
       // Just delete the service request record
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('service_requests')
         .delete()
         .eq('id', requestId)
@@ -304,7 +304,7 @@ const MyRequests = () => {
         : newUrls.join(',');
 
       // Update service request with new photos and clear photo request flag
-      const { error: updateError } = await (supabase as any)
+      const { error: updateError } = await supabase
         .from('service_requests')
         .update({ 
           image_url: allUrls,
@@ -626,7 +626,7 @@ const MyRequests = () => {
                       expiresAt={request.appointments[0].confirmation_expires_at}
                       onExpired={async () => {
                         // Auto-update appointment to expired
-                        await (supabase as any)
+                        await supabase
                           .from('appointments')
                           .update({ status: 'expired' })
                           .eq('id', request.appointments![0].id);
