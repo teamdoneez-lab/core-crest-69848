@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { MessageSquare, Menu } from 'lucide-react';
 import { CartPanel } from '@/components/marketplace/CartPanel';
-import logo from '@/assets/logo.png';
+import logo from '@/assets/logo-modern.png';
 import santaHat from '@/assets/santa-hat.png';
 import { useState } from 'react';
 
@@ -28,14 +28,14 @@ export function Navigation() {
 
   const handleSignOut = async () => {
     setMobileMenuOpen(false);
-    
+
     try {
       // Clear session first
       await signOut();
-      
+
       // Wait a bit for state to update
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
       // Redirect to home page instead of auth
       window.location.href = '/';
     } catch (error) {
@@ -50,10 +50,10 @@ export function Navigation() {
   const navLinks = (
     <>
       <Link
-        to="/" 
+        to="/"
         onClick={() => setMobileMenuOpen(false)}
         className={cn(
-          "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+          'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap',
           isActive('/') ? 'text-primary' : 'text-muted-foreground'
         )}
       >
@@ -62,21 +62,21 @@ export function Navigation() {
 
       {isCustomer && (
         <>
-          <Link 
-            to="/request-service" 
+          <Link
+            to="/request-service"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap',
               isActive('/request-service') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
             Request
           </Link>
-          <Link 
-            to="/my-requests" 
+          <Link
+            to="/my-requests"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap relative flex items-center gap-1",
+              'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap relative flex items-center gap-1',
               isActive('/my-requests') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
@@ -85,40 +85,40 @@ export function Navigation() {
               <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive animate-pulse" />
             )}
           </Link>
-          <Link 
-            to="/appointments" 
+          <Link
+            to="/appointments"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap',
               isActive('/appointments') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
             Appointments
           </Link>
-          <Link 
-            to="/messages" 
+          <Link
+            to="/messages"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap relative",
+              'text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap relative',
               isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
             <MessageSquare className="h-4 w-4" />
             <span>Messages</span>
             {unreadCount > 0 && (
-              <Badge 
-                variant="destructive" 
+              <Badge
+                variant="destructive"
                 className="ml-1 h-5 min-w-5 flex items-center justify-center rounded-full p-0 px-1.5 text-xs"
               >
                 {unreadCount > 99 ? '99+' : unreadCount}
               </Badge>
             )}
           </Link>
-          <Link 
-            to="/customer-profile" 
+          <Link
+            to="/customer-profile"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap',
               isActive('/customer-profile') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
@@ -129,31 +129,31 @@ export function Navigation() {
 
       {isPro && (
         <>
-          <Link 
-            to="/pro-profile" 
+          <Link
+            to="/pro-profile"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap',
               isActive('/pro-profile') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
             Profile
           </Link>
-          <Link 
-            to="/service-requests" 
+          <Link
+            to="/service-requests"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap',
               isActive('/service-requests') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
             Requests
           </Link>
-          <Link 
-            to="/my-jobs" 
+          <Link
+            to="/my-jobs"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap relative flex items-center gap-1",
+              'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap relative flex items-center gap-1',
               isActive('/my-jobs') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
@@ -162,49 +162,49 @@ export function Navigation() {
               <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive animate-pulse" />
             )}
           </Link>
-          <Link 
-            to="/earnings" 
+          <Link
+            to="/earnings"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap',
               isActive('/earnings') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
             Earnings
           </Link>
-          <Link 
-            to="/pro-marketplace" 
+          <Link
+            to="/pro-marketplace"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap',
               isActive('/pro-marketplace') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
             Marketplace
           </Link>
-          <Link 
-            to="/partner-offers" 
+          <Link
+            to="/partner-offers"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+              'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap',
               isActive('/partner-offers') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
             Partner Offers
           </Link>
-          <Link 
+          <Link
             to="/messages"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap relative",
+              'text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 whitespace-nowrap relative',
               isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
             )}
           >
             <MessageSquare className="h-4 w-4" />
             <span>Messages</span>
             {unreadCount > 0 && (
-              <Badge 
-                variant="destructive" 
+              <Badge
+                variant="destructive"
                 className="ml-1 h-5 min-w-5 flex items-center justify-center rounded-full p-0 px-1.5 text-xs"
               >
                 {unreadCount > 99 ? '99+' : unreadCount}
@@ -215,11 +215,11 @@ export function Navigation() {
       )}
 
       {isAdmin && (
-        <Link 
-          to="/admin" 
+        <Link
+          to="/admin"
           onClick={() => setMobileMenuOpen(false)}
           className={cn(
-            "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
+            'text-sm font-medium transition-colors hover:text-primary whitespace-nowrap',
             isActive('/admin') ? 'text-primary' : 'text-muted-foreground'
           )}
         >
@@ -237,8 +237,11 @@ export function Navigation() {
             <img
               src={santaHat}
               alt=""
-              className="absolute -top-4 -left-2 h-10 w-auto z-10 pointer-events-none select-none"
-              style={{ transform: 'rotate(-20deg)', filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.3))' }}
+              className="absolute -top-3 -left-1 h-8 w-auto z-10 pointer-events-none select-none"
+              style={{
+                transform: 'rotate(-18deg)',
+                filter: 'drop-shadow(0 1px 1px hsl(var(--foreground) / 0.22))',
+              }}
               draggable={false}
             />
             <img
@@ -248,12 +251,8 @@ export function Navigation() {
               draggable={false}
             />
           </Link>
-            
-          {!isMobile ? (
-            <div className="flex items-center gap-4 flex-1 ml-6">
-              {navLinks}
-            </div>
-          ) : null}
+
+          {!isMobile ? <div className="flex items-center gap-4 flex-1 ml-6">{navLinks}</div> : null}
 
           <div className="flex items-center gap-2 flex-shrink-0">
             {isPro && <CartPanel />}
@@ -261,11 +260,7 @@ export function Navigation() {
               {role || 'customer'}
             </Badge>
             {!isMobile && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSignOut}
-              >
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
                 Sign Out
               </Button>
             )}
@@ -279,8 +274,8 @@ export function Navigation() {
                 <SheetContent side="right" className="w-64">
                   <div className="flex flex-col gap-4 mt-8">
                     {navLinks}
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         setMobileMenuOpen(false);
                         handleSignOut();

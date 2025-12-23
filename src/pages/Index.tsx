@@ -233,7 +233,12 @@ const Index = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
-              <img src={logo} alt="DoneEZ" className="h-8 sm:h-10 w-auto mr-2 drop-shadow-md" />
+              <img
+                src={logo}
+                alt="DoneEZ auto repair marketplace logo"
+                className="h-12 sm:h-14 w-auto mr-2 object-contain select-none"
+                draggable={false}
+              />
             </div>
             
             {/* Desktop Navigation */}
